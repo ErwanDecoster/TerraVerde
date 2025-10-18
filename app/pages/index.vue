@@ -1,5 +1,8 @@
 <script lang="ts" setup>
 const { user } = useAuth();
+definePageMeta({
+  layout: 'home',
+})
 </script>
 
 <template>
