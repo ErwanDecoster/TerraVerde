@@ -14,19 +14,24 @@ const { user, logout, loading } = useAuth();
       <template #right>
         <UColorModeSelect />
 
-        <template v-if="!loading">
-          <UUser
-            v-if="user"
-            :name="
-              user.user_metadata?.first_name +
-              ' ' +
-              user.user_metadata?.last_name
-            "
-          />
-          <UButton v-if="user" @click="logout">Sign Out</UButton>
-        </template>
-
-        <USkeleton v-else class="h-8 w-24" />
+        <ClientOnly>
+          <div class="flex items-center gap-3">
+            <template v-if="loading">
+              <USkeleton class="h-8 w-24" />
+            </template>
+            <template v-else>
+              <UUser
+                v-if="user"
+                :name="
+                  user.user_metadata?.first_name +
+                  ' ' +
+                  user.user_metadata?.last_name
+                "
+              />
+              <UButton v-if="user" @click="logout">Sign Out</UButton>
+            </template>
+          </div>
+        </ClientOnly>
       </template>
 
       <!-- <template #body>

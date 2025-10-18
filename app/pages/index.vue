@@ -7,10 +7,12 @@ const { user } = useAuth();
     <div class="border border-accented rounded p-8 text-center">
       <h1>Welcome on TerraVerde</h1>
       <ClientOnly>
-        <NuxtLink v-if="user" to="/dashboard" as
-          ><UButton>Go to Dashboard</UButton></NuxtLink
-        >
-        <NuxtLink v-else to="/login" as><UButton>Login</UButton></NuxtLink>
+        <NuxtLink v-if="user" to="/dashboard" as>
+          <UButton>Go to Dashboard</UButton>
+        </NuxtLink>
+        <NuxtLink v-else to="/login" as>
+          <UButton>Login</UButton>
+        </NuxtLink>
       </ClientOnly>
     </div>
     <div>
