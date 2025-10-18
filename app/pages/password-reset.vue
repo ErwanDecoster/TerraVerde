@@ -118,8 +118,8 @@ async function onSubmitPassword(payload: FormSubmitEvent<PasswordSchema>) {
         :fields="emailFields"
         title="Password Recovery"
         icon="i-lucide-lock"
-        @submit="onSubmitEmail"
         :submit="{ label: 'Send reset email' }"
+        @submit="onSubmitEmail"
       >
         <template v-if="!user" #description>
           Remember your password?
@@ -133,8 +133,8 @@ async function onSubmitPassword(payload: FormSubmitEvent<PasswordSchema>) {
         :fields="passwordFields"
         title="Set New Password"
         icon="i-lucide-key"
-        @submit="onSubmitPassword"
         :submit="{ label: 'Update password' }"
+        @submit="onSubmitPassword"
       >
         <template #description> Enter your new password below. </template>
       </UAuthForm>

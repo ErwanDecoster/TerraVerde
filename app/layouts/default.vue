@@ -6,7 +6,7 @@ const { user, logout, loading } = useAuth();
   <UApp>
     <UHeader>
       <template #title>
-        <Logo />
+        <BrandLogo />
       </template>
 
       <!-- <UNavigationMenu :items="items" /> -->

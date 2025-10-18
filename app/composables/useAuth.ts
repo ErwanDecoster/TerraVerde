@@ -1,7 +1,8 @@
+import type { User } from '@supabase/supabase-js'
 import { supabaseClient } from "~/composables/supabase";
 
 export const useAuth = () => {
-  const user = useState<any>('auth.user', () => null);
+  const user = useState<User | null>('auth.user', () => null);
   const loading = useState('auth.loading', () => true);
 
   const getUser = async () => {
@@ -41,7 +42,7 @@ export const useAuth = () => {
       
       user.value = data.user;
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { data: null, error };
     } finally {
       loading.value = false;
@@ -58,7 +59,7 @@ export const useAuth = () => {
       if (error) throw error;
       
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { error };
     }
   };
@@ -73,7 +74,7 @@ export const useAuth = () => {
       if (error) throw error;
       
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { error };
     }
   };
