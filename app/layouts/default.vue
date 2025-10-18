@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { user, logout, loading } = useAuth();
+const { user, logout, loading } = useAuth()
 </script>
 
 <template>
@@ -23,12 +23,17 @@ const { user, logout, loading } = useAuth();
               <UUser
                 v-if="user"
                 :name="
-                  user.user_metadata?.first_name +
-                  ' ' +
-                  user.user_metadata?.last_name
+                  user.user_metadata?.first_name
+                    + ' '
+                    + user.user_metadata?.last_name
                 "
               />
-              <UButton v-if="user" @click="logout">Sign Out</UButton>
+              <UButton
+                v-if="user"
+                @click="logout"
+              >
+                Sign Out
+              </UButton>
             </template>
           </div>
         </ClientOnly>

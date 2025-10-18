@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { user } = useAuth();
+const { user } = useAuth()
 definePageMeta({
   layout: 'home',
 })
@@ -10,10 +10,18 @@ definePageMeta({
     <div class="border border-accented rounded p-8 text-center">
       <h1>Welcome on TerraVerde</h1>
       <ClientOnly>
-        <NuxtLink v-if="user" to="/dashboard" as>
+        <NuxtLink
+          v-if="user"
+          to="/dashboard"
+          as
+        >
           <UButton>Go to Dashboard</UButton>
         </NuxtLink>
-        <NuxtLink v-else to="/login" as>
+        <NuxtLink
+          v-else
+          to="/login"
+          as
+        >
           <UButton>Login</UButton>
         </NuxtLink>
       </ClientOnly>
