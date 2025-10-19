@@ -106,7 +106,7 @@ async function onSubmitPassword(payload: FormSubmitEvent<PasswordSchema>) {
       description: 'Password updated successfully',
       color: 'success',
     })
-    await navigateTo('/dashboard')
+    await navigateTo('/gardens')
   }
 }
 </script>

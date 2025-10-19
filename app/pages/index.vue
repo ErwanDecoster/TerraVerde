@@ -12,10 +12,10 @@ definePageMeta({
       <ClientOnly>
         <NuxtLink
           v-if="user"
-          to="/dashboard"
+          to="/gardens"
           as
         >
-          <UButton>Go to Dashboard</UButton>
+          <UButton>Go to gardens</UButton>
         </NuxtLink>
         <NuxtLink
           v-else
