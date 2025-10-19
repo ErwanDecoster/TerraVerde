@@ -145,7 +145,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         ref="form"
         :schema="schema"
         :state="state"
-        class="space-y-6"
+        class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
         <UFormField
@@ -155,48 +155,36 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         >
           <UInput
             v-model="state.name"
+            class="w-full"
             placeholder="Enter plant name"
+          />
+        </UFormField>
+        <UFormField
+          label="Category"
+          name="category"
+          required
+        >
+          <USelect
+            v-model="state.category"
+            :items="PLANT_CATEGORIES.slice()"
+            class="w-full"
+            placeholder="Select category"
           />
         </UFormField>
 
         <UFormField
           label="Description"
           name="description"
+          class="col-span-2"
         >
           <UTextarea
             v-model="state.description"
             placeholder="Describe your plant..."
+            class="w-full"
             :rows="3"
           />
         </UFormField>
 
-        <!-- Category and Status -->
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField
-            label="Category"
-            name="category"
-            required
-          >
-            <USelect
-              v-model="state.category"
-              :options="PLANT_CATEGORIES"
-              placeholder="Select category"
-            />
-          </UFormField>
-          <UFormField
-            label="Status"
-            name="status"
-            required
-          >
-            <USelect
-              v-model="state.status"
-              :options="PLANT_STATUSES"
-              placeholder="Select status"
-            />
-          </UFormField>
-        </div>
-
-        <!-- Planted date -->
         <UFormField
           label="Planted Date"
           name="planted_date"
@@ -205,10 +193,22 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           <UInput
             v-model="state.planted_date"
             type="date"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField
+          label="Status"
+          name="status"
+          required
+        >
+          <USelect
+            v-model="state.status"
+            :items="PLANT_STATUSES.slice()"
+            class="w-full z-10"
+            placeholder="Select status"
           />
         </UFormField>
 
-        <!-- Main color -->
         <UFormField
           label="Main Color"
           name="main_color"
@@ -217,6 +217,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           <UPopover>
             <UButton
               label="Choose color"
+              class="w-full"
               color="neutral"
               variant="outline"
             >
@@ -246,6 +247,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
             <UInput
               v-model.number="state.height"
               type="number"
+              class="w-full"
               placeholder="0"
               min="0"
               max="1000"
@@ -259,6 +261,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
             <UInput
               v-model.number="state.width"
               type="number"
+              class="w-full"
               placeholder="0"
               min="0"
               max="1000"
@@ -270,24 +273,26 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     </template>
 
     <template #footer="{ close }">
-      <UButton
-        color="neutral"
-        variant="ghost"
-        :disabled="loading"
-        @click="close"
-      >
-        Cancel
-      </UButton>
-      <UButton
-        type="submit"
-        form="plant-form"
-        :loading="loading"
-        :disabled="loading"
-        icon="i-heroicons-plus-20-solid"
-        @click="form.submit()"
-      >
-        Add Plant
-      </UButton>
+      <div class="flex justify-end w-full">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          :disabled="loading"
+          @click="close"
+        >
+          Cancel
+        </UButton>
+        <UButton
+          type="submit"
+          form="plant-form"
+          :loading="loading"
+          :disabled="loading"
+          icon="i-heroicons-plus-20-solid"
+          @click="form.submit()"
+        >
+          Add Plant
+        </UButton>
+      </div>
     </template>
   </UModal>
 </template>
