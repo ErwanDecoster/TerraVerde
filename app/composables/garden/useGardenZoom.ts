@@ -94,7 +94,7 @@ export const useGardenZoom = (stageRef: any, backgroundConfig: any) => {
     // Obtenir les vraies dimensions du stage et de l'image
     const stageWidth = stage.width() || stageConfig.width
     const stageHeight = stage.height() || stageConfig.height
-    
+
     // Accéder à backgroundConfig correctement (c'est un computed ref)
     const bgConfig = backgroundConfig?.value || {}
     const imageWidth = bgConfig.width || stageWidth
@@ -118,7 +118,7 @@ export const useGardenZoom = (stageRef: any, backgroundConfig: any) => {
     // Calculer la position pour centrer l'image mise à l'échelle
     const scaledImageWidth = imageWidth * scale
     const scaledImageHeight = imageHeight * scale
-    
+
     const x = Math.max(0, (stageWidth - scaledImageWidth) / 2)
     const y = Math.max(0, (stageHeight - scaledImageHeight) / 2)
 
@@ -127,11 +127,11 @@ export const useGardenZoom = (stageRef: any, backgroundConfig: any) => {
     // Appliquer les transformations
     stage.scale({ x: scale, y: scale })
     stage.position({ x, y })
-    
+
     // Mettre à jour la configuration réactive
     stageConfig.scaleX = scale
     stageConfig.scaleY = scale
-    
+
     stage.batchDraw()
   }
 

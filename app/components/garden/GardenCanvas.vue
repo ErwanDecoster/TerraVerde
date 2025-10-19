@@ -1,8 +1,17 @@
 <template>
-  <v-stage ref="stage" :config="stageConfig" @wheel="handleWheel">
+  <v-stage
+    ref="stage"
+    :config="stageConfig"
+    @wheel="handleWheel"
+    @click="handleBackgroundClick"
+  >
     <v-layer ref="layer">
       <!-- Image de fond -->
-      <v-image v-if="background" :config="backgroundConfig" />
+      <v-image
+        v-if="background"
+        :config="backgroundConfig"
+        name="background"
+      />
 
       <v-group
         v-for="marker in plantMarkers"
@@ -53,26 +62,27 @@
 
 <script setup lang="ts">
 interface Props {
-  stageConfig: any;
-  background: HTMLImageElement | null;
-  backgroundConfig: any;
-  plantMarkers: any[];
-  handleWheel: (e: any) => void;
-  handlePlantClick: (marker: any) => void;
-  handlePlantDragStart: (marker: any) => void;
-  handlePlantDragEnd: (marker: any, event: any) => void;
-  handlePlantHover: (marker: any, isHovering: boolean) => void;
-  getCategoryLetter: (category: string) => string;
+  stageConfig: any
+  background: HTMLImageElement | null
+  backgroundConfig: any
+  plantMarkers: any[]
+  handleWheel: (e: any) => void
+  handlePlantClick: (marker: any) => void
+  handlePlantDragStart: (marker: any) => void
+  handlePlantDragEnd: (marker: any, event: any) => void
+  handlePlantHover: (marker: any, isHovering: boolean) => void
+  getCategoryLetter: (category: string) => string
+  handleBackgroundClick?: (e: any) => void
 }
 
-defineProps<Props>();
+defineProps<Props>()
 
 // Exposer les refs pour le parent
-const stage = ref(null);
-const layer = ref(null);
+const stage = ref(null)
+const layer = ref(null)
 
 defineExpose({
   stage,
   layer,
-});
+})
 </script>

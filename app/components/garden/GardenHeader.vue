@@ -3,7 +3,11 @@
     <div
       class="rounded-xl p-2 grid gap-1 bg-default/75 backdrop-blur border border-default"
     >
-      <UButton color="neutral" variant="subtle" @click="$emit('back')">
+      <UButton
+        color="neutral"
+        variant="subtle"
+        @click="$emit('back')"
+      >
         Back to Gardens
       </UButton>
     </div>
@@ -32,19 +36,19 @@
 </template>
 
 <script setup lang="ts">
-import type { GardenData } from "~/types/garden";
-import EditGardenModal from "./EditGardenModal.vue";
+import type { GardenData } from '~/types/garden'
+import EditGardenModal from './EditGardenModal.vue'
 
 interface Props {
-  garden?: GardenData | null;
-  plantsCount: number;
+  garden?: GardenData | null
+  plantsCount: number
 }
 
 interface Emits {
-  (e: "back"): void;
-  (e: "garden-updated"): void;
+  (e: 'back'): void
+  (e: 'garden-updated'): void
 }
 
-defineProps<Props>();
-defineEmits<Emits>();
+defineProps<Props>()
+defineEmits<Emits>()
 </script>

@@ -33,16 +33,16 @@
 <script setup lang="ts">
 interface Props {
   stageConfig: {
-    scaleX: number;
-    scaleY: number;
-    width: number;
-    height: number;
-    draggable: boolean;
-  };
-  zoomIn: () => void;
-  zoomOut: () => void;
-  resetZoom: () => void;
+    scaleX: number
+    scaleY: number
+    width: number
+    height: number
+    draggable: boolean
+  }
+  zoomIn: () => void
+  zoomOut: () => void
+  resetZoom: () => void
 }
 
-defineProps<Props>();
+defineProps<Props>()
 </script>
