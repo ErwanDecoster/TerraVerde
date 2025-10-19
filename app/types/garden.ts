@@ -29,3 +29,11 @@ export interface GardenFormData {
   backgroundColor: string
   backgroundImage: File
 }
+
+// Update form data types (backgroundImage is optional)
+export interface GardenUpdateFormData {
+  name: string
+  position: GardenPosition
+  backgroundColor: string
+  backgroundImage?: File
+}

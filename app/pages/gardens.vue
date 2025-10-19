@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import AddGardenModal from '~/components/garden/AddGardenModal.vue'
+import EditGardenModal from '~/components/garden/EditGardenModal.vue'
 import { useGarden } from '~/composables/data/useGarden'
 import type { GardenData } from '~/types/garden'
 
@@ -10,6 +11,16 @@ definePageMeta({
 function handleGardenAdded(data: GardenData) {
   console.log('New garden added:', data)
   gardens.value.unshift(data)
+}
+
+function handleGardenUpdated(updatedGarden: GardenData) {
+  console.log('Garden updated:', updatedGarden)
+  const index = gardens.value.findIndex(
+    garden => garden.id === updatedGarden.id,
+  )
+  if (index !== -1) {
+    gardens.value[index] = updatedGarden
+  }
 }
 
 const gardens = ref<GardenData[]>([])
@@ -50,10 +61,10 @@ onMounted(async () => {
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton @click="editGarden(garden)">
-              <!-- TODO -->
-              Edit
-            </UButton>
+            <EditGardenModal
+              :garden="garden"
+              @garden-updated="handleGardenUpdated"
+            />
             <UButton :to="`/gardens/${garden.id}`">
               View
             </UButton>
@@ -61,7 +72,5 @@ onMounted(async () => {
         </template>
       </UCard>
     </div>
-
-    <!-- Add map modal -->
   </div>
 </template>
