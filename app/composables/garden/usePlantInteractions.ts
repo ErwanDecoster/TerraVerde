@@ -6,6 +6,7 @@ export const usePlantInteractions = (
   garden: Ref<any>,
   gardenId: string,
   updatePlant: Function,
+  onPlantClick?: (plant: PlantData) => void,
 ) => {
   // Plant hover state for tooltips
   const hoveredPlant = ref<PlantData | null>(null)
@@ -13,8 +14,10 @@ export const usePlantInteractions = (
   // Plant marker event handlers
   const handlePlantClick = (marker: any) => {
     console.log(`Plant ${marker.plant.name} clicked!`, marker.plant)
-    // You could open a plant details modal here
-    // showPlantDetails(marker.plant)
+    // Call the callback to open edit modal
+    if (onPlantClick) {
+      onPlantClick(marker.plant)
+    }
   }
 
   const handlePlantDragStart = (marker: any) => {

@@ -1,5 +1,8 @@
 <template>
-  <div v-if="pending" class="flex justify-center items-center h-screen">
+  <div
+    v-if="pending"
+    class="flex justify-center items-center h-screen"
+  >
     <UIcon
       name="i-heroicons-arrow-path-20-solid"
       class="animate-spin text-4xl"
@@ -7,7 +10,10 @@
     <span class="ml-2">Loading garden...</span>
   </div>
 
-  <div v-else-if="error" class="flex justify-center items-center h-screen">
+  <div
+    v-else-if="error"
+    class="flex justify-center items-center h-screen"
+  >
     <UAlert
       icon="i-heroicons-exclamation-triangle-20-solid"
       color="error"
@@ -17,7 +23,10 @@
     />
   </div>
 
-  <div v-else-if="!garden" class="flex justify-center items-center h-screen">
+  <div
+    v-else-if="!garden"
+    class="flex justify-center items-center h-screen"
+  >
     <UAlert
       icon="i-heroicons-information-circle-20-solid"
       color="warning"
@@ -27,7 +36,10 @@
     />
   </div>
 
-  <div v-else class="h-screen overflow-hidden">
+  <div
+    v-else
+    class="h-screen overflow-hidden"
+  >
     <div class="flex-1 overflow-hidden relative">
       <!-- Garden Header -->
       <GardenHeader
@@ -60,150 +72,242 @@
         :handle-plant-drag-end="handlePlantDragEnd"
         :handle-plant-hover="handlePlantHover"
         :get-category-letter="getCategoryLetter"
+        :handle-background-click="handleBackgroundClick"
       />
     </div>
+
+    <!-- Modals -->
+    <AddPlantModal
+      v-if="showAddPlantModal"
+      v-model:open="showAddPlantModal"
+      @plant-added="onPlantAdded"
+    />
+
+    <EditPlantModal
+      v-if="selectedPlant && showEditPlantModal"
+      v-model:open="showEditPlantModal"
+      :plant="selectedPlant"
+      @plant-updated="onPlantUpdated"
+      @plant-deleted="onPlantDeleted"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import type { GardenData } from "~/types/garden";
-import type { PlantData } from "~/types/plant";
-import { useGarden } from "~/composables/data/useGarden";
-import { usePlant } from "~/composables/data/usePlant";
-import { useGardenZoom } from "~/composables/garden/useGardenZoom";
-import { useGardenCanvas } from "~/composables/garden/useGardenCanvas";
-import { usePlantMarkers } from "~/composables/garden/usePlantMarkers";
-import { usePlantInteractions } from "~/composables/garden/usePlantInteractions";
-import GardenHeader from "~/components/garden/GardenHeader.vue";
-import GardenZoomControls from "~/components/garden/GardenZoomControls.vue";
-import GardenCanvas from "~/components/garden/GardenCanvas.vue";
-import PlantCategoryFilters from "~/components/garden/PlantCategoryFilters.vue";
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import type { GardenData } from '~/types/garden'
+import type { PlantData } from '~/types/plant'
+import { useGarden } from '~/composables/data/useGarden'
+import { usePlant } from '~/composables/data/usePlant'
+import { useGardenZoom } from '~/composables/garden/useGardenZoom'
+import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
+import { usePlantMarkers } from '~/composables/garden/usePlantMarkers'
+import { usePlantInteractions } from '~/composables/garden/usePlantInteractions'
+import { pixelsToMeters } from '~/utils/coordinates'
+import GardenHeader from '~/components/garden/GardenHeader.vue'
+import GardenZoomControls from '~/components/garden/GardenZoomControls.vue'
+import GardenCanvas from '~/components/garden/GardenCanvas.vue'
+import PlantCategoryFilters from '~/components/garden/PlantCategoryFilters.vue'
+import AddPlantModal from '~/components/plant/AddPlantModal.vue'
+import EditPlantModal from '~/components/plant/EditPlantModal.vue'
 
 // Page meta
 definePageMeta({
-  middleware: ["auth"],
-});
+  middleware: ['auth'],
+})
 
 // Get route params
-const route = useRoute();
-const gardenId = route.params.id as string;
+const route = useRoute()
+const gardenId = route.params.id as string
 
 // Composables
-const { fetchGardenById } = useGarden();
-const { fetchPlants, updatePlant } = usePlant();
+const { fetchGardenById } = useGarden()
+const { fetchPlants, updatePlant } = usePlant()
 
 // Plant category filters state
 const visibleCategories = ref<string[]>([
-  "arbre",
-  "arbre_fruitier",
-  "arbuste",
-  "fleur",
-  "legume",
-  "herbe",
-  "autre",
-]);
+  'arbre',
+  'arbre_fruitier',
+  'arbuste',
+  'fleur',
+  'legume',
+  'herbe',
+  'autre',
+])
 
 // Reactive state
-const garden = ref<GardenData | null>(null);
-const plants = ref<PlantData[]>([]);
-const pending = ref(true);
-const error = ref<string | null>(null);
+const garden = ref<GardenData | null>(null)
+const plants = ref<PlantData[]>([])
+const pending = ref(true)
+const error = ref<string | null>(null)
+
+// Modal states
+const showAddPlantModal = ref(false)
+const showEditPlantModal = ref(false)
+const selectedPlant = ref<PlantData | null>(null)
 
 // Canvas ref
-const canvas = ref(null);
+const canvas = ref<any>(null)
 
 // Initialize composables
-const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize } =
-  useGardenZoom(
+const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize }
+  = useGardenZoom(
     computed(() => canvas.value?.stage),
-    computed(() => backgroundConfig)
-  );
+    computed(() => backgroundConfig),
+  )
 
-const { background, backgroundConfig, loadBackgroundImage } =
-  useGardenCanvas(resetZoom);
+const { background, backgroundConfig, loadBackgroundImage }
+  = useGardenCanvas(resetZoom)
 
 const { plantMarkers, getCategoryLetter } = usePlantMarkers(
   plants,
   visibleCategories,
-  garden
-);
+  garden,
+)
+
+// Coordonnées pour les nouvelles plantes
+const clickCoordinates = ref<{ x: number, y: number } | null>(null)
+
+// Modal interaction handlers
+const onPlantClick = (plant: PlantData) => {
+  selectedPlant.value = plant
+  showEditPlantModal.value = true
+}
+
+const handleBackgroundClick = (event: any) => {
+  // Vérifier que le clic est sur le background et non sur un marker
+  const stage = event.target.getStage()
+  const clickedElement = event.target
+
+  // Si le clic est sur le stage ou l'image de fond (pas sur un marker)
+  if (clickedElement === stage || clickedElement.attrs?.name === 'background') {
+    const pointer = stage.getPointerPosition()
+    if (pointer) {
+      clickCoordinates.value = { x: pointer.x, y: pointer.y }
+    }
+    showAddPlantModal.value = true
+  }
+}
+
+// Plant CRUD handlers
+const onPlantAdded = async (newPlant: PlantData) => {
+  // Ajouter les coordonnées du clic si disponibles
+  if (clickCoordinates.value && garden.value) {
+    const PixelsPerMeters = garden.value.pixels_per_meters || 20
+    const meterX = pixelsToMeters(clickCoordinates.value.x, PixelsPerMeters)
+    const meterY = pixelsToMeters(clickCoordinates.value.y, PixelsPerMeters)
+
+    // Mettre à jour la plante avec les coordonnées
+    const updatedPlant = await updatePlant(newPlant.id, {
+      ...newPlant,
+      x_position: meterX,
+      y_position: meterY,
+      garden_id: gardenId,
+    })
+
+    plants.value.push(updatedPlant)
+  }
+  else {
+    plants.value.push(newPlant)
+  }
+
+  showAddPlantModal.value = false
+  clickCoordinates.value = null
+}
+
+const onPlantUpdated = (updatedPlant: PlantData) => {
+  const index = plants.value.findIndex(p => p.id === updatedPlant.id)
+  if (index !== -1) {
+    plants.value[index] = updatedPlant
+  }
+  showEditPlantModal.value = false
+  selectedPlant.value = null
+}
+
+const onPlantDeleted = (plantId: string) => {
+  plants.value = plants.value.filter(p => p.id !== plantId)
+  showEditPlantModal.value = false
+  selectedPlant.value = null
+}
 
 const {
   handlePlantClick,
   handlePlantDragStart,
   handlePlantDragEnd,
   handlePlantHover,
-} = usePlantInteractions(garden, gardenId, updatePlant);
+} = usePlantInteractions(garden, gardenId, updatePlant, onPlantClick)
 
 // Load garden data and plants
 const loadGarden = async () => {
   try {
-    pending.value = true;
-    error.value = null;
+    pending.value = true
+    error.value = null
 
     // Load garden data
-    const gardenData = await fetchGardenById(gardenId);
+    const gardenData = await fetchGardenById(gardenId)
 
     if (!gardenData) {
-      error.value = "Garden not found";
-      return;
+      error.value = 'Garden not found'
+      return
     }
 
-    garden.value = gardenData;
+    garden.value = gardenData
 
     // Load the garden's background image
     if (gardenData.background_image_url) {
-      loadBackgroundImage(gardenData.background_image_url, gardenData);
+      loadBackgroundImage(gardenData.background_image_url, gardenData)
     }
 
     // Update stage config with garden dimensions if available
     if (gardenData.image_width && gardenData.image_height) {
-      stageConfig.width = gardenData.image_width;
-      stageConfig.height = gardenData.image_height;
-      backgroundConfig.width = gardenData.image_width;
-      backgroundConfig.height = gardenData.image_height;
+      stageConfig.width = gardenData.image_width
+      stageConfig.height = gardenData.image_height
+      backgroundConfig.width = gardenData.image_width
+      backgroundConfig.height = gardenData.image_height
     }
 
     // Load plants for this garden
-    await loadPlants();
-  } catch (err) {
-    console.error("Error loading garden:", err);
-    error.value = "Failed to load garden data";
-  } finally {
-    pending.value = false;
+    await loadPlants()
   }
-};
+  catch (err) {
+    console.error('Error loading garden:', err)
+    error.value = 'Failed to load garden data'
+  }
+  finally {
+    pending.value = false
+  }
+}
 
 // Load plants
 const loadPlants = async () => {
   try {
-    plants.value = await fetchPlants(gardenId);
-    
+    plants.value = await fetchPlants(gardenId)
+
     // Appliquer le resetZoom après que tout soit chargé
-    await nextTick();
+    await nextTick()
     setTimeout(() => {
-      resetZoom();
-    }, 200);
-  } catch (err) {
-    console.error("Error loading plants:", err);
+      resetZoom()
+    }, 200)
+  }
+  catch (err) {
+    console.error('Error loading plants:', err)
     // Don't show error for plants, just continue without them
   }
-};
+}
 
 // Setup resize listener
 onMounted(() => {
-  loadGarden();
+  loadGarden()
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("resize", handleResize);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleResize)
   }
-});
+})
 
 // Cleanup on unmount
 onUnmounted(() => {
-  if (typeof window !== "undefined") {
-    window.removeEventListener("resize", handleResize);
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', handleResize)
   }
-});
+})
 </script>

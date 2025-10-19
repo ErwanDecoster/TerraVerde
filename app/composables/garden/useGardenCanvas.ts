@@ -46,9 +46,27 @@ export const useGardenCanvas = (resetZoom: Function) => {
     }
   }
 
+  // Handle background click to add plant
+  const handleBackgroundClick = (event: any, onBackgroundClick?: (x: number, y: number) => void) => {
+    // Only handle if we have a callback and the click is on the background (not on a plant)
+    if (!onBackgroundClick) return
+
+    const stage = event.target.getStage()
+    const pointer = stage.getPointerPosition()
+
+    // Check if the click target is the background image or stage
+    const clickedOnBackground = event.target === stage || event.target.attrs?.name === 'background'
+
+    if (clickedOnBackground && pointer) {
+      // Call the callback with the click coordinates
+      onBackgroundClick(pointer.x, pointer.y)
+    }
+  }
+
   return {
     background,
     backgroundConfig,
     loadBackgroundImage,
+    handleBackgroundClick,
   }
 }
