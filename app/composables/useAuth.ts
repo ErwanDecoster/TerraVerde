@@ -1,14 +1,15 @@
 import type { User } from '@supabase/supabase-js'
-import { supabaseClient } from '~/composables/supabase'
 
 export const useAuth = () => {
+  const { $supabase } = useNuxtApp()
+
   const user = useState<User | null>('auth.user', () => null)
   const loading = useState('auth.loading', () => true)
 
   const getUser = async () => {
     try {
       loading.value = true
-      const { data } = await supabaseClient.auth.getUser()
+      const { data } = await $supabase.auth.getUser()
       user.value = data.user
       return data.user
     }
@@ -24,7 +25,7 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      await supabaseClient.auth.signOut()
+      await $supabase.auth.signOut()
       user.value = null
       await navigateTo('/login')
     }
@@ -36,7 +37,7 @@ export const useAuth = () => {
   const login = async (email: string, password: string) => {
     try {
       loading.value = true
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
+      const { data, error } = await $supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -56,7 +57,7 @@ export const useAuth = () => {
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      const { error } = await $supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/password-reset?step=2`,
       })
       console.error('error', error)
@@ -72,7 +73,7 @@ export const useAuth = () => {
 
   const updatePassword = async (newPassword: string) => {
     try {
-      const { error } = await supabaseClient.auth.updateUser({
+      const { error } = await $supabase.auth.updateUser({
         password: newPassword,
       })
       console.log('error', error)

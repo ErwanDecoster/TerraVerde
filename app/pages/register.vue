@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
-import { supabaseClient } from '~/composables/supabase'
+import { supabaseClient } from '~/plugins/supabase'
 
 definePageMeta({
   middleware: ['guest'],

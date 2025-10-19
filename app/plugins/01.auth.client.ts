@@ -1,13 +1,13 @@
 import type { User } from '@supabase/supabase-js'
-import { supabaseClient } from '~/composables/supabase'
 
 export default defineNuxtPlugin(async () => {
   const user = useState<User | null>('auth.user', () => null)
-  const { getUser } = useAuth()
+  const { $supabase } = useNuxtApp()
 
-  await getUser()
+  const { data } = await $supabase.auth.getUser()
+  user.value = data.user
 
-  supabaseClient.auth.onAuthStateChange((event, session) => {
+  $supabase.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user || null
   })
 })

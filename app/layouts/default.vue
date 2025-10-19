@@ -16,7 +16,7 @@ const { user, logout, loading } = useAuth()
 
         <ClientOnly>
           <div class="flex items-center gap-3">
-            <template v-if="loading">
+            <template v-if="loading && !user">
               <USkeleton class="h-8 w-24" />
             </template>
             <template v-else>

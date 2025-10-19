@@ -2,6 +2,7 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { GardenData } from '~/types/garden'
 import { z } from 'zod'
+import { useGarden } from '~/composables/data/useGarden'
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
@@ -11,6 +12,7 @@ interface Emits {
 const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
+const { addGarden } = useGarden()
 
 // Validation schema with Zod
 const schema = z.object({
@@ -63,48 +65,15 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     // Data is already validated by the schema
     const validatedData = event.data
 
-    const uuid = crypto.randomUUID()
+    // Use the composable to add the garden
+    const gardenData = await addGarden({
+      name: validatedData.name,
+      position: validatedData.position,
+      backgroundColor: validatedData.backgroundColor,
+      backgroundImage: validatedData.backgroundImage,
+    })
 
-    const image = await supabaseClient.storage
-      .from('maps')
-      .upload(uuid, validatedData.backgroundImage)
-
-    const { data, error } = await supabaseClient
-      .from('garden_config')
-      .insert({
-        id: uuid,
-        name: validatedData.name,
-        x_position: validatedData.position.x,
-        y_position: validatedData.position.y,
-        background_color: validatedData.backgroundColor,
-        background_image_url: image.data?.path || '',
-        image_width: 0, // TODO get actual dimensions
-        image_height: 0, // TODO get actual dimensions
-      })
-      .select()
-      .single()
-
-    if (error) {
-      try {
-        const fullPath = image.data?.fullPath || ''
-        await supabaseClient.storage.from('maps').remove([fullPath])
-      }
-      catch (cleanupError) {
-        console.warn(
-          'Failed to clean up uploaded image after DB error:',
-          cleanupError,
-        )
-      }
-      throw new Error(`Error adding photo: ${error.message}`)
-    }
-    const project_id = 'tvqeubgblmwvracewenz' // use env variable in real code
-    const bucket = 'maps'
-    const gardenData: GardenData = {
-      ...data,
-      background_image_url: `https://${project_id}.supabase.co/storage/v1/object/public/${bucket}/${data.imagePath}`,
-    }
     emit('gardenAdded', gardenData)
-
     open.value = false
 
     // Reset form
