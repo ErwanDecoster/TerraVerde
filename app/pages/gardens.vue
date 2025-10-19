@@ -23,6 +23,14 @@ function handleGardenUpdated(updatedGarden: GardenData) {
   }
 }
 
+function handleGardenDeleted(gardenId: string) {
+  console.log('Garden deleted:', gardenId)
+  const index = gardens.value.findIndex(garden => garden.id === gardenId)
+  if (index !== -1) {
+    gardens.value.splice(index, 1)
+  }
+}
+
 const gardens = ref<GardenData[]>([])
 const { fetchGardens } = useGarden()
 
@@ -64,6 +72,7 @@ onMounted(async () => {
             <EditGardenModal
               :garden="garden"
               @garden-updated="handleGardenUpdated"
+              @garden-deleted="handleGardenDeleted"
             />
             <UButton :to="`/gardens/${garden.id}`">
               View

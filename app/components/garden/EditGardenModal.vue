@@ -11,13 +11,17 @@ interface Props {
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'gardenUpdated', data: GardenData): void
+  (e: 'gardenDeleted', gardenId: string): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
-const { updateGarden } = useGarden()
+const { updateGarden, deleteGarden } = useGarden()
+
+// Delete confirmation state
+const showDeleteConfirmation = ref(false)
 
 // Validation schema with Zod (same as AddGardenModal but backgroundImage is optional)
 const schema = z.object({
@@ -59,6 +63,7 @@ const chip = computed(() => ({ backgroundColor: state.backgroundColor }))
 
 // Submission state
 const loading = ref(false)
+const deleting = ref(false)
 
 // Form reference
 const form = ref()
@@ -123,6 +128,47 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
   finally {
     loading.value = false
   }
+}
+
+// Delete function
+async function onDelete() {
+  deleting.value = true
+
+  try {
+    // Extract the image path from the URL for cleanup
+    const imagePath = props.garden.background_image_url.split('/').pop() || ''
+
+    await deleteGarden(props.garden.id, imagePath)
+
+    emit('gardenDeleted', props.garden.id)
+    open.value = false
+    showDeleteConfirmation.value = false
+
+    // Success notification
+    toast.add({
+      title: 'Garden Deleted',
+      description: 'The garden has been successfully deleted',
+      color: 'success',
+    })
+  }
+  catch (error) {
+    console.error('Error deleting garden:', error)
+
+    // Error notification
+    toast.add({
+      title: 'Error',
+      description: 'An error occurred while deleting the garden',
+      color: 'error',
+    })
+  }
+  finally {
+    deleting.value = false
+  }
+}
+
+// Confirm delete function
+function confirmDelete() {
+  showDeleteConfirmation.value = true
 }
 </script>
 
@@ -235,24 +281,67 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
     </template>
 
     <template #footer="{ close }">
-      <UButton
-        color="neutral"
-        variant="ghost"
-        :disabled="loading"
-        @click="close"
-      >
-        Cancel
-      </UButton>
-      <UButton
-        type="submit"
-        form="edit-garden-form"
-        :loading="loading"
-        :disabled="loading"
-        icon="i-heroicons-check-20-solid"
-        @click="form.submit()"
-      >
-        Update Garden
-      </UButton>
+      <div class="flex justify-between w-full">
+        <!-- Left side: Delete button -->
+        <div v-if="!showDeleteConfirmation">
+          <UButton
+            color="error"
+            variant="outline"
+            icon="i-heroicons-trash-20-solid"
+            :disabled="loading || deleting"
+            @click="confirmDelete"
+          >
+            Delete
+          </UButton>
+        </div>
+
+        <!-- Delete confirmation -->
+        <div
+          v-else
+          class="flex gap-2"
+        >
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="showDeleteConfirmation = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="error"
+            size="sm"
+            icon="i-heroicons-trash-20-solid"
+            :loading="deleting"
+            :disabled="deleting"
+            @click="onDelete"
+          >
+            Confirm Delete
+          </UButton>
+        </div>
+
+        <!-- Right side: Cancel and Update buttons -->
+        <div class="flex gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="loading || deleting"
+            @click="close"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            type="submit"
+            form="edit-garden-form"
+            :loading="loading"
+            :disabled="loading || deleting || showDeleteConfirmation"
+            icon="i-heroicons-check-20-solid"
+            @click="form.submit()"
+          >
+            Update Garden
+          </UButton>
+        </div>
+      </div>
     </template>
   </UModal>
 </template>
