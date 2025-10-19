@@ -44,7 +44,7 @@ const { user, logout, loading } = useAuth()
       </template> -->
     </UHeader>
 
-    <UMain class="px-4">
+    <UMain>
       <slot />
     </UMain>
 

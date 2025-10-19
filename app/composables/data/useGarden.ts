@@ -53,6 +53,7 @@ export const useGarden = () => {
     background_image_url: string
     image_width: number
     image_height: number
+    pixels_per_meters: number
   }) => {
     const { data, error } = await $supabase
       .from('garden_config')
@@ -89,6 +90,7 @@ export const useGarden = () => {
         background_image_url: uploadResult.path,
         image_width: 0, // TODO: Get actual dimensions
         image_height: 0, // TODO: Get actual dimensions
+        pixels_per_meters: formData.PixelsPerMeters,
       }
 
       const createdGarden = await createGarden(gardenDbData)
@@ -129,6 +131,31 @@ export const useGarden = () => {
   }
 
   /**
+   * Fetch a single garden by ID
+   */
+  const fetchGardenById = async (gardenId: string): Promise<GardenData | null> => {
+    const { data, error } = await $supabase
+      .from('garden_config')
+      .select('*')
+      .eq('id', gardenId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null
+      }
+      throw new Error(`Failed to fetch garden: ${error.message}`)
+    }
+
+    // Transform the data to include public URL
+    return {
+      ...data,
+      background_image_url: getImagePublicUrl(data.background_image_url),
+    }
+  }
+
+  /**
    * Update an existing garden
    */
   const updateGarden = async (
@@ -158,6 +185,7 @@ export const useGarden = () => {
         x_position: formData.position.x,
         y_position: formData.position.y,
         background_color: formData.backgroundColor,
+        pixels_per_meters: formData.PixelsPerMeters,
         ...(hasNewImage && { background_image_url: imagePath }),
         // Keep existing dimensions for now
       }
@@ -221,6 +249,7 @@ export const useGarden = () => {
     addGarden,
     updateGarden,
     fetchGardens,
+    fetchGardenById,
     deleteGarden,
     uploadGardenImage,
     removeGardenImage,

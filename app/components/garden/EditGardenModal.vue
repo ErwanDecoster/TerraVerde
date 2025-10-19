@@ -34,6 +34,10 @@ const schema = z.object({
     y: z.number().min(0, 'Y position must be positive'),
   }),
   backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color'),
+  PixelsPerMeters: z
+    .number()
+    .min(1, 'Scale must be at least 1 Pixels per Meters')
+    .max(100, 'Scale cannot exceed 100 Pixels per Meters'),
   backgroundImage: z
     .instanceof(File, { message: 'Map file is required' })
     .optional()
@@ -55,6 +59,7 @@ const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   position: { x: props.garden.x_position, y: props.garden.y_position },
   backgroundColor: props.garden.background_color,
+  PixelsPerMeters: props.garden.pixels_per_meters || 20,
   backgroundImage: undefined,
 })
 
@@ -98,6 +103,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
         position: validatedData.position,
         backgroundColor: validatedData.backgroundColor,
         backgroundImage: validatedData.backgroundImage,
+        PixelsPerMeters: validatedData.PixelsPerMeters,
       },
       props.garden.background_image_url, // Pass current image path for cleanup
     )
@@ -253,6 +259,23 @@ function confirmDelete() {
               />
             </template>
           </UPopover>
+        </UFormField>
+
+        <!-- Scale (Pixels per Meters) -->
+        <UFormField
+          label="Scale (Pixels per Meters)"
+          name="PixelsPerMeters"
+          description="How many pixels each meter represents"
+          required
+        >
+          <UInput
+            v-model.number="state.PixelsPerMeters"
+            type="number"
+            placeholder="20"
+            min="1"
+            max="100"
+            step="1"
+          />
         </UFormField>
 
         <!-- Current Background Image Preview -->

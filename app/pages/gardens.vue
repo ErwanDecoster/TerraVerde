@@ -74,7 +74,7 @@ onMounted(async () => {
               @garden-updated="handleGardenUpdated"
               @garden-deleted="handleGardenDeleted"
             />
-            <UButton :to="`/gardens/${garden.id}`">
+            <UButton :to="`/garden/${garden.id}`">
               View
             </UButton>
           </div>

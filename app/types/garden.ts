@@ -12,6 +12,7 @@ export interface GardenData {
   default_zoom: number
   min_zoom: number
   max_zoom: number
+  pixels_per_meters: number // Échelle : mètres par pixel
   created_at: string
   updated_at: string
   imagePath: string
@@ -28,6 +29,7 @@ export interface GardenFormData {
   position: GardenPosition
   backgroundColor: string
   backgroundImage: File
+  PixelsPerMeters: number // Échelle pour la conversion mètres/pixels
 }
 
 // Update form data types (backgroundImage is optional)
@@ -36,4 +38,5 @@ export interface GardenUpdateFormData {
   position: GardenPosition
   backgroundColor: string
   backgroundImage?: File
+  PixelsPerMeters: number // Échelle pour la conversion mètres/pixels
 }
