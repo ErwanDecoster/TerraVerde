@@ -12,13 +12,13 @@ export const usePlantMarkers = (
   const getPlantStatusStroke = (status: string) => {
     switch (status) {
       case 'healthy':
-        return '#22c55e' // green
+        return '#00000000'
       case 'sick':
         return '#f59e0b' // amber
       case 'dead':
         return '#ef4444' // red
       case 'planted':
-        return '#3b82f6' // blue
+        return '#00000000'
       default:
         return '#6b7280' // gray
     }
@@ -64,7 +64,7 @@ export const usePlantMarkers = (
             radius: radius,
             fill: plant.main_color || '#ffffff',
             stroke: getPlantStatusStroke(plant.status),
-            strokeWidth: 3,
+            strokeWidth: 1,
             // Add hover effects
             opacity: plant.status === 'dead' ? 0.6 : 1,
           },
