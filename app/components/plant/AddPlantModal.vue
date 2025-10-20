@@ -110,6 +110,12 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       const baseX = props.clickCoordinates?.x || 0
       const baseY = props.clickCoordinates?.y || 0
 
+      // Calculate spacing based on plant width for realistic positioning
+      const plantWidthMeters = validatedData.width
+      const spacingMultiplier = 1.5 // Space plants 1.5x their width apart
+      const spacingMeters
+        = plantWidthMeters * spacingMultiplier + plantWidthMeters
+
       // Create array of plant data for bulk insert
       const plantsToCreate = Array.from(
         { length: multipleAddingCount.value },
@@ -122,9 +128,9 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           main_color: validatedData.main_color,
           height: validatedData.height,
           width: validatedData.width,
-          // Distribute plants in a small grid pattern around the click point
-          x_position: baseX + (index % 3) * validatedData.width / 2, // 3 plants per row, 20px spacing
-          y_position: baseY + Math.floor(index / 3) * validatedData.width / 2, // New row every 3 plants
+          // Distribute plants in a grid pattern with spacing based on plant width
+          x_position: baseX + (index % 3) * spacingMeters, // 3 plants per row
+          y_position: baseY + Math.floor(index / 3) * spacingMeters, // New row every 3 plants
           garden_id: props.gardenId || '',
         }),
       )
@@ -346,7 +352,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           icon="i-heroicons-plus-20-solid"
           @click="form.submit()"
         >
-          Add {{ multipleAddingCount > 1 ? 'Plants' : 'Plant' }}
+          Add {{ multipleAddingCount > 1 ? "Plants" : "Plant" }}
         </UButton>
         <UPopover>
           <UButton

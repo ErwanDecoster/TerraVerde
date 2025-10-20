@@ -4,7 +4,6 @@ import type { PlantData } from '~/types/plant'
 import { PLANT_CATEGORIES, PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
-import { metersToPixels } from '~/utils/coordinates'
 
 interface Props {
   plant: PlantData
@@ -12,9 +11,8 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'plantUpdated', data: PlantData): void
+  (e: 'plantUpdated' | 'plantCopied', data: PlantData): void
   (e: 'plantDeleted', plantId: string): void
-  (e: 'plantCopied', data: PlantData): void
 }
 
 const props = defineProps<Props>()
@@ -191,28 +189,39 @@ async function copyPlant() {
   copying.value = true
 
   try {
-    const validatedData = state
-    console.log('Copying plant with data:', validatedData)
+    // Use the original plant data as fallback for required fields
+    const validatedData = {
+      name: state.name || props.plant.name,
+      description: state.description || props.plant.description || '',
+      category: state.category || props.plant.category,
+      status: state.status || props.plant.status,
+      planted_date: state.planted_date || props.plant.planted_date,
+      main_color: state.main_color || props.plant.main_color,
+      height: state.height || props.plant.height,
+      width: state.width || props.plant.width,
+    }
 
-    // Create array of plant data for bulk insert
+    // Calculate spacing based on plant width in pixels
+    const plantWidthMeters = validatedData.width || 1 // Default to 1 meter if no width
+    const spacingMultiplier = 1.5 // Space plants 1.5x their width apart
+    const spacingMeters
+      = plantWidthMeters * spacingMultiplier + plantWidthMeters
+
     const plantsToCreate = Array.from(
       { length: multipleCopyingCount.value },
       (_, index) => ({
-        name: `${validatedData.name}`,
-        description: validatedData.description || '',
+        name: validatedData.name,
+        description: validatedData.description,
         category: validatedData.category,
         status: validatedData.status,
         planted_date: validatedData.planted_date,
         main_color: validatedData.main_color,
         height: validatedData.height,
         width: validatedData.width,
-        // Position copies near the original plant
-        x_position:
-          (props.plant.x_position || 0)
-          + (index % 3) * (metersToPixels(validatedData.width) || 0),
+        // Position copies based on plant width - 3 plants per row
+        x_position: (props.plant.x_position || 0) + (index % 3) * spacingMeters,
         y_position:
-          (props.plant.y_position || 0)
-          + Math.floor(index / 3) * (metersToPixels(validatedData.width) || 0),
+          (props.plant.y_position || 0) + Math.floor(index / 3) * spacingMeters,
         garden_id: props.plant.garden_id || '',
       }),
     )
