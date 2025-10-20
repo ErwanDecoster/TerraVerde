@@ -59,6 +59,12 @@
       <!-- Plant Category Filters -->
       <PlantCategoryFilters v-model:visible-categories="visibleCategories" />
 
+      <!-- Plant Hover Data -->
+      <PlantHoverData
+        v-if="hoveredPlant"
+        :plant="hoveredPlant"
+      />
+
       <!-- Garden Canvas -->
       <GardenCanvas
         ref="canvas"
@@ -110,6 +116,7 @@ import GardenHeader from '~/components/garden/GardenHeader.vue'
 import GardenZoomControls from '~/components/garden/GardenZoomControls.vue'
 import GardenCanvas from '~/components/garden/GardenCanvas.vue'
 import PlantCategoryFilters from '~/components/garden/PlantCategoryFilters.vue'
+import PlantHoverData from '~/components/garden/PlantHoverData.vue'
 import AddPlantModal from '~/components/plant/AddPlantModal.vue'
 import EditPlantModal from '~/components/plant/EditPlantModal.vue'
 
@@ -246,6 +253,7 @@ const onPlantCopied = (copiedPlant: PlantData) => {
 }
 
 const {
+  hoveredPlant,
   handlePlantClick,
   handlePlantDragStart,
   handlePlantDragEnd,
