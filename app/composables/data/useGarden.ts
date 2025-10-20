@@ -84,8 +84,8 @@ export const useGarden = () => {
       const gardenDbData = {
         id: uuid,
         name: formData.name,
-        x_position: formData.position.x,
-        y_position: formData.position.y,
+        x_position: 0,
+        y_position: 0,
         background_color: formData.backgroundColor,
         background_image_url: uploadResult.path,
         image_width: 0, // TODO: Get actual dimensions
@@ -182,8 +182,8 @@ export const useGarden = () => {
       // Update garden in database
       const gardenDbData = {
         name: formData.name,
-        x_position: formData.position.x,
-        y_position: formData.position.y,
+        x_position: 0,
+        y_position: 0,
         background_color: formData.backgroundColor,
         pixels_per_meters: formData.PixelsPerMeters,
         ...(hasNewImage && { background_image_url: imagePath }),

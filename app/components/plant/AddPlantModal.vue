@@ -241,7 +241,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         <!-- Dimensions -->
         <div class="grid grid-cols-2 gap-4">
           <UFormField
-            label="Height (cm)"
+            label="Height (meters)"
             name="height"
           >
             <UInput
@@ -255,7 +255,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
             />
           </UFormField>
           <UFormField
-            label="Width (cm)"
+            label="Width (meters)"
             name="width"
           >
             <UInput

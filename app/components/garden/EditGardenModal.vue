@@ -29,10 +29,6 @@ const schema = z.object({
     .string()
     .min(1, 'Name is required')
     .max(100, 'Name cannot exceed 100 characters'),
-  position: z.object({
-    x: z.number().min(0, 'X position must be positive'),
-    y: z.number().min(0, 'Y position must be positive'),
-  }),
   backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color'),
   PixelsPerMeters: z
     .number()
@@ -57,7 +53,6 @@ export type EditGardenSchema = z.output<typeof schema>
 // Form state - initialize with existing garden data
 const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
-  position: { x: props.garden.x_position, y: props.garden.y_position },
   backgroundColor: props.garden.background_color,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
   backgroundImage: undefined,
@@ -79,7 +74,6 @@ watch(
   (newGarden) => {
     Object.assign(state, {
       name: newGarden.name,
-      position: { x: newGarden.x_position, y: newGarden.y_position },
       backgroundColor: newGarden.background_color,
       backgroundImage: undefined,
     })
@@ -100,7 +94,6 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
       props.garden.id,
       {
         name: validatedData.name,
-        position: validatedData.position,
         backgroundColor: validatedData.backgroundColor,
         backgroundImage: validatedData.backgroundImage,
         PixelsPerMeters: validatedData.PixelsPerMeters,
@@ -196,53 +189,35 @@ function confirmDelete() {
         ref="form"
         :schema="schema"
         :state="state"
-        class="space-y-6"
+        class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
         <UFormField
           label="Garden Name"
           name="name"
           required
+          class="col-span-2"
         >
           <UInput
             v-model="state.name"
             placeholder="Enter garden name"
+            class="w-full"
           />
         </UFormField>
-
-        <!-- Position -->
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="X Position">
-            <UInput
-              v-model.number="state.position!.x"
-              type="number"
-              placeholder="0"
-              min="0"
-              step="1"
-            />
-          </UFormField>
-          <UFormField label="Y Position">
-            <UInput
-              v-model.number="state.position!.y"
-              type="number"
-              placeholder="0"
-              min="0"
-              step="1"
-            />
-          </UFormField>
-        </div>
 
         <!-- Background color -->
         <UFormField
           label="Background Color"
           name="backgroundColor"
           required
+          class="col-span-2"
         >
           <UPopover>
             <UButton
               label="Choose color"
               color="neutral"
               variant="outline"
+              class="w-full"
             >
               <template #leading>
                 <span
@@ -261,12 +236,12 @@ function confirmDelete() {
           </UPopover>
         </UFormField>
 
-        <!-- Scale (Pixels per Meters) -->
         <UFormField
           label="Scale (Pixels per Meters)"
           name="PixelsPerMeters"
           description="How many pixels each meter represents"
           required
+          class="col-span-2"
         >
           <UInput
             v-model.number="state.PixelsPerMeters"
@@ -275,11 +250,12 @@ function confirmDelete() {
             min="1"
             max="100"
             step="1"
+            class="w-full"
           />
         </UFormField>
 
         <!-- Current Background Image Preview -->
-        <div class="space-y-2">
+        <div class="space-y-2 col-span-2">
           <label class="block text-sm font-medium text-gray-700">Current Background Image</label>
           <img
             :src="garden.background_image_url"
@@ -292,6 +268,7 @@ function confirmDelete() {
         <UFormField
           name="backgroundImage"
           label="New Background Image (Optional)"
+          class="col-span-2"
           description="JPEG, PNG, WebP. Max 5MB. Leave empty to keep current image."
         >
           <UFileUpload

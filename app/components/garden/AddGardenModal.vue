@@ -20,10 +20,6 @@ const schema = z.object({
     .string()
     .min(1, 'Name is required')
     .max(100, 'Name cannot exceed 100 characters'),
-  position: z.object({
-    x: z.number().min(0, 'X position must be positive'),
-    y: z.number().min(0, 'Y position must be positive'),
-  }),
   backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color'),
   PixelsPerMeters: z
     .number()
@@ -47,7 +43,6 @@ export type GardenSchema = z.output<typeof schema>
 // Form state
 const state = reactive<Partial<GardenSchema>>({
   name: '',
-  position: { x: 0, y: 0 },
   backgroundColor: '#ffffff',
   PixelsPerMeters: 20,
   backgroundImage: undefined,
@@ -73,7 +68,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     // Use the composable to add the garden
     const gardenData = await addGarden({
       name: validatedData.name,
-      position: validatedData.position,
       backgroundColor: validatedData.backgroundColor,
       backgroundImage: validatedData.backgroundImage,
       PixelsPerMeters: validatedData.PixelsPerMeters,
@@ -85,7 +79,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     // Reset form
     Object.assign(state, {
       name: '',
-      position: { x: 0, y: 0 },
       backgroundColor: '#ffffff',
       backgroundImage: undefined,
     })
@@ -130,46 +123,27 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
         ref="form"
         :schema="schema"
         :state="state"
-        class="space-y-6"
+        class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
         <UFormField
           label="Garden Name"
           name="name"
           required
+          class="col-span-2"
         >
           <UInput
             v-model="state.name"
+            class="w-full"
             placeholder="Enter garden name"
           />
         </UFormField>
-
-        <!-- Position -->
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="X Position">
-            <UInput
-              v-model.number="state.position!.x"
-              type="number"
-              placeholder="0"
-              min="0"
-              step="1"
-            />
-          </UFormField>
-          <UFormField label="Y Position">
-            <UInput
-              v-model.number="state.position!.y"
-              type="number"
-              placeholder="0"
-              min="0"
-              step="1"
-            />
-          </UFormField>
-        </div>
 
         <!-- Background color -->
         <UFormField
           label="Background Color"
           name="backgroundColor"
+          class="col-span-2"
           required
         >
           <UPopover>
@@ -177,6 +151,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
               label="Choose color"
               color="neutral"
               variant="outline"
+              class="w-full"
             >
               <template #leading>
                 <span
@@ -200,6 +175,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           label="Scale (Pixels per Meters)"
           name="PixelsPerMeters"
           description="How many pixels each meter represents"
+          class="col-span-2"
           required
         >
           <UInput
@@ -209,6 +185,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
             min="1"
             max="100"
             step="1"
+            class="w-full"
           />
         </UFormField>
 
@@ -217,6 +194,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           name="backgroundImage"
           label="Background Image"
           description="JPEG, PNG, WebP. Max 5MB"
+          class="col-span-2"
         >
           <UFileUpload
             v-model="state.backgroundImage"

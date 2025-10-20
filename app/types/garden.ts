@@ -3,8 +3,8 @@
 export interface GardenData {
   id: string
   name: string
-  x_position: number
-  y_position: number
+  x_position?: number
+  y_position?: number
   background_color: string
   background_image_url: string
   image_width: number
@@ -12,7 +12,7 @@ export interface GardenData {
   default_zoom: number
   min_zoom: number
   max_zoom: number
-  pixels_per_meters: number // Échelle : mètres par pixel
+  pixels_per_meters: number
   created_at: string
   updated_at: string
   imagePath: string
@@ -29,7 +29,7 @@ export interface GardenFormData {
   position: GardenPosition
   backgroundColor: string
   backgroundImage: File
-  PixelsPerMeters: number // Échelle pour la conversion mètres/pixels
+  PixelsPerMeters: number
 }
 
 // Update form data types (backgroundImage is optional)
@@ -38,5 +38,5 @@ export interface GardenUpdateFormData {
   position: GardenPosition
   backgroundColor: string
   backgroundImage?: File
-  PixelsPerMeters: number // Échelle pour la conversion mètres/pixels
+  PixelsPerMeters: number
 }
