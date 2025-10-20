@@ -1,17 +1,19 @@
 import { ref } from 'vue'
+import type { PlantMarker } from '~/components/garden/GardenCanvas.vue'
+import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
 
 export const usePlantInteractions = (
-  garden: Ref<any>,
+  garden: Ref<GardenData>,
   gardenId: string,
-  updatePlant: Function,
+  updatePlant: () => void,
   onPlantClick?: (plant: PlantData) => void,
 ) => {
   // Plant hover state for tooltips
   const hoveredPlant = ref<PlantData | null>(null)
 
   // Plant marker event handlers
-  const handlePlantClick = (marker: any) => {
+  const handlePlantClick = (marker: PlantMarker) => {
     console.log(`Plant ${marker.plant.name} clicked!`, marker.plant)
     // Call the callback to open edit modal
     if (onPlantClick) {
@@ -19,18 +21,16 @@ export const usePlantInteractions = (
     }
   }
 
-  const handlePlantDragStart = (marker: any) => {
+  const handlePlantDragStart = (marker: PlantMarker) => {
     console.log(`Plant ${marker.plant.name} drag started`)
   }
 
-  const handlePlantDragEnd = async (marker: any, event: any) => {
+  const handlePlantDragEnd = async (marker: PlantMarker, event: Event) => {
     console.log(`Plant ${marker.plant.name} drag ended`)
 
     if (!garden.value) return
 
     try {
-      const PixelsPerMeters = garden.value.pixels_per_meters || 20
-
       // Get the new position from the event target (the group)
       const newX = event.target.x()
       const newY = event.target.y()
@@ -53,7 +53,7 @@ export const usePlantInteractions = (
     }
   }
 
-  const handlePlantHover = (marker: any, isHovering: boolean) => {
+  const handlePlantHover = (marker: PlantMarker, isHovering: boolean) => {
     if (isHovering) {
       hoveredPlant.value = marker.plant
     }

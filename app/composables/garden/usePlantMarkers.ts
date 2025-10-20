@@ -1,11 +1,12 @@
-import { computed } from 'vue'
+import { computed, type Ref } from 'vue'
+import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
 import { metersToPixels } from '~/utils/coordinates'
 
 export const usePlantMarkers = (
   plants: Ref<PlantData[]>,
   visibleCategories: Ref<string[]>,
-  garden: Ref<any>,
+  garden: Ref<GardenData>,
 ) => {
   // Helper function to get stroke color based on plant status
   const getPlantStatusStroke = (status: string) => {

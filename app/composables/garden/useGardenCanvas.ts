@@ -1,6 +1,7 @@
 import { ref, reactive, nextTick } from 'vue'
+import type { GardenData } from '~/types/garden'
 
-export const useGardenCanvas = (resetZoom: Function) => {
+export const useGardenCanvas = (resetZoom: () => void) => {
   // Image de fond
   const background = ref<HTMLImageElement | null>(null)
   const backgroundConfig = reactive({
@@ -12,7 +13,7 @@ export const useGardenCanvas = (resetZoom: Function) => {
   })
 
   // Load background image
-  const loadBackgroundImage = (imageUrl: string, garden: any) => {
+  const loadBackgroundImage = (imageUrl: string, garden: GardenData) => {
     const img = new window.Image()
     img.crossOrigin = 'anonymous' // For CORS if needed
     img.src = imageUrl
@@ -47,7 +48,10 @@ export const useGardenCanvas = (resetZoom: Function) => {
   }
 
   // Handle background click to add plant
-  const handleBackgroundClick = (event: any, onBackgroundClick?: (x: number, y: number) => void) => {
+  const handleBackgroundClick = (
+    event: Event,
+    onBackgroundClick?: (x: number, y: number) => void,
+  ) => {
     // Only handle if we have a callback and the click is on the background (not on a plant)
     if (!onBackgroundClick) return
 
@@ -55,9 +59,9 @@ export const useGardenCanvas = (resetZoom: Function) => {
     const pointer = stage.getPointerPosition()
 
     // Check if the click target is the background image or stage
-    const clickedOnBackground = event.target === stage || event.target.attrs?.name === 'background'
+    const isBackgroundClick = event.target.attrs?.name === 'background' || !event.target.attrs?.name
 
-    if (clickedOnBackground && pointer) {
+    if (isBackgroundClick && pointer) {
       // Call the callback with the click coordinates
       onBackgroundClick(pointer.x, pointer.y)
     }

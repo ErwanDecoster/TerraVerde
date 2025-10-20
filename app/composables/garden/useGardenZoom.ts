@@ -1,6 +1,28 @@
-import { ref, reactive, nextTick } from 'vue'
+import { reactive, nextTick, type Ref } from 'vue'
 
-export const useGardenZoom = (stageRef: any, backgroundConfig: any) => {
+interface BackgroundConfig {
+  width: number
+  height: number
+  [key: string]: unknown
+}
+
+interface KonvaStage {
+  scaleX: () => number
+  scaleY: () => number
+  x: () => number
+  y: () => number
+  width: () => number
+  height: () => number
+  scale: (scale: { x: number, y: number }) => void
+  position: (pos: { x: number, y: number }) => void
+  batchDraw: () => void
+  getPointerPosition: () => { x: number, y: number } | null
+}
+
+export const useGardenZoom = (
+  stageRef: Ref<{ getStage: () => KonvaStage } | null>,
+  backgroundConfig: Ref<BackgroundConfig>,
+) => {
   // Stage configuration - responsive
   const stageConfig = reactive({
     width: typeof window !== 'undefined' ? window.innerWidth : 800,
@@ -11,13 +33,15 @@ export const useGardenZoom = (stageRef: any, backgroundConfig: any) => {
   })
 
   // Konva wheel event handler
-  const handleWheel = (e: any) => {
+  const handleWheel = (e: { evt: WheelEvent, target: { getStage: () => KonvaStage } }) => {
     e.evt.preventDefault()
 
     const scaleBy = 1.1 // Réduire la vitesse de zoom pour plus de contrôle
     const stage = e.target.getStage()
     const oldScale = stage.scaleX()
     const pointer = stage.getPointerPosition()
+
+    if (!pointer) return
 
     const mousePointTo = {
       x: (pointer.x - stage.x()) / oldScale,

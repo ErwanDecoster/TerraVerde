@@ -45,8 +45,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'back'): void
-  (e: 'garden-updated'): void
+  (e: 'back' | 'garden-updated'): void
 }
 
 defineProps<Props>()

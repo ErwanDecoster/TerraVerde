@@ -61,18 +61,51 @@
 </template>
 
 <script setup lang="ts">
+import type { PlantData } from '~/types/plant'
+
+interface StageConfig {
+  width: number
+  height: number
+  draggable: boolean
+  scaleX: number
+  scaleY: number
+}
+
+interface BackgroundConfig {
+  x: number
+  y: number
+  image: HTMLImageElement | null
+  width: number
+  height: number
+}
+
+export interface PlantMarker {
+  id: string
+  plant: PlantData
+  config: {
+    x: number
+    y: number
+    radius: number
+    fill: string
+    stroke: string
+    strokeWidth: number
+    opacity: number
+    [key: string]: unknown
+  }
+}
+
 interface Props {
-  stageConfig: any
+  stageConfig: StageConfig
   background: HTMLImageElement | null
-  backgroundConfig: any
-  plantMarkers: any[]
-  handleWheel: (e: any) => void
-  handlePlantClick: (marker: any) => void
-  handlePlantDragStart: (marker: any) => void
-  handlePlantDragEnd: (marker: any, event: any) => void
-  handlePlantHover: (marker: any, isHovering: boolean) => void
+  backgroundConfig: BackgroundConfig
+  plantMarkers: PlantMarker[]
+  handleWheel: (e: Event) => void
+  handlePlantClick: (marker: PlantMarker) => void
+  handlePlantDragStart: (marker: PlantMarker) => void
+  handlePlantDragEnd: (marker: PlantMarker, event: Event) => void
+  handlePlantHover: (marker: PlantMarker, isHovering: boolean) => void
   getCategoryLetter: (category: string) => string
-  handleBackgroundClick?: (e: any) => void
+  handleBackgroundClick?: (e: Event) => void
 }
 
 defineProps<Props>()

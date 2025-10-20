@@ -135,7 +135,7 @@ const visibleCategories = ref<string[]>([
 ])
 
 // Reactive state
-const garden = ref<GardenData | null>(null)
+const garden = ref<GardenData>({} as GardenData)
 const plants = ref<PlantData[]>([])
 const pending = ref(true)
 const error = ref<string | null>(null)
@@ -146,12 +146,25 @@ const showEditPlantModal = ref(false)
 const selectedPlant = ref<PlantData | null>(null)
 
 // Canvas ref
-const canvas = ref<any>(null)
+interface KonvaStage {
+  scaleX: () => number
+  scaleY: () => number
+  x: () => number
+  y: () => number
+  width: () => number
+  height: () => number
+  scale: (scale: { x: number, y: number }) => void
+  position: (pos: { x: number, y: number }) => void
+  batchDraw: () => void
+  getPointerPosition: () => { x: number, y: number } | null
+}
+
+const canvas = ref<{ stage: { getStage: () => KonvaStage } } | null>(null)
 
 // Initialize composables
 const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize }
   = useGardenZoom(
-    computed(() => canvas.value?.stage),
+    computed(() => canvas.value?.stage || null),
     computed(() => backgroundConfig),
   )
 
@@ -173,7 +186,9 @@ const onPlantClick = (plant: PlantData) => {
   showEditPlantModal.value = true
 }
 
-const handleBackgroundClick = (event: any) => {
+const handleBackgroundClick = (event: Event) => {
+  if (!event.target) return
+
   // Vérifier que le clic est sur le background et non sur un marker
   const stage = event.target.getStage()
   const clickedElement = event.target

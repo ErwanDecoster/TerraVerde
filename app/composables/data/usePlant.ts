@@ -39,29 +39,24 @@ export const usePlant = () => {
   const addPlant = async (formData: PlantFormData): Promise<PlantData> => {
     const uuid = crypto.randomUUID()
 
-    try {
-      // Create plant in database
-      const plantDbData = {
-        id: uuid,
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        status: formData.status,
-        planted_date: formData.planted_date,
-        main_color: formData.main_color,
-        height: formData.height,
-        width: formData.width,
-        x_position: formData.x_position,
-        y_position: formData.y_position,
-        garden_id: formData.garden_id,
-      }
+    // Create plant in database
+    const plantDbData = {
+      id: uuid,
+      name: formData.name,
+      description: formData.description,
+      category: formData.category,
+      status: formData.status,
+      planted_date: formData.planted_date,
+      main_color: formData.main_color,
+      height: formData.height,
+      width: formData.width,
+      x_position: formData.x_position,
+      y_position: formData.y_position,
+      garden_id: formData.garden_id,
+    }
 
-      const createdPlant = await createPlant(plantDbData)
-      return createdPlant
-    }
-    catch (error) {
-      throw error
-    }
+    const createdPlant = await createPlant(plantDbData)
+    return createdPlant
   }
 
   /**
@@ -109,38 +104,33 @@ export const usePlant = () => {
     plantId: string,
     formData: PlantUpdateFormData,
   ): Promise<PlantData> => {
-    try {
-      // Update plant in database
-      const plantDbData = {
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        status: formData.status,
-        planted_date: formData.planted_date,
-        main_color: formData.main_color,
-        height: formData.height,
-        width: formData.width,
-        x_position: formData.x_position,
-        y_position: formData.y_position,
-        garden_id: formData.garden_id,
-      }
-
-      const { data, error } = await $supabase
-        .from('plants')
-        .update(plantDbData)
-        .eq('id', plantId)
-        .select()
-        .single()
-
-      if (error) {
-        throw new Error(`Failed to update plant: ${error.message}`)
-      }
-
-      return data
+    // Update plant in database
+    const plantDbData = {
+      name: formData.name,
+      description: formData.description,
+      category: formData.category,
+      status: formData.status,
+      planted_date: formData.planted_date,
+      main_color: formData.main_color,
+      height: formData.height,
+      width: formData.width,
+      x_position: formData.x_position,
+      y_position: formData.y_position,
+      garden_id: formData.garden_id,
     }
-    catch (error) {
-      throw error
+
+    const { data, error } = await $supabase
+      .from('plants')
+      .update(plantDbData)
+      .eq('id', plantId)
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to update plant: ${error.message}`)
     }
+
+    return data
   }
 
   /**
