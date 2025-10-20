@@ -148,8 +148,42 @@ export const usePlant = () => {
     }
   }
 
+  /**
+   * Add multiple plants in bulk
+   */
+  const addMultiplePlants = async (plantsData: PlantFormData[]): Promise<PlantData[]> => {
+    // Generate UUIDs and create database data for all plants
+    const plantsDbData = plantsData.map(plantData => ({
+      id: crypto.randomUUID(),
+      name: plantData.name,
+      description: plantData.description,
+      category: plantData.category,
+      status: plantData.status,
+      planted_date: plantData.planted_date,
+      main_color: plantData.main_color,
+      height: plantData.height,
+      width: plantData.width,
+      x_position: plantData.x_position,
+      y_position: plantData.y_position,
+      garden_id: plantData.garden_id,
+    }))
+
+    // Bulk insert using Supabase
+    const { data, error } = await $supabase
+      .from('plants')
+      .insert(plantsDbData)
+      .select()
+
+    if (error) {
+      throw new Error(`Failed to create plants: ${error.message}`)
+    }
+
+    return data || []
+  }
+
   return {
     addPlant,
+    addMultiplePlants,
     updatePlant,
     fetchPlants,
     fetchPlantById,

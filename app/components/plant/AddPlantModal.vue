@@ -20,7 +20,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
-const { addPlant } = usePlant()
+const { addPlant, addMultiplePlants } = usePlant()
 
 // Validation schema with Zod
 const schema = z.object({
@@ -73,6 +73,9 @@ const chip = computed(() => ({ backgroundColor: state.main_color }))
 // Submission state
 const loading = ref(false)
 
+// Multiple plants creation
+const multipleAddingCount = ref(1)
+
 // Form reference
 const form = ref()
 
@@ -84,22 +87,65 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     // Data is already validated by the schema
     const validatedData = event.data
 
-    // Use the composable to add the plant
-    const plantData = await addPlant({
-      name: validatedData.name,
-      description: validatedData.description || '',
-      category: validatedData.category,
-      status: validatedData.status,
-      planted_date: validatedData.planted_date,
-      main_color: validatedData.main_color,
-      height: validatedData.height,
-      width: validatedData.width,
-      x_position: props.clickCoordinates?.x || 0,
-      y_position: props.clickCoordinates?.y || 0,
-      garden_id: props.gardenId || '',
+    if (multipleAddingCount.value === 1) {
+      // Single plant creation
+      const plantData = await addPlant({
+        name: validatedData.name,
+        description: validatedData.description || '',
+        category: validatedData.category,
+        status: validatedData.status,
+        planted_date: validatedData.planted_date,
+        main_color: validatedData.main_color,
+        height: validatedData.height,
+        width: validatedData.width,
+        x_position: props.clickCoordinates?.x || 0,
+        y_position: props.clickCoordinates?.y || 0,
+        garden_id: props.gardenId || '',
+      })
+
+      emit('plantAdded', plantData)
+    }
+    else {
+      // Multiple plants creation
+      const baseX = props.clickCoordinates?.x || 0
+      const baseY = props.clickCoordinates?.y || 0
+
+      // Create array of plant data for bulk insert
+      const plantsToCreate = Array.from(
+        { length: multipleAddingCount.value },
+        (_, index) => ({
+          name: `${validatedData.name}`,
+          description: validatedData.description || '',
+          category: validatedData.category,
+          status: validatedData.status,
+          planted_date: validatedData.planted_date,
+          main_color: validatedData.main_color,
+          height: validatedData.height,
+          width: validatedData.width,
+          // Distribute plants in a small grid pattern around the click point
+          x_position: baseX + (index % 3) * validatedData.width / 2, // 3 plants per row, 20px spacing
+          y_position: baseY + Math.floor(index / 3) * validatedData.width / 2, // New row every 3 plants
+          garden_id: props.gardenId || '',
+        }),
+      )
+
+      const createdPlants = await addMultiplePlants(plantsToCreate)
+
+      // Emit each plant individually so the parent can add them
+      createdPlants.forEach((plant: PlantData) => emit('plantAdded', plant))
+    }
+
+    // Success notification
+    const plantCount = multipleAddingCount.value
+    toast.add({
+      title: plantCount === 1 ? 'Plant Added' : 'Plants Added',
+      description:
+        plantCount === 1
+          ? 'The plant has been successfully added'
+          : `${plantCount} plants have been successfully added`,
+      color: 'success',
     })
 
-    emit('plantAdded', plantData)
     open.value = false
 
     // Reset form
@@ -114,12 +160,8 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       width: 0,
     })
 
-    // Success notification
-    toast.add({
-      title: 'Plant Added',
-      description: 'The plant has been successfully added',
-      color: 'success',
-    })
+    // Reset multiple count
+    multipleAddingCount.value = 1
   }
   catch (error) {
     console.error('Error adding plant:', error)
@@ -287,7 +329,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-end w-full">
+      <div class="flex justify-end gap-0.5 w-full">
         <UButton
           color="neutral"
           variant="ghost"
@@ -304,8 +346,24 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           icon="i-heroicons-plus-20-solid"
           @click="form.submit()"
         >
-          Add Plant
+          Add {{ multipleAddingCount > 1 ? 'Plants' : 'Plant' }}
         </UButton>
+        <UPopover>
+          <UButton
+            aria-label="Open"
+            icon="i-lucide-chevron-down"
+          />
+
+          <template #content>
+            <div class="grid p-2">
+              <span>Add number</span>
+              <USelect
+                v-model="multipleAddingCount"
+                :items="Array.from({ length: 10 }, (_, i) => i + 1)"
+              />
+            </div>
+          </template>
+        </UPopover>
       </div>
     </template>
   </UModal>
