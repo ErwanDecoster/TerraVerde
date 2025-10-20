@@ -80,6 +80,8 @@
     <AddPlantModal
       v-if="showAddPlantModal"
       v-model:open="showAddPlantModal"
+      :garden-id="gardenId"
+      :click-coordinates="clickCoordinates"
       @plant-added="onPlantAdded"
     />
 
@@ -196,29 +198,29 @@ const handleBackgroundClick = (event: Event) => {
   // Si le clic est sur le stage ou l'image de fond (pas sur un marker)
   if (clickedElement === stage || clickedElement.attrs?.name === 'background') {
     const pointer = stage.getPointerPosition()
+
     if (pointer) {
-      clickCoordinates.value = { x: pointer.x, y: pointer.y }
+      const stageX = stage.x()
+      const stageY = stage.y()
+      const scaleX = stage.scaleX()
+      const scaleY = stage.scaleY()
+
+      const imageX = (pointer.x - stageX) / scaleX
+      const imageY = (pointer.y - stageY) / scaleY
+
+      console.log('Screen coordinates:', pointer.x, pointer.y)
+      console.log('Stage transform:', { x: stageX, y: stageY, scaleX, scaleY })
+      console.log('Image coordinates:', imageX, imageY)
+
+      clickCoordinates.value = { x: imageX, y: imageY }
     }
     showAddPlantModal.value = true
   }
 }
 
 // Plant CRUD handlers
-const onPlantAdded = async (newPlant: PlantData) => {
-  if (clickCoordinates.value && garden.value) {
-    const updatedPlant = await updatePlant(newPlant.id, {
-      ...newPlant,
-      x_position: clickCoordinates.value.x,
-      y_position: clickCoordinates.value.y,
-      garden_id: gardenId,
-    })
-
-    plants.value.push(updatedPlant)
-  }
-  else {
-    plants.value.push(newPlant)
-  }
-
+const onPlantAdded = (newPlant: PlantData) => {
+  plants.value.push(newPlant)
   showAddPlantModal.value = false
   clickCoordinates.value = null
 }

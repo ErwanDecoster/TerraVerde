@@ -5,10 +5,17 @@ import { PLANT_CATEGORIES, PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
 
+interface Props {
+  gardenId?: string
+  clickCoordinates?: { x: number, y: number } | null
+}
+
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'plantAdded', data: PlantData): void
 }
+
+const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 const open = ref(false)
@@ -87,6 +94,9 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       main_color: validatedData.main_color,
       height: validatedData.height,
       width: validatedData.width,
+      x_position: props.clickCoordinates?.x || 0,
+      y_position: props.clickCoordinates?.y || 0,
+      garden_id: props.gardenId || '',
     })
 
     emit('plantAdded', plantData)

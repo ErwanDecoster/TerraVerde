@@ -29,6 +29,7 @@ export const usePlantInteractions = (
     console.log(`Plant ${marker.plant.name} drag ended`)
 
     if (!garden.value) return
+    if (!event.target) return
 
     try {
       // Get the new position from the event target (the group)
