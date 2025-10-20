@@ -212,7 +212,9 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         <UFormField
           label="Main Color"
           name="main_color"
+          class="col-span-2"
           required
+          :ui="{ container: 'grid grid-cols-2 gap-4' }"
         >
           <UPopover>
             <UButton
@@ -236,39 +238,41 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
               />
             </template>
           </UPopover>
+          <UInput
+            v-model="state.main_color"
+            type="string"
+            class="w-full"
+          />
         </UFormField>
 
-        <!-- Dimensions -->
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField
-            label="Height (meters)"
-            name="height"
-          >
-            <UInput
-              v-model.number="state.height"
-              type="number"
-              class="w-full"
-              placeholder="0"
-              min="0"
-              max="1000"
-              step="1"
-            />
-          </UFormField>
-          <UFormField
-            label="Width (meters)"
-            name="width"
-          >
-            <UInput
-              v-model.number="state.width"
-              type="number"
-              class="w-full"
-              placeholder="0"
-              min="0"
-              max="1000"
-              step="1"
-            />
-          </UFormField>
-        </div>
+        <UFormField
+          label="Height (meters)"
+          name="height"
+        >
+          <UInput
+            v-model.number="state.height"
+            type="number"
+            class="w-full"
+            placeholder="0"
+            min="0"
+            max="1000"
+            step="1"
+          />
+        </UFormField>
+        <UFormField
+          label="Width (meters)"
+          name="width"
+        >
+          <UInput
+            v-model.number="state.width"
+            type="number"
+            class="w-full"
+            placeholder="0"
+            min="0"
+            max="1000"
+            step="1"
+          />
+        </UFormField>
       </UForm>
     </template>
 
