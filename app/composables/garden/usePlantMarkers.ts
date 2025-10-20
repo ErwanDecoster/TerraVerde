@@ -56,9 +56,8 @@ export const usePlantMarkers = (
 
         // Get the display size in pixels based on the plant's real dimensions
         const displaySize = getPlantDisplaySize(plant, PixelsPerMeters)
-
         // Use the smaller dimension for radius, with min/max limits
-        const radius = displaySize.width
+        const radius = Math.round(displaySize.width / 2)
 
         return {
           id: plant.id,
