@@ -91,6 +91,7 @@
       :plant="selectedPlant"
       @plant-updated="onPlantUpdated"
       @plant-deleted="onPlantDeleted"
+      @plant-copied="onPlantCopied"
     />
   </div>
 </template>
@@ -238,6 +239,10 @@ const onPlantDeleted = (plantId: string) => {
   plants.value = plants.value.filter(p => p.id !== plantId)
   showEditPlantModal.value = false
   selectedPlant.value = null
+}
+
+const onPlantCopied = (copiedPlant: PlantData) => {
+  plants.value.push(copiedPlant)
 }
 
 const {

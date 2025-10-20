@@ -6,7 +6,7 @@ import type { PlantData } from '~/types/plant'
 export const usePlantInteractions = (
   garden: Ref<GardenData>,
   gardenId: string,
-  updatePlant: () => void,
+  updatePlant: (id: string, data: any) => Promise<PlantData>,
   onPlantClick?: (plant: PlantData) => void,
 ) => {
   // Plant hover state for tooltips

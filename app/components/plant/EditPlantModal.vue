@@ -4,6 +4,7 @@ import type { PlantData } from '~/types/plant'
 import { PLANT_CATEGORIES, PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
+import { metersToPixels } from '~/utils/coordinates'
 
 interface Props {
   plant: PlantData
@@ -13,13 +14,14 @@ interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'plantUpdated', data: PlantData): void
   (e: 'plantDeleted', plantId: string): void
+  (e: 'plantCopied', data: PlantData): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
-const { updatePlant, deletePlant } = usePlant()
+const { updatePlant, deletePlant, addMultiplePlants } = usePlant()
 
 // Delete confirmation state
 const showDeleteConfirmation = ref(false)
@@ -75,6 +77,10 @@ const chip = computed(() => ({ backgroundColor: state.main_color }))
 // Submission state
 const loading = ref(false)
 const deleting = ref(false)
+
+// Multiple plant copying
+const multipleCopyingCount = ref(1)
+const copying = ref(false)
 
 // Form reference
 const form = ref()
@@ -178,6 +184,71 @@ async function onDelete() {
 // Confirm delete function
 function confirmDelete() {
   showDeleteConfirmation.value = true
+}
+
+// Copy plant function
+async function copyPlant() {
+  copying.value = true
+
+  try {
+    const validatedData = state
+    console.log('Copying plant with data:', validatedData)
+
+    // Create array of plant data for bulk insert
+    const plantsToCreate = Array.from(
+      { length: multipleCopyingCount.value },
+      (_, index) => ({
+        name: `${validatedData.name}`,
+        description: validatedData.description || '',
+        category: validatedData.category,
+        status: validatedData.status,
+        planted_date: validatedData.planted_date,
+        main_color: validatedData.main_color,
+        height: validatedData.height,
+        width: validatedData.width,
+        // Position copies near the original plant
+        x_position:
+          (props.plant.x_position || 0)
+          + (index % 3) * (metersToPixels(validatedData.width) || 0),
+        y_position:
+          (props.plant.y_position || 0)
+          + Math.floor(index / 3) * (metersToPixels(validatedData.width) || 0),
+        garden_id: props.plant.garden_id || '',
+      }),
+    )
+
+    const createdPlants = await addMultiplePlants(plantsToCreate)
+
+    // Emit each copied plant individually so the parent can add them
+    createdPlants.forEach((plant: PlantData) => emit('plantCopied', plant))
+
+    // Success notification
+    const plantCount = multipleCopyingCount.value
+    toast.add({
+      title: plantCount === 1 ? 'Plant Copied' : 'Plants Copied',
+      description:
+        plantCount === 1
+          ? 'The plant has been successfully copied'
+          : `${plantCount} plants have been successfully copied`,
+      color: 'success',
+    })
+
+    // Reset copy count
+    multipleCopyingCount.value = 1
+  }
+  catch (error) {
+    console.error('Error copying plant:', error)
+
+    // Error notification
+    toast.add({
+      title: 'Error',
+      description: 'An error occurred while copying the plant',
+      color: 'error',
+    })
+  }
+  finally {
+    copying.value = false
+  }
 }
 </script>
 
@@ -370,12 +441,12 @@ function confirmDelete() {
           </UButton>
         </div>
 
-        <!-- Right side: Cancel and Update buttons -->
-        <div class="flex gap-2">
+        <!-- Right side: Cancel, Update and Copy buttons -->
+        <div class="flex gap-0.5">
           <UButton
             color="neutral"
             variant="ghost"
-            :disabled="loading || deleting"
+            :disabled="loading || deleting || copying"
             @click="close"
           >
             Cancel
@@ -384,12 +455,43 @@ function confirmDelete() {
             type="submit"
             form="edit-plant-form"
             :loading="loading"
-            :disabled="loading || deleting || showDeleteConfirmation"
+            :disabled="loading || deleting || showDeleteConfirmation || copying"
             icon="i-heroicons-check-20-solid"
             @click="form.submit()"
           >
             Update Plant
           </UButton>
+          <UPopover>
+            <UButton
+              aria-label="Copy Options"
+              icon="i-lucide-chevron-down"
+              :disabled="
+                loading || deleting || showDeleteConfirmation || copying
+              "
+            />
+
+            <template #content>
+              <div class="grid p-2">
+                <span>Copy multiple</span>
+                <USelect
+                  v-model="multipleCopyingCount"
+                  :items="Array.from({ length: 10 }, (_, i) => i + 1)"
+                />
+                <UButton
+                  color="primary"
+                  variant="outline"
+                  :loading="copying"
+                  :disabled="
+                    loading || deleting || showDeleteConfirmation || copying
+                  "
+                  icon="i-heroicons-document-duplicate-20-solid"
+                  @click="copyPlant"
+                >
+                  Copy
+                </UButton>
+              </div>
+            </template>
+          </UPopover>
         </div>
       </div>
     </template>
