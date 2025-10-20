@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import type { PlantData } from '~/types/plant'
-import { getPlantDisplaySize, metersToPixels } from '~/utils/coordinates'
+import { metersToPixels } from '~/utils/coordinates'
 
 export const usePlantMarkers = (
   plants: Ref<PlantData[]>,
@@ -48,16 +48,10 @@ export const usePlantMarkers = (
       .map((plant) => {
         // Convert plant position from meters to pixels using the garden's scale
         const pixelX = plant.x_position
-          ? metersToPixels(plant.x_position, PixelsPerMeters)
-          : 100
         const pixelY = plant.y_position
-          ? metersToPixels(plant.y_position, PixelsPerMeters)
-          : 100
 
-        // Get the display size in pixels based on the plant's real dimensions
-        const displaySize = getPlantDisplaySize(plant, PixelsPerMeters)
-        // Use the smaller dimension for radius, with min/max limits
-        const radius = Math.round(displaySize.width / 2)
+        const pixelWidth = metersToPixels(plant.width, PixelsPerMeters)
+        const radius = Math.round(pixelWidth / 2)
 
         return {
           id: plant.id,

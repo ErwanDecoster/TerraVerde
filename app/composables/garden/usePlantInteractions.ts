@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import type { PlantData } from '~/types/plant'
-import { pixelsToMeters } from '~/utils/coordinates'
 
 export const usePlantInteractions = (
   garden: Ref<any>,
@@ -36,20 +35,16 @@ export const usePlantInteractions = (
       const newX = event.target.x()
       const newY = event.target.y()
 
-      // Convert pixel position back to meters
-      const meterX = pixelsToMeters(newX, PixelsPerMeters)
-      const meterY = pixelsToMeters(newY, PixelsPerMeters)
-
       // Update the plant position in the database
       await updatePlant(marker.plant.id, {
         ...marker.plant,
-        x_position: meterX,
-        y_position: meterY,
+        x_position: newX,
+        y_position: newY,
         garden_id: gardenId,
       })
 
       console.log(
-        `Plant position updated: (${meterX.toFixed(2)}m, ${meterY.toFixed(2)}m)`,
+        `Plant position updated: (${newX.toFixed(2)}px, ${newY.toFixed(2)}px)`,
       )
     }
     catch (error) {

@@ -103,7 +103,6 @@ import { useGardenZoom } from '~/composables/garden/useGardenZoom'
 import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
 import { usePlantMarkers } from '~/composables/garden/usePlantMarkers'
 import { usePlantInteractions } from '~/composables/garden/usePlantInteractions'
-import { pixelsToMeters } from '~/utils/coordinates'
 import GardenHeader from '~/components/garden/GardenHeader.vue'
 import GardenZoomControls from '~/components/garden/GardenZoomControls.vue'
 import GardenCanvas from '~/components/garden/GardenCanvas.vue'
@@ -191,17 +190,11 @@ const handleBackgroundClick = (event: any) => {
 
 // Plant CRUD handlers
 const onPlantAdded = async (newPlant: PlantData) => {
-  // Ajouter les coordonnées du clic si disponibles
   if (clickCoordinates.value && garden.value) {
-    const PixelsPerMeters = garden.value.pixels_per_meters || 20
-    const meterX = pixelsToMeters(clickCoordinates.value.x, PixelsPerMeters)
-    const meterY = pixelsToMeters(clickCoordinates.value.y, PixelsPerMeters)
-
-    // Mettre à jour la plante avec les coordonnées
     const updatedPlant = await updatePlant(newPlant.id, {
       ...newPlant,
-      x_position: meterX,
-      y_position: meterY,
+      x_position: clickCoordinates.value.x,
+      y_position: clickCoordinates.value.y,
       garden_id: gardenId,
     })
 
