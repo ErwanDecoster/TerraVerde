@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
 import { useVariety } from '~/composables/data/useVariety'
 import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
+import EditVarietyModal from '../variety/EditVarietyModal.vue'
 
 interface Props {
   gardenId?: string
@@ -123,6 +124,22 @@ const onVarietyAdded = (newVariety: VarietyData) => {
   // Auto-select the new variety
   state.variety_id = newVariety.id.toString()
 }
+
+// Handle variety updated
+const onVarietyUpdated = (updatedVariety: VarietyData) => {
+  const index = varieties.value.findIndex(v => v.id === updatedVariety.id)
+  if (index !== -1) {
+    varieties.value[index] = updatedVariety
+  }
+}
+
+// Get currently selected variety
+const selectedVariety = computed(() => {
+  if (!state.variety_id) return null
+  return (
+    varieties.value.find(v => v.id.toString() === state.variety_id) || null
+  )
+})
 
 // Submission function
 async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
@@ -253,6 +270,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       >
         <UFormField
           label="Plant Name"
+          class="col-span-2"
           name="name"
           required
         >
@@ -265,6 +283,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         <UFormField
           label="Variety"
           name="variety_id"
+          class="col-span-2"
           required
         >
           <div class="grid gap-2">
@@ -276,15 +295,30 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
               placeholder="Select variety"
               searchable
             />
-            <AddVarietyModal @variety-added="onVarietyAdded">
-              <UButton
-                icon="i-heroicons-plus-20-solid"
-                size="sm"
-                color="neutral"
-                variant="outline"
-                :disabled="loading"
-              />
-            </AddVarietyModal>
+            <div class="flex gap-2">
+              <AddVarietyModal @variety-added="onVarietyAdded">
+                <UButton
+                  icon="i-heroicons-plus-20-solid"
+                  size="sm"
+                  color="neutral"
+                  variant="outline"
+                  :disabled="loading"
+                />
+              </AddVarietyModal>
+              <EditVarietyModal
+                v-if="selectedVariety"
+                :variety="selectedVariety"
+                @variety-updated="onVarietyUpdated"
+              >
+                <UButton
+                  icon="i-heroicons-pencil-square-20-solid"
+                  size="sm"
+                  color="neutral"
+                  variant="outline"
+                  :disabled="loading"
+                />
+              </EditVarietyModal>
+            </div>
           </div>
         </UFormField>
 
