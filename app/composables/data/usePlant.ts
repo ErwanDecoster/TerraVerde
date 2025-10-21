@@ -134,7 +134,10 @@ export const usePlant = () => {
       .from('plants')
       .update(plantDbData)
       .eq('id', plantId)
-      .select()
+      .select(`*,
+        variety(
+          *
+        )`)
       .single()
 
     if (error) {
@@ -183,7 +186,10 @@ export const usePlant = () => {
     const { data, error } = await $supabase
       .from('plants')
       .insert(plantsDbData)
-      .select()
+      .select(`*,
+        variety(
+          *
+        )`)
 
     if (error) {
       throw new Error(`Failed to create plants: ${error.message}`)
