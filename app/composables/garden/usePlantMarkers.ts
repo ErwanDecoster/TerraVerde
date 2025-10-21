@@ -45,7 +45,7 @@ export const usePlantMarkers = (
     const PixelsPerMeters = garden.value.pixels_per_meters || 20 // Default to 20 pixels per meter
 
     return plants.value
-      .filter(plant => visibleCategories.value.includes(plant.category))
+      .filter(plant => visibleCategories.value.includes(plant.variety.category))
       .map((plant) => {
         // Convert plant position from meters to pixels using the garden's scale
         const pixelX = plant.x_position
@@ -62,7 +62,7 @@ export const usePlantMarkers = (
             x: pixelX,
             y: pixelY,
             radius: radius,
-            fill: plant.main_color || '#ffffff',
+            fill: plant.variety.main_color || '#ffffff',
             stroke: getPlantStatusStroke(plant.status),
             strokeWidth: 1,
             // Add hover effects

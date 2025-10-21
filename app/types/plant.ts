@@ -1,10 +1,13 @@
 // Types for Plant management
 
+import type { VarietyData } from './variety'
+
 export interface PlantData {
   id: string
   name: string
   description: string
-  category: PlantCategory
+  variety_id: number
+  variety: VarietyData
   status: PlantStatus
   planted_date: string
   main_color: string
@@ -17,15 +20,13 @@ export interface PlantData {
   updated_at: string
 }
 
-export type PlantCategory = 'arbre' | 'arbre_fruitier' | 'arbuste' | 'fleur' | 'legume' | 'herbe' | 'autre'
-
 export type PlantStatus = 'healthy' | 'sick' | 'dead' | 'planted'
 
 // Form data types
 export interface PlantFormData {
   name: string
   description: string
-  category: PlantCategory
+  variety_id: number
   status: PlantStatus
   planted_date: string
   main_color: string
@@ -40,7 +41,7 @@ export interface PlantFormData {
 export interface PlantUpdateFormData {
   name: string
   description: string
-  category: PlantCategory
+  variety_id: number
   status: PlantStatus
   planted_date: string
   main_color: string
@@ -50,17 +51,6 @@ export interface PlantUpdateFormData {
   y_position?: number
   garden_id?: string
 }
-
-// Options for selects
-export const PLANT_CATEGORIES = [
-  { value: 'arbre', label: 'Arbre' },
-  { value: 'arbre_fruitier', label: 'Arbre fruitier' },
-  { value: 'arbuste', label: 'Arbuste' },
-  { value: 'fleur', label: 'Fleur' },
-  { value: 'legume', label: 'Légume' },
-  { value: 'herbe', label: 'Herbe' },
-  { value: 'autre', label: 'Autre' },
-] as const
 
 export const PLANT_STATUSES = [
   { value: 'healthy', label: 'En bonne santé', color: 'success' },

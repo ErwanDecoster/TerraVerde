@@ -10,7 +10,7 @@ export const usePlant = () => {
     id: string
     name: string
     description: string
-    category: string
+    variety_id: number
     status: string
     planted_date: string
     main_color: string
@@ -23,7 +23,10 @@ export const usePlant = () => {
     const { data, error } = await $supabase
       .from('plants')
       .insert(plantData)
-      .select()
+      .select(`*,
+        variety(
+          *
+        )`)
       .single()
 
     if (error) {
@@ -44,7 +47,7 @@ export const usePlant = () => {
       id: uuid,
       name: formData.name,
       description: formData.description,
-      category: formData.category,
+      variety_id: formData.variety_id,
       status: formData.status,
       planted_date: formData.planted_date,
       main_color: formData.main_color,
@@ -65,7 +68,12 @@ export const usePlant = () => {
   const fetchPlants = async (gardenId: string): Promise<PlantData[]> => {
     const { data, error } = await $supabase
       .from('plants')
-      .select('*')
+      .select(`
+        *,
+        variety(
+          *
+        )
+      `)
       .eq('garden_id', gardenId)
       .order('created_at', { ascending: false })
 
@@ -82,7 +90,10 @@ export const usePlant = () => {
   const fetchPlantById = async (plantId: string): Promise<PlantData | null> => {
     const { data, error } = await $supabase
       .from('plants')
-      .select('*')
+      .select(`*,
+        variety(
+          *
+        )`)
       .eq('id', plantId)
       .single()
 
@@ -108,7 +119,7 @@ export const usePlant = () => {
     const plantDbData = {
       name: formData.name,
       description: formData.description,
-      category: formData.category,
+      variety_id: formData.variety_id,
       status: formData.status,
       planted_date: formData.planted_date,
       main_color: formData.main_color,
@@ -157,7 +168,7 @@ export const usePlant = () => {
       id: crypto.randomUUID(),
       name: plantData.name,
       description: plantData.description,
-      category: plantData.category,
+      variety_id: plantData.variety_id,
       status: plantData.status,
       planted_date: plantData.planted_date,
       main_color: plantData.main_color,

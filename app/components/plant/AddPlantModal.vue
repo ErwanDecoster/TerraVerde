@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { PlantData, PlantCategory, PlantStatus } from '~/types/plant'
-import { PLANT_CATEGORIES, PLANT_STATUSES } from '~/types/plant'
+import type { PlantData, PlantStatus } from '~/types/plant'
+import type { VarietyData } from '~/types/variety'
+import { PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
+import { useVariety } from '~/composables/data/useVariety'
+import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 
 interface Props {
   gardenId?: string
@@ -21,6 +24,11 @@ const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
 const { addPlant, addMultiplePlants } = usePlant()
+const { fetchVarieties } = useVariety()
+
+// Varieties state
+const varieties = ref<VarietyData[]>([])
+const varietiesLoading = ref(false)
 
 // Validation schema with Zod
 const schema = z.object({
@@ -32,12 +40,7 @@ const schema = z.object({
     .string()
     .max(500, 'Description cannot exceed 500 characters')
     .optional(),
-  category: z.enum(
-    ['arbre', 'arbre_fruitier', 'arbuste', 'fleur', 'legume', 'herbe', 'autre'],
-    {
-      message: 'Category is required',
-    },
-  ),
+  variety_id: z.string(),
   status: z.enum(['healthy', 'sick', 'dead', 'planted'], {
     message: 'Status is required',
   }),
@@ -59,7 +62,7 @@ export type PlantSchema = z.output<typeof schema>
 const state = reactive<Partial<PlantSchema>>({
   name: '',
   description: '',
-  category: 'fleur' as PlantCategory,
+  variety_id: '',
   status: 'planted' as PlantStatus,
   planted_date: new Date().toISOString().split('T')[0], // Today's date
   main_color: '#22c55e',
@@ -79,6 +82,48 @@ const multipleAddingCount = ref(1)
 // Form reference
 const form = ref()
 
+// Computed varieties options for select
+const varietyOptions = computed(() => {
+  return varieties.value.map(variety => ({
+    label: `${variety.name} ${
+      variety.scientific_name ? `(${variety.scientific_name})` : ''
+    }`,
+    value: variety.id.toString(),
+  }))
+})
+
+// Load varieties when modal opens
+const loadVarieties = async () => {
+  if (varieties.value.length > 0) return // Already loaded
+  varietiesLoading.value = true
+  try {
+    varieties.value = await fetchVarieties()
+  }
+  catch (error) {
+    console.error('Error loading varieties:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load varieties',
+      color: 'error',
+    })
+  }
+  finally {
+    varietiesLoading.value = false
+  }
+}
+
+// Watch for modal opening to load varieties
+onMounted(() => {
+  loadVarieties()
+})
+
+// Handle new variety added
+const onVarietyAdded = (newVariety: VarietyData) => {
+  varieties.value.unshift(newVariety)
+  // Auto-select the new variety
+  state.variety_id = newVariety.id.toString()
+}
+
 // Submission function
 async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
   loading.value = true
@@ -92,7 +137,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       const plantData = await addPlant({
         name: validatedData.name,
         description: validatedData.description || '',
-        category: validatedData.category,
+        variety_id: parseInt(validatedData.variety_id),
         status: validatedData.status,
         planted_date: validatedData.planted_date,
         main_color: validatedData.main_color,
@@ -122,7 +167,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         (_, index) => ({
           name: `${validatedData.name}`,
           description: validatedData.description || '',
-          category: validatedData.category,
+          variety_id: parseInt(validatedData.variety_id),
           status: validatedData.status,
           planted_date: validatedData.planted_date,
           main_color: validatedData.main_color,
@@ -158,7 +203,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     Object.assign(state, {
       name: '',
       description: '',
-      category: 'fleur' as PlantCategory,
+      variety_id: '',
       status: 'planted' as PlantStatus,
       planted_date: new Date().toISOString().split('T')[0],
       main_color: '#22c55e',
@@ -218,16 +263,29 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           />
         </UFormField>
         <UFormField
-          label="Category"
-          name="category"
+          label="Variety"
+          name="variety_id"
           required
         >
-          <USelect
-            v-model="state.category"
-            :items="PLANT_CATEGORIES.slice()"
-            class="w-full"
-            placeholder="Select category"
-          />
+          <div class="grid gap-2">
+            <UInputMenu
+              v-model="state.variety_id"
+              :items="varietyOptions"
+              :loading="varietiesLoading"
+              :value-key="'value'"
+              placeholder="Select variety"
+              searchable
+            />
+            <AddVarietyModal @variety-added="onVarietyAdded">
+              <UButton
+                icon="i-heroicons-plus-20-solid"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                :disabled="loading"
+              />
+            </AddVarietyModal>
+          </div>
         </UFormField>
 
         <UFormField
@@ -262,7 +320,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           <USelect
             v-model="state.status"
             :items="PLANT_STATUSES.slice()"
-            class="w-full z-10"
+            class="w-full"
             placeholder="Select status"
           />
         </UFormField>

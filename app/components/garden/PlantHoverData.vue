@@ -3,9 +3,9 @@
     <UKbd
       size="sm"
     >
-      {{ getCategoryInfo(plant.category)?.key }}
+      {{ getCategoryInfo(plant.variety.category)?.key }}
     </UKbd>
-    <span class="text-xs font-medium">{{ plant.name }}</span>
+    <span class="text-xs font-medium">{{ plant.name }} | {{ plant.variety.name }}</span>
   </div>
 </template>
 

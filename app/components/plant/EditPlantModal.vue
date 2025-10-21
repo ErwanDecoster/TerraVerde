@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { PlantData } from '~/types/plant'
-import { PLANT_CATEGORIES, PLANT_STATUSES } from '~/types/plant'
+import type { VarietyData } from '~/types/variety'
+import { PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
+import { useVariety } from '~/composables/data/useVariety'
+import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 
 interface Props {
   plant: PlantData
@@ -20,6 +23,11 @@ const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
 const { updatePlant, deletePlant, addMultiplePlants } = usePlant()
+const { fetchVarieties } = useVariety()
+
+// Varieties state
+const varieties = ref<VarietyData[]>([])
+const varietiesLoading = ref(false)
 
 // Delete confirmation state
 const showDeleteConfirmation = ref(false)
@@ -34,12 +42,7 @@ const schema = z.object({
     .string()
     .max(500, 'Description cannot exceed 500 characters')
     .optional(),
-  category: z.enum(
-    ['arbre', 'arbre_fruitier', 'arbuste', 'fleur', 'legume', 'herbe', 'autre'],
-    {
-      message: 'Category is required',
-    },
-  ),
+  variety_id: z.string(),
   status: z.enum(['healthy', 'sick', 'dead', 'planted'], {
     message: 'Status is required',
   }),
@@ -61,7 +64,7 @@ export type EditPlantSchema = z.output<typeof schema>
 const state = reactive<Partial<EditPlantSchema>>({
   name: props.plant.name,
   description: props.plant.description,
-  category: props.plant.category,
+  variety_id: props.plant.variety_id?.toString() || '',
   status: props.plant.status,
   planted_date: props.plant.planted_date,
   main_color: props.plant.main_color,
@@ -83,6 +86,48 @@ const copying = ref(false)
 // Form reference
 const form = ref()
 
+// Computed varieties options for select
+const varietyOptions = computed(() => {
+  return varieties.value.map(variety => ({
+    label: `${variety.name} ${
+      variety.scientific_name ? `(${variety.scientific_name})` : ''
+    }`,
+    value: variety.id.toString(),
+  }))
+})
+
+// Load varieties when modal opens
+const loadVarieties = async () => {
+  if (varieties.value.length > 0) return // Already loaded
+  varietiesLoading.value = true
+  try {
+    varieties.value = await fetchVarieties()
+  }
+  catch (error) {
+    console.error('Error loading varieties:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load varieties',
+      color: 'error',
+    })
+  }
+  finally {
+    varietiesLoading.value = false
+  }
+}
+
+// Watch for modal opening to load varieties
+onMounted(() => {
+  loadVarieties()
+})
+
+// Handle new variety added
+const onVarietyAdded = (newVariety: VarietyData) => {
+  varieties.value.unshift(newVariety)
+  // Auto-select the new variety
+  state.variety_id = newVariety.id.toString()
+}
+
 // Watch for prop changes to update form state
 watch(
   () => props.plant,
@@ -90,7 +135,7 @@ watch(
     Object.assign(state, {
       name: newPlant.name,
       description: newPlant.description,
-      category: newPlant.category,
+      variety_id: newPlant.variety_id?.toString() || '',
       status: newPlant.status,
       planted_date: newPlant.planted_date,
       main_color: newPlant.main_color,
@@ -113,7 +158,7 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
     const plantData = await updatePlant(props.plant.id, {
       name: validatedData.name,
       description: validatedData.description || '',
-      category: validatedData.category,
+      variety_id: parseInt(validatedData.variety_id),
       status: validatedData.status,
       planted_date: validatedData.planted_date,
       main_color: validatedData.main_color,
@@ -193,7 +238,9 @@ async function copyPlant() {
     const validatedData = {
       name: state.name || props.plant.name,
       description: state.description || props.plant.description || '',
-      category: state.category || props.plant.category,
+      variety_id: parseInt(
+        state.variety_id || props.plant.variety_id?.toString() || '0',
+      ),
       status: state.status || props.plant.status,
       planted_date: state.planted_date || props.plant.planted_date,
       main_color: state.main_color || props.plant.main_color,
@@ -212,7 +259,7 @@ async function copyPlant() {
       (_, index) => ({
         name: validatedData.name,
         description: validatedData.description,
-        category: validatedData.category,
+        variety_id: validatedData.variety_id,
         status: validatedData.status,
         planted_date: validatedData.planted_date,
         main_color: validatedData.main_color,
@@ -294,16 +341,29 @@ async function copyPlant() {
           />
         </UFormField>
         <UFormField
-          label="Category"
-          name="category"
+          label="Variety"
+          name="variety_id"
           required
         >
-          <USelect
-            v-model="state.category"
-            :items="PLANT_CATEGORIES.slice()"
-            class="w-full"
-            placeholder="Select category"
-          />
+          <div class="grid gap-2">
+            <UInputMenu
+              v-model="state.variety_id"
+              :items="varietyOptions"
+              :loading="varietiesLoading"
+              :value-key="'value'"
+              placeholder="Select variety"
+              searchable
+            />
+            <AddVarietyModal @variety-added="onVarietyAdded">
+              <UButton
+                icon="i-heroicons-plus-20-solid"
+                size="sm"
+                color="neutral"
+                variant="outline"
+                :disabled="loading"
+              />
+            </AddVarietyModal>
+          </div>
         </UFormField>
 
         <UFormField

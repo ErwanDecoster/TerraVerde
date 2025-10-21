@@ -42,7 +42,7 @@
         <!-- Plant Category Label -->
         <v-text
           :config="{
-            text: getCategoryLetter(marker.plant.category),
+            text: getCategoryLetter(marker.plant.variety.category),
             fontSize: Math.max(10, Math.min(marker.config.radius / 2, 16)),
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold',
