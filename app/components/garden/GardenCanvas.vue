@@ -19,7 +19,7 @@
         :config="{
           x: marker.config.x,
           y: marker.config.y,
-          draggable: true,
+          draggable: isEditingEnabled,
         }"
         @click="() => handlePlantClick(marker)"
         @dragstart="() => handlePlantDragStart(marker)"
@@ -99,6 +99,7 @@ interface Props {
   background: HTMLImageElement | null
   backgroundConfig: BackgroundConfig
   plantMarkers: PlantMarker[]
+  isEditingEnabled: boolean
   handleWheel: (e: Event) => void
   handlePlantClick: (marker: PlantMarker) => void
   handlePlantDragStart: (marker: PlantMarker) => void

@@ -45,7 +45,9 @@
       <GardenHeader
         :garden="garden"
         :plants-count="plants.length"
+        :is-editing-enabled="isEditingEnabled"
         @garden-updated="loadGarden"
+        @update:editing-enabled="isEditingEnabled = $event"
       />
 
       <!-- Zoom Controls -->
@@ -72,6 +74,7 @@
         :background="background"
         :background-config="backgroundConfig"
         :plant-markers="plantMarkers"
+        :is-editing-enabled="isEditingEnabled"
         :handle-wheel="handleWheel"
         :handle-plant-click="handlePlantClick"
         :handle-plant-drag-start="handlePlantDragStart"
@@ -155,6 +158,9 @@ const showAddPlantModal = ref(false)
 const showEditPlantModal = ref(false)
 const selectedPlant = ref<PlantData | null>(null)
 
+// Editing mode state
+const isEditingEnabled = ref(false)
+
 // Canvas ref
 interface KonvaStage {
   scaleX: () => number
@@ -192,11 +198,17 @@ const clickCoordinates = ref<{ x: number, y: number } | null>(null)
 
 // Modal interaction handlers
 const onPlantClick = (plant: PlantData) => {
+  // Only allow plant editing if editing mode is enabled
+  if (!isEditingEnabled.value) return
+
   selectedPlant.value = plant
   showEditPlantModal.value = true
 }
 
 const handleBackgroundClick = (event: Event) => {
+  // Only allow adding plants if editing mode is enabled
+  if (!isEditingEnabled.value) return
+
   if (!event.target) return
 
   // Vérifier que le clic est sur le background et non sur un marker
@@ -258,7 +270,13 @@ const {
   handlePlantDragStart,
   handlePlantDragEnd,
   handlePlantHover,
-} = usePlantInteractions(garden, gardenId, updatePlant, onPlantClick)
+} = usePlantInteractions(
+  garden,
+  gardenId,
+  updatePlant,
+  onPlantClick,
+  isEditingEnabled,
+)
 
 // Load garden data and plants
 const loadGarden = async () => {

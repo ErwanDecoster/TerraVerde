@@ -31,6 +31,11 @@
         :garden="garden"
         @garden-updated="$emit('garden-updated')"
       />
+      <UCheckbox
+        label="Map editing"
+        :model-value="isEditingEnabled"
+        @update:model-value="handleEditingToggle"
+      />
     </div>
   </div>
 </template>
@@ -42,12 +47,19 @@ import EditGardenModal from './EditGardenModal.vue'
 interface Props {
   garden?: GardenData | null
   plantsCount: number
+  isEditingEnabled?: boolean
 }
 
 interface Emits {
   (e: 'back' | 'garden-updated'): void
+  (e: 'update:editing-enabled', value: boolean): void
 }
 
 defineProps<Props>()
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Handle editing mode toggle
+const handleEditingToggle = (value: string | boolean) => {
+  emit('update:editing-enabled', Boolean(value))
+}
 </script>

@@ -8,6 +8,7 @@ export const usePlantInteractions = (
   gardenId: string,
   updatePlant: (id: string, data: PlantData) => Promise<PlantData>,
   onPlantClick?: (plant: PlantData) => void,
+  isEditingEnabled?: Ref<boolean>,
 ) => {
   // Plant hover state for tooltips
   const hoveredPlant = ref<PlantData | null>(null)
@@ -15,6 +16,9 @@ export const usePlantInteractions = (
   // Plant marker event handlers
   const handlePlantClick = (marker: PlantMarker) => {
     console.log(`Plant ${marker.plant.name} clicked!`, marker.plant)
+    // Only handle click if editing is enabled
+    if (isEditingEnabled?.value === false) return
+
     // Call the callback to open edit modal
     if (onPlantClick) {
       onPlantClick(marker.plant)
@@ -22,10 +26,16 @@ export const usePlantInteractions = (
   }
 
   const handlePlantDragStart = (marker: PlantMarker) => {
+    // Only allow drag if editing is enabled
+    if (isEditingEnabled?.value === false) return
+
     console.log(`Plant ${marker.plant.name} drag started`)
   }
 
   const handlePlantDragEnd = async (marker: PlantMarker, event: Event) => {
+    // Only handle drag end if editing is enabled
+    if (isEditingEnabled?.value === false) return
+
     console.log(`Plant ${marker.plant.name} drag ended`)
 
     if (!garden.value) return
