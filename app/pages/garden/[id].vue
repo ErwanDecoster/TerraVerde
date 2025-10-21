@@ -41,7 +41,6 @@
     class="h-screen overflow-hidden"
   >
     <div class="flex-1 overflow-hidden relative">
-      <!-- Garden Header -->
       <GardenHeader
         :garden="garden"
         :plants-count="plants.length"
@@ -50,7 +49,6 @@
         @update:editing-enabled="isEditingEnabled = $event"
       />
 
-      <!-- Zoom Controls -->
       <GardenZoomControls
         :stage-config="stageConfig"
         :zoom-in="zoomIn"
@@ -58,16 +56,13 @@
         :reset-zoom="resetZoom"
       />
 
-      <!-- Plant Category Filters -->
       <PlantCategoryFilters v-model:visible-categories="visibleCategories" />
 
-      <!-- Plant Hover Data -->
       <PlantHoverData
         v-if="hoveredPlant"
         :plant="hoveredPlant"
       />
 
-      <!-- Garden Canvas -->
       <GardenCanvas
         ref="canvas"
         :stage-config="stageConfig"
@@ -85,7 +80,6 @@
       />
     </div>
 
-    <!-- Modals -->
     <AddPlantModal
       v-if="showAddPlantModal"
       v-model:open="showAddPlantModal"
