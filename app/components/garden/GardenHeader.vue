@@ -13,13 +13,13 @@
     </div>
 
     <div
-      class="rounded-xl p-2 grid gap-1 bg-default/75 backdrop-blur border border-default"
+      class="rounded-xl p-2 grid gap-2 bg-default/75 backdrop-blur border border-default"
     >
       <h1 class="text-xl font-semibold">
         {{ garden?.name }}
       </h1>
       <USeparator />
-      <div class="flex items-center gap-2 py-1">
+      <div class="flex items-center justify-center gap-2">
         <UIcon
           name="i-heroicons-sparkles-20-solid"
           class="w-4 h-4 text-green-500"
@@ -31,7 +31,7 @@
         :garden="garden"
         @garden-updated="$emit('garden-updated')"
       />
-      <UCheckbox
+      <USwitch
         label="Map editing"
         :model-value="isEditingEnabled"
         @update:model-value="handleEditingToggle"
