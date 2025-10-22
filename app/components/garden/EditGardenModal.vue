@@ -179,9 +179,9 @@ function confirmDelete() {
   >
     <UButton
       label="Edit Garden"
-      color="neutral"
-      variant="subtle"
+      variant="outline"
       icon="i-heroicons-pencil-square-20-solid"
+      class="justify-center"
     />
 
     <template #body>

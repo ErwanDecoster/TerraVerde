@@ -19,21 +19,35 @@
         {{ garden?.name }}
       </h1>
       <USeparator />
-      <div class="grid grid-cols-2 gap-4">
-        <div class="flex items-center justify-center gap-2">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex items-center gap-2 justify-center">
           <UIcon
             name="i-heroicons-sparkles-20-solid"
             class="w-4 h-4 text-green-500"
           />
-          <span class="text-sm">{{ plantsCount }} plantes</span>
+          <span class="text-sm">{{ plantsCount }} plants</span>
         </div>
-        <div class="flex items-center justify-center gap-2">
+        <div class="flex items-center gap-2 justify-center">
           <UIcon
             name="i-heroicons-squares-2x2-20-solid"
             class="w-4 h-4 text-blue-500"
           />
-          <span class="text-sm">{{ varietiesCount }} variétés</span>
+          <span class="text-sm">{{ varietiesCount }} varieties</span>
         </div>
+        <UButton
+          :to="`/garden/${garden?.id}/plants`"
+          variant="outline"
+          class="justify-center"
+        >
+          View Plants
+        </UButton>
+        <UButton
+          :to="`/garden/${garden?.id}/varieties`"
+          variant="outline"
+          class="justify-center"
+        >
+          View Varieties
+        </UButton>
       </div>
       <EditGardenModal
         v-if="garden"
