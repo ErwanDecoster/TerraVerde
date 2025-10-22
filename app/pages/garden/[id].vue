@@ -43,7 +43,7 @@
     <div class="flex-1 overflow-hidden relative">
       <GardenHeader
         :garden="garden"
-        :plants-count="plants.length"
+        :plants="plants"
         :is-editing-enabled="isEditingEnabled"
         @garden-updated="loadGarden"
         @update:editing-enabled="isEditingEnabled = $event"

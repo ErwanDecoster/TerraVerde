@@ -19,12 +19,21 @@
         {{ garden?.name }}
       </h1>
       <USeparator />
-      <div class="flex items-center justify-center gap-2">
-        <UIcon
-          name="i-heroicons-sparkles-20-solid"
-          class="w-4 h-4 text-green-500"
-        />
-        <span>{{ plantsCount }} plants</span>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex items-center justify-center gap-2">
+          <UIcon
+            name="i-heroicons-sparkles-20-solid"
+            class="w-4 h-4 text-green-500"
+          />
+          <span class="text-sm">{{ plantsCount }} plantes</span>
+        </div>
+        <div class="flex items-center justify-center gap-2">
+          <UIcon
+            name="i-heroicons-squares-2x2-20-solid"
+            class="w-4 h-4 text-blue-500"
+          />
+          <span class="text-sm">{{ varietiesCount }} variétés</span>
+        </div>
       </div>
       <EditGardenModal
         v-if="garden"
@@ -42,11 +51,12 @@
 
 <script setup lang="ts">
 import type { GardenData } from '~/types/garden'
+import type { PlantData } from '~/types/plant'
 import EditGardenModal from './EditGardenModal.vue'
 
 interface Props {
   garden?: GardenData | null
-  plantsCount: number
+  plants: PlantData[]
   isEditingEnabled?: boolean
 }
 
@@ -55,8 +65,20 @@ interface Emits {
   (e: 'update:editing-enabled', value: boolean): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// Computed properties for statistics
+const plantsCount = computed(() => props.plants.length)
+
+const varietiesCount = computed(() => {
+  const uniqueVarietyIds = new Set(
+    props.plants
+      .filter(plant => plant.variety_id) // Filter out plants without variety
+      .map(plant => plant.variety_id),
+  )
+  return uniqueVarietyIds.size
+})
 
 // Handle editing mode toggle
 const handleEditingToggle = (value: string | boolean) => {
