@@ -17,10 +17,6 @@ export const usePlantInteractions = (
   // Plant marker event handlers
   const handlePlantClick = (marker: PlantMarker) => {
     console.log(`Plant ${marker.plant.name} clicked!`, marker.plant)
-    // Only handle click if editing is enabled
-    if (isEditingEnabled?.value === false) return
-
-    // Call the callback to open edit modal
     if (onPlantClick) {
       onPlantClick(marker.plant)
     }

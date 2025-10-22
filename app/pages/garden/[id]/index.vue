@@ -88,6 +88,13 @@
       @plant-added="onPlantAdded"
     />
 
+    <PlantInfoModal
+      v-if="selectedPlant && showPlantInfoModal"
+      v-model:open="showPlantInfoModal"
+      :plant="selectedPlant"
+      @edit-requested="onEditRequested"
+    />
+
     <EditPlantModal
       v-if="selectedPlant && showEditPlantModal"
       v-model:open="showEditPlantModal"
@@ -116,6 +123,7 @@ import PlantCategoryFilters from '~/components/garden/PlantCategoryFilters.vue'
 import PlantHoverData from '~/components/garden/PlantHoverData.vue'
 import AddPlantModal from '~/components/plant/AddPlantModal.vue'
 import EditPlantModal from '~/components/plant/EditPlantModal.vue'
+import PlantInfoModal from '~/components/plant/PlantInfoModal.vue'
 
 // Page meta
 definePageMeta({
@@ -150,7 +158,19 @@ const error = ref<string | null>(null)
 // Modal states
 const showAddPlantModal = ref(false)
 const showEditPlantModal = ref(false)
+const showPlantInfoModal = ref(false)
 const selectedPlant = ref<PlantData | null>(null)
+
+// Debug watchers
+watch(showPlantInfoModal, (newVal) => {
+  console.log('showPlantInfoModal changed to:', newVal)
+})
+watch(showEditPlantModal, (newVal) => {
+  console.log('showEditPlantModal changed to:', newVal)
+})
+watch(selectedPlant, (newVal) => {
+  console.log('selectedPlant changed to:', newVal?.name)
+})
 
 // Editing mode state
 const isEditingEnabled = ref(false)
@@ -192,11 +212,21 @@ const clickCoordinates = ref<{ x: number, y: number } | null>(null)
 
 // Modal interaction handlers
 const onPlantClick = (plant: PlantData) => {
-  // Only allow plant editing if editing mode is enabled
-  if (!isEditingEnabled.value) return
+  console.log('onPlantClick called with plant:', plant.name)
+  console.log('isEditingEnabled.value:', isEditingEnabled.value)
 
   selectedPlant.value = plant
-  showEditPlantModal.value = true
+
+  if (isEditingEnabled.value) {
+    // In editing mode, open edit modal directly
+    console.log('Opening edit modal')
+    showEditPlantModal.value = true
+  }
+  else {
+    // In view mode, open info modal
+    console.log('Opening info modal')
+    showPlantInfoModal.value = true
+  }
 }
 
 const handleBackgroundClick = (event: Event) => {
@@ -263,6 +293,13 @@ const onPlantDeleted = (plantId: string) => {
 
 const onPlantCopied = (copiedPlant: PlantData) => {
   plants.value.push(copiedPlant)
+}
+
+// Handle edit request from info modal
+const onEditRequested = (plant: PlantData) => {
+  selectedPlant.value = plant
+  showPlantInfoModal.value = false
+  showEditPlantModal.value = true
 }
 
 const {
