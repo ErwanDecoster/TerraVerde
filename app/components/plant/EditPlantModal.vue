@@ -48,7 +48,6 @@ const schema = z.object({
     message: 'Status is required',
   }),
   planted_date: z.string().min(1, 'Planted date is required'),
-  main_color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color'),
   height: z
     .number()
     .min(0, 'Height must be positive')
@@ -68,13 +67,9 @@ const state = reactive<Partial<EditPlantSchema>>({
   variety_id: props.plant.variety_id?.toString() || '',
   status: props.plant.status,
   planted_date: props.plant.planted_date,
-  main_color: props.plant.main_color,
   height: props.plant.height,
   width: props.plant.width,
 })
-
-// Computed for color chip
-const chip = computed(() => ({ backgroundColor: state.main_color }))
 
 // Submission state
 const loading = ref(false)
@@ -155,7 +150,6 @@ watch(
       variety_id: newPlant.variety_id?.toString() || '',
       status: newPlant.status,
       planted_date: newPlant.planted_date,
-      main_color: newPlant.main_color,
       height: newPlant.height,
       width: newPlant.width,
     })
@@ -178,7 +172,6 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
       variety_id: parseInt(validatedData.variety_id),
       status: validatedData.status,
       planted_date: validatedData.planted_date,
-      main_color: validatedData.main_color,
       height: validatedData.height,
       width: validatedData.width,
     })
@@ -260,7 +253,6 @@ async function copyPlant() {
       ),
       status: state.status || props.plant.status,
       planted_date: state.planted_date || props.plant.planted_date,
-      main_color: state.main_color || props.plant.main_color,
       height: state.height || props.plant.height,
       width: state.width || props.plant.width,
     }
@@ -279,7 +271,6 @@ async function copyPlant() {
         variety_id: validatedData.variety_id,
         status: validatedData.status,
         planted_date: validatedData.planted_date,
-        main_color: validatedData.main_color,
         height: validatedData.height,
         width: validatedData.width,
         // Position copies based on plant width - 3 plants per row
@@ -434,42 +425,6 @@ async function copyPlant() {
             :items="PLANT_STATUSES.slice()"
             class="w-full z-10"
             placeholder="Select status"
-          />
-        </UFormField>
-
-        <UFormField
-          label="Main Color"
-          name="main_color"
-          class="col-span-2"
-          required
-          :ui="{ container: 'grid grid-cols-2 gap-4' }"
-        >
-          <UPopover>
-            <UButton
-              label="Choose color"
-              class="w-full"
-              color="neutral"
-              variant="outline"
-            >
-              <template #leading>
-                <span
-                  :style="chip"
-                  class="size-3 rounded-full"
-                />
-              </template>
-            </UButton>
-
-            <template #content>
-              <UColorPicker
-                v-model="state.main_color"
-                class="p-2"
-              />
-            </template>
-          </UPopover>
-          <UInput
-            v-model="state.main_color"
-            type="string"
-            class="w-full"
           />
         </UFormField>
 

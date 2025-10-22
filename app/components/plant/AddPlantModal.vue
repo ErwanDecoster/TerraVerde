@@ -46,7 +46,6 @@ const schema = z.object({
     message: 'Status is required',
   }),
   planted_date: z.string().min(1, 'Planted date is required'),
-  main_color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color'),
   height: z
     .number()
     .min(0, 'Height must be positive')
@@ -66,13 +65,9 @@ const state = reactive<Partial<PlantSchema>>({
   variety_id: '',
   status: 'planted' as PlantStatus,
   planted_date: new Date().toISOString().split('T')[0], // Today's date
-  main_color: '#22c55e',
   height: 0,
   width: 0,
 })
-
-// Computed for color chip
-const chip = computed(() => ({ backgroundColor: state.main_color }))
 
 // Submission state
 const loading = ref(false)
@@ -157,7 +152,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         variety_id: parseInt(validatedData.variety_id),
         status: validatedData.status,
         planted_date: validatedData.planted_date,
-        main_color: validatedData.main_color,
         height: validatedData.height,
         width: validatedData.width,
         x_position: props.clickCoordinates?.x || 0,
@@ -187,7 +181,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           variety_id: parseInt(validatedData.variety_id),
           status: validatedData.status,
           planted_date: validatedData.planted_date,
-          main_color: validatedData.main_color,
           height: validatedData.height,
           width: validatedData.width,
           // Distribute plants in a grid pattern with spacing based on plant width
@@ -223,7 +216,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       variety_id: '',
       status: 'planted' as PlantStatus,
       planted_date: new Date().toISOString().split('T')[0],
-      main_color: '#22c55e',
       height: 0,
       width: 0,
     })
@@ -356,42 +348,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
             :items="PLANT_STATUSES.slice()"
             class="w-full"
             placeholder="Select status"
-          />
-        </UFormField>
-
-        <UFormField
-          label="Main Color"
-          name="main_color"
-          class="col-span-2"
-          required
-          :ui="{ container: 'grid grid-cols-2 gap-4' }"
-        >
-          <UPopover>
-            <UButton
-              label="Choose color"
-              class="w-full"
-              color="neutral"
-              variant="outline"
-            >
-              <template #leading>
-                <span
-                  :style="chip"
-                  class="size-3 rounded-full"
-                />
-              </template>
-            </UButton>
-
-            <template #content>
-              <UColorPicker
-                v-model="state.main_color"
-                class="p-2"
-              />
-            </template>
-          </UPopover>
-          <UInput
-            v-model="state.main_color"
-            type="string"
-            class="w-full"
           />
         </UFormField>
 

@@ -13,7 +13,7 @@ export const usePlant = () => {
     variety_id: number
     status: string
     planted_date: string
-    main_color: string
+    main_color?: string
     height: number
     width: number
     x_position?: number
@@ -50,7 +50,6 @@ export const usePlant = () => {
       variety_id: formData.variety_id,
       status: formData.status,
       planted_date: formData.planted_date,
-      main_color: formData.main_color,
       height: formData.height,
       width: formData.width,
       x_position: formData.x_position,
@@ -122,7 +121,6 @@ export const usePlant = () => {
       variety_id: formData.variety_id,
       status: formData.status,
       planted_date: formData.planted_date,
-      main_color: formData.main_color,
       height: formData.height,
       width: formData.width,
       x_position: formData.x_position,
