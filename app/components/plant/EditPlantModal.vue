@@ -50,12 +50,12 @@ const schema = z.object({
   planted_date: z.string().min(1, 'Planted date is required'),
   height: z
     .number()
-    .min(0, 'Height must be positive')
-    .max(1000, 'Height cannot exceed 1000cm'),
+    .min(0.1, 'Height must be more than 0.1')
+    .max(150, 'Height cannot exceed 150 meters'),
   width: z
     .number()
-    .min(0, 'Width must be positive')
-    .max(1000, 'Width cannot exceed 1000cm'),
+    .min(0.1, 'Width must be more than 0.1')
+    .max(40, 'Width cannot exceed 40 meters'),
 })
 
 export type EditPlantSchema = z.output<typeof schema>

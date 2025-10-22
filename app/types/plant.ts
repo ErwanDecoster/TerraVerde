@@ -13,8 +13,8 @@ export interface PlantData {
   main_color: string
   height: number
   width: number
-  x_position?: number // Position in meters on the garden map
-  y_position?: number // Position in meters on the garden map
+  x_position?: number
+  y_position?: number
   garden_id?: string // Which garden this plant belongs to
   created_at: string
   updated_at: string
@@ -29,7 +29,6 @@ export interface PlantFormData {
   variety_id: number
   status: PlantStatus
   planted_date: string
-  main_color: string
   height: number
   width: number
   x_position?: number
@@ -44,7 +43,6 @@ export interface PlantUpdateFormData {
   variety_id: number
   status: PlantStatus
   planted_date: string
-  main_color: string
   height: number
   width: number
   x_position?: number
