@@ -9,6 +9,7 @@ export const usePlantInteractions = (
   updatePlant: (id: string, data: PlantData) => Promise<PlantData>,
   onPlantClick?: (plant: PlantData) => void,
   isEditingEnabled?: Ref<boolean>,
+  onPlantPositionUpdated?: (updatedPlant: PlantData) => void,
 ) => {
   // Plant hover state for tooltips
   const hoveredPlant = ref<PlantData | null>(null)
@@ -47,12 +48,17 @@ export const usePlantInteractions = (
       const newY = event.target.y()
 
       // Update the plant position in the database
-      await updatePlant(marker.plant.id, {
+      const updatedPlant = await updatePlant(marker.plant.id, {
         ...marker.plant,
         x_position: newX,
         y_position: newY,
         garden_id: gardenId,
       })
+
+      // Call the callback to update the plant in the parent component
+      if (onPlantPositionUpdated) {
+        onPlantPositionUpdated(updatedPlant)
+      }
 
       console.log(
         `Plant position updated: (${newX.toFixed(2)}px, ${newY.toFixed(2)}px)`,

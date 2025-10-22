@@ -248,6 +248,13 @@ const onPlantUpdated = (updatedPlant: PlantData) => {
   selectedPlant.value = null
 }
 
+const onPlantPositionUpdated = (updatedPlant: PlantData) => {
+  const index = plants.value.findIndex(p => p.id === updatedPlant.id)
+  if (index !== -1) {
+    plants.value[index] = updatedPlant
+  }
+}
+
 const onPlantDeleted = (plantId: string) => {
   plants.value = plants.value.filter(p => p.id !== plantId)
   showEditPlantModal.value = false
@@ -270,6 +277,7 @@ const {
   updatePlant,
   onPlantClick,
   isEditingEnabled,
+  onPlantPositionUpdated,
 )
 
 // Load garden data and plants
