@@ -51,7 +51,9 @@ export const usePlantMarkers = (
         const pixelX = plant.x_position
         const pixelY = plant.y_position
 
-        const pixelWidth = metersToPixels(plant.width, PixelsPerMeters)
+        const minVisibleWidth = plant.width > 0.7 ? plant.width : 0.7
+
+        const pixelWidth = metersToPixels(minVisibleWidth, PixelsPerMeters)
         const radius = Math.round(pixelWidth / 2)
 
         return {
