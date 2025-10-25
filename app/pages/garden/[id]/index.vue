@@ -140,13 +140,15 @@ const { fetchPlants, updatePlant } = usePlant()
 
 // Plant category filters state
 const visibleCategories = ref<string[]>([
-  'arbre',
-  'arbre_fruitier',
-  'arbuste',
-  'fleur',
-  'legume',
-  'herbe',
-  'autre',
+  'tree',
+  'fruit_tree',
+  'shrub',
+  'flower',
+  'climber',
+  'vegetable',
+  'grass',
+  'aquatic',
+  'other',
 ])
 
 // Reactive state

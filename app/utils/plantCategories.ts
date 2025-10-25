@@ -1,15 +1,54 @@
-// Plant categories data
-export const plantCategories = [
-  { key: 'A', label: 'Arbre', value: 'arbre' },
-  { key: 'F', label: 'Arbre fruitier', value: 'arbre_fruitier' },
-  { key: 'B', label: 'Arbuste', value: 'arbuste' },
-  { key: 'L', label: 'Fleur', value: 'fleur' },
-  { key: 'G', label: 'Légume', value: 'legume' },
-  { key: 'H', label: 'Herbe', value: 'herbe' },
-  { key: 'X', label: 'Autre', value: 'autre' },
-]
+import type { PlantCategory } from '~/types/variety'
 
-// Helper function to get category info
+// Plant categories data - SOURCE UNIQUE DE VÉRITÉ
+export const PLANT_CATEGORIES = [
+  { key: 'A', label: 'Tree', value: 'tree' as PlantCategory },
+  { key: 'F', label: 'Fruit Tree', value: 'fruit_tree' as PlantCategory },
+  { key: 'B', label: 'Shrub', value: 'shrub' as PlantCategory },
+  { key: 'L', label: 'Flower', value: 'flower' as PlantCategory },
+  { key: 'C', label: 'Climber', value: 'climber' as PlantCategory },
+  { key: 'G', label: 'Vegetable', value: 'vegetable' as PlantCategory },
+  { key: 'H', label: 'Grass', value: 'grass' as PlantCategory },
+  { key: 'W', label: 'Aquatic', value: 'aquatic' as PlantCategory },
+  { key: 'X', label: 'Other', value: 'other' as PlantCategory },
+] as const
+
+// Backward compatibility
+export const plantCategories = PLANT_CATEGORIES
+
+// Helper functions
 export const getCategoryInfo = (categoryValue: string) => {
-  return plantCategories.find(cat => cat.value === categoryValue)
+  return PLANT_CATEGORIES.find(cat => cat.value === categoryValue)
 }
+
+export const getCategoryLabel = (categoryValue: string) => {
+  return getCategoryInfo(categoryValue)?.label || categoryValue
+}
+
+export const getCategoryKey = (categoryValue: string) => {
+  return getCategoryInfo(categoryValue)?.key || 'X'
+}
+
+export const getCategoryColor = (categoryValue: string) => {
+  const categoryColors = {
+    tree: 'success',
+    fruit_tree: 'warning',
+    shrub: 'info',
+    flower: 'secondary',
+    climber: 'info',
+    vegetable: 'primary',
+    grass: 'success',
+    aquatic: 'info',
+    other: 'neutral',
+  } as const
+  return categoryColors[categoryValue as keyof typeof categoryColors] || 'neutral'
+}
+
+// Formats for different use cases
+export const VARIETY_CATEGORIES_FOR_SELECT = PLANT_CATEGORIES.map(cat => ({
+  value: cat.value,
+  label: cat.label,
+}))
+
+// Type helpers
+export type PlantCategoryInfo = typeof PLANT_CATEGORIES[number]

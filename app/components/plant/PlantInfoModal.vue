@@ -134,7 +134,7 @@
 <script lang="ts" setup>
 import type { PlantData } from '~/types/plant'
 import { PLANT_STATUSES } from '~/types/plant'
-import { VARIETY_CATEGORIES } from '~/types/variety'
+import { getCategoryLabel } from '~/utils/plantCategories'
 
 interface Props {
   plant: PlantData
@@ -180,11 +180,6 @@ const getStatusColor = (status: string) => {
     default:
       return 'neutral'
   }
-}
-
-const getCategoryLabel = (category: string) => {
-  const categoryInfo = VARIETY_CATEGORIES.find(c => c.value === category)
-  return categoryInfo?.label || category
 }
 
 const formatDate = (dateString: string) => {

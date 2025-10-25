@@ -2,6 +2,7 @@ import { computed, type Ref } from 'vue'
 import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
 import { metersToPixels } from '~/utils/coordinates'
+import { getCategoryKey } from '~/utils/plantCategories'
 
 export const usePlantMarkers = (
   plants: Ref<PlantData[]>,
@@ -26,16 +27,7 @@ export const usePlantMarkers = (
 
   // Helper function to get category letter based on plant category
   const getCategoryLetter = (category: string) => {
-    const categoryMap: Record<string, string> = {
-      arbre: 'A',
-      arbre_fruitier: 'F',
-      arbuste: 'B',
-      fleur: 'L',
-      legume: 'G',
-      herbe: 'H',
-      autre: 'X',
-    }
-    return categoryMap[category] || 'X'
+    return getCategoryKey(category)
   }
 
   // Plant markers computed from plants data

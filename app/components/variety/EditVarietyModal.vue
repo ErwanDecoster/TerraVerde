@@ -2,7 +2,8 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 import { useVariety } from '~/composables/data/useVariety'
-import { VARIETY_CATEGORIES, type VarietyData } from '~/types/variety'
+import type { VarietyData } from '~/types/variety'
+import { VARIETY_CATEGORIES_FOR_SELECT } from '~/utils/plantCategories'
 
 interface Props {
   variety: VarietyData
@@ -47,7 +48,16 @@ const schema = z.object({
     .optional()
     .or(z.literal('')),
   category: z.enum(
-    ['arbre', 'arbre_fruitier', 'arbuste', 'fleur', 'legume', 'herbe', 'autre'],
+    [
+      'tree',
+      'fruit_tree',
+      'shrub',
+      'flower',
+      'climber',
+      'vegetable',
+      'grass',
+      'other',
+    ],
     {
       message: 'Category is required',
     },
@@ -213,7 +223,7 @@ function confirmDelete() {
         >
           <USelect
             v-model="state.category"
-            :items="VARIETY_CATEGORIES.slice()"
+            :items="VARIETY_CATEGORIES_FOR_SELECT.slice()"
             class="w-full"
             placeholder="Select category"
           />

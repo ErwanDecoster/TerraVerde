@@ -257,6 +257,7 @@ import type { GardenData } from '~/types/garden'
 import { useGarden } from '~/composables/data/useGarden'
 import { usePlant } from '~/composables/data/usePlant'
 import { useVariety } from '~/composables/data/useVariety'
+import { getCategoryColor, getCategoryLabel } from '~/utils/plantCategories'
 import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 import EditVarietyModal from '~/components/variety/EditVarietyModal.vue'
 
@@ -327,44 +328,17 @@ const filteredVarieties = computed(() => {
 const treeCount = computed(
   () =>
     varieties.value.filter(
-      v => v.category === 'arbre' || v.category === 'arbre_fruitier',
+      v => v.category === 'tree' || v.category === 'fruit_tree',
     ).length,
 )
 
 const flowerCount = computed(
-  () => varieties.value.filter(v => v.category === 'fleur').length,
+  () => varieties.value.filter(v => v.category === 'flower').length,
 )
 
 const vegetableCount = computed(
-  () => varieties.value.filter(v => v.category === 'legume').length,
+  () => varieties.value.filter(v => v.category === 'vegetable').length,
 )
-
-// Helper functions
-const getCategoryColor = (category: string) => {
-  const categoryColors = {
-    arbre: 'success',
-    arbre_fruitier: 'warning',
-    arbuste: 'info',
-    fleur: 'secondary',
-    legume: 'primary',
-    herbe: 'success',
-    autre: 'neutral',
-  }
-  return categoryColors[category as keyof typeof categoryColors] || 'neutral'
-}
-
-const getCategoryLabel = (category: string) => {
-  const categoryLabels = {
-    arbre: 'Tree',
-    arbre_fruitier: 'Fruit Tree',
-    arbuste: 'Shrub',
-    fleur: 'Flower',
-    legume: 'Vegetable',
-    herbe: 'Grass',
-    autre: 'Other',
-  }
-  return categoryLabels[category as keyof typeof categoryLabels] || category
-}
 
 const getPlantCountForVariety = (varietyId: number) => {
   return plants.value.filter(plant => plant.variety_id === varietyId).length

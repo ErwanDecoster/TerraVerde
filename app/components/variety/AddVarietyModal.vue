@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { VARIETY_CATEGORIES, type VarietyData } from '~/types/variety'
+import type { VarietyData } from '~/types/variety'
+import { VARIETY_CATEGORIES_FOR_SELECT } from '~/utils/plantCategories'
 import { z } from 'zod'
 import { useVariety } from '~/composables/data/useVariety'
 
@@ -38,7 +39,16 @@ const schema = z.object({
     .optional()
     .or(z.literal('')),
   category: z.enum(
-    ['arbre', 'arbre_fruitier', 'arbuste', 'fleur', 'legume', 'herbe', 'autre'],
+    [
+      'tree',
+      'fruit_tree',
+      'shrub',
+      'flower',
+      'climber',
+      'vegetable',
+      'grass',
+      'other',
+    ],
     {
       message: 'Category is required',
     },
@@ -54,7 +64,7 @@ const state = reactive<Partial<VarietySchema>>({
   harvest_period: '',
   main_color: '#22c55e',
   reference_url: '',
-  category: 'fleur',
+  category: 'flower',
 })
 
 // Computed for color chip
@@ -101,7 +111,7 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
       harvest_period: '',
       main_color: '#22c55e',
       reference_url: '',
-      category: 'fleur',
+      category: 'flower',
     })
   }
   catch (error) {
@@ -159,7 +169,7 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
         >
           <USelect
             v-model="state.category"
-            :items="VARIETY_CATEGORIES.slice()"
+            :items="VARIETY_CATEGORIES_FOR_SELECT.slice()"
             class="w-full"
             placeholder="Select category"
           />
