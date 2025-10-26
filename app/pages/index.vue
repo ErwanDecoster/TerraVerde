@@ -10,20 +10,23 @@ definePageMeta({
     <div class="border border-accented rounded p-8 text-center">
       <h1>Welcome on TerraVerde</h1>
       <ClientOnly>
-        <NuxtLink
-          v-if="user"
-          to="/gardens"
-          as
-        >
-          <UButton>Go to gardens</UButton>
-        </NuxtLink>
-        <NuxtLink
-          v-else
-          to="/login"
-          as
-        >
-          <UButton>Login</UButton>
-        </NuxtLink>
+        <div class="flex gap-2 justify-center mt-3">
+          <UButton
+            v-if="user"
+            to="/gardens"
+          >
+            Go to gardens
+          </UButton>
+          <UButton
+            v-else
+            to="/login"
+          >
+            Login
+          </UButton>
+          <UButton to="/public-gardens">
+            Explore Public Gardens
+          </UButton>
+        </div>
       </ClientOnly>
     </div>
     <div>
