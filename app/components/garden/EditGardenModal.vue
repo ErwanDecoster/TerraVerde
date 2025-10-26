@@ -27,7 +27,7 @@ const schema = z.object({
     .string()
     .min(1, 'Name is required')
     .max(100, 'Name cannot exceed 100 characters'),
-  backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color'),
+  isPublic: z.boolean().optional(),
   PixelsPerMeters: z
     .number()
     .min(1, 'Scale must be at least 1 Pixels per Meters')
@@ -50,12 +50,10 @@ export type EditGardenSchema = z.output<typeof schema>
 
 const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
-  backgroundColor: props.garden.background_color,
+  isPublic: props.garden.is_public || false,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
   backgroundImage: undefined,
 })
-
-const chip = computed(() => ({ backgroundColor: state.backgroundColor }))
 
 const loading = ref(false)
 const deleting = ref(false)
@@ -67,7 +65,7 @@ watch(
   (newGarden) => {
     Object.assign(state, {
       name: newGarden.name,
-      backgroundColor: newGarden.background_color,
+      isPublic: newGarden.is_public || false,
       backgroundImage: undefined,
     })
   },
@@ -84,7 +82,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
       props.garden.id,
       {
         name: validatedData.name,
-        backgroundColor: validatedData.backgroundColor,
+        isPublic: validatedData.isPublic || false,
         backgroundImage: validatedData.backgroundImage,
         PixelsPerMeters: validatedData.PixelsPerMeters,
       },
@@ -188,33 +186,14 @@ function confirmDelete() {
         </UFormField>
 
         <UFormField
-          label="Background Color"
-          name="backgroundColor"
-          required
+          label="Public Garden"
+          name="isPublic"
           class="col-span-2"
         >
-          <UPopover>
-            <UButton
-              label="Choose color"
-              color="neutral"
-              variant="outline"
-              class="w-full"
-            >
-              <template #leading>
-                <span
-                  :style="chip"
-                  class="size-3 rounded-full"
-                />
-              </template>
-            </UButton>
-
-            <template #content>
-              <UColorPicker
-                v-model="state.backgroundColor"
-                class="p-2"
-              />
-            </template>
-          </UPopover>
+          <USwitch
+            v-model="state.isPublic"
+            label="Make this garden visible to other"
+          />
         </UFormField>
 
         <UFormField

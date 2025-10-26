@@ -3,7 +3,6 @@ export interface GardenData {
   name: string
   x_position?: number
   y_position?: number
-  background_color: string
   background_image_url: string
   image_width: number
   image_height: number
@@ -11,6 +10,7 @@ export interface GardenData {
   min_zoom: number
   max_zoom: number
   pixels_per_meters: number
+  is_public: boolean
   created_at: string
   updated_at: string
   imagePath: string
@@ -23,16 +23,14 @@ export interface GardenPosition {
 
 export interface GardenFormData {
   name: string
-  position: GardenPosition
-  backgroundColor: string
+  isPublic: boolean
   backgroundImage: File
   PixelsPerMeters: number
 }
 
 export interface GardenUpdateFormData {
   name: string
-  position: GardenPosition
-  backgroundColor: string
+  isPublic: boolean
   backgroundImage?: File
   PixelsPerMeters: number
 }
