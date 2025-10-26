@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Loading state -->
     <div
       v-if="pending"
       class="flex justify-center items-center h-screen"
@@ -12,7 +11,6 @@
       <span class="ml-2">Loading varieties...</span>
     </div>
 
-    <!-- Error state -->
     <div
       v-else-if="error"
       class="flex justify-center items-center h-screen"
@@ -26,12 +24,10 @@
       />
     </div>
 
-    <!-- Main content -->
     <div
       v-else
       class="p-4"
     >
-      <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <div>
           <div class="flex items-center gap-2">
@@ -62,7 +58,6 @@
         </AddVarietyModal>
       </div>
 
-      <!-- Statistics -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <UCard>
           <div class="flex items-center gap-3">
@@ -133,7 +128,6 @@
         </UCard>
       </div>
 
-      <!-- Varieties table -->
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -262,16 +256,13 @@ import { getCategoryColor, getCategoryLabel } from '~/utils/plantCategories'
 import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 import EditVarietyModal from '~/components/variety/EditVarietyModal.vue'
 
-// Page meta
 definePageMeta({
   middleware: ['auth'],
 })
 
-// Get route params
 const route = useRoute()
 const gardenId = route.params.id as string
 
-// Composables
 const { fetchGardenById } = useGarden()
 const { fetchPlants } = usePlant()
 const { fetchVarieties } = useVariety()
@@ -282,7 +273,6 @@ const {
   syncVarietyInPlants,
 } = useVarietySync()
 
-// State
 const garden = ref<GardenData | null>(null)
 const varieties = ref<VarietyData[]>([])
 const plants = ref<PlantData[]>([])
@@ -290,7 +280,6 @@ const pending = ref(true)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
 
-// Table columns configuration
 const columns = [
   {
     accessorKey: 'name',
@@ -318,7 +307,6 @@ const columns = [
   },
 ]
 
-// Computed properties
 const filteredVarieties = computed(() => {
   if (!searchQuery.value) return varieties.value
 
@@ -351,7 +339,6 @@ const getPlantCountForVariety = (varietyId: number) => {
   return plants.value.filter(plant => plant.variety_id === varietyId).length
 }
 
-// Event handlers
 const onVarietyAdded = (variety: VarietyData) => {
   addVarietyToList(varieties, variety)
 }
@@ -368,13 +355,11 @@ const onVarietyDeleted = (varietyId: string) => {
   )
 }
 
-// Load data
 const loadData = async () => {
   try {
     pending.value = true
     error.value = null
 
-    // Load garden data
     const gardenData = await fetchGardenById(gardenId)
     if (!gardenData) {
       error.value = 'Garden not found'
@@ -382,7 +367,6 @@ const loadData = async () => {
     }
     garden.value = gardenData
 
-    // Load varieties and plants
     const [varietiesData, plantsData] = await Promise.all([
       fetchVarieties(),
       fetchPlants(gardenId),
@@ -400,7 +384,6 @@ const loadData = async () => {
   }
 }
 
-// Initialize
 onMounted(() => {
   loadData()
 })

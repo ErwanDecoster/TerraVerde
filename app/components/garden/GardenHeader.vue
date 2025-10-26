@@ -82,19 +82,17 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Computed properties for statistics
 const plantsCount = computed(() => props.plants.length)
 
 const varietiesCount = computed(() => {
   const uniqueVarietyIds = new Set(
     props.plants
-      .filter(plant => plant.variety_id) // Filter out plants without variety
+      .filter(plant => plant.variety_id)
       .map(plant => plant.variety_id),
   )
   return uniqueVarietyIds.size
 })
 
-// Handle editing mode toggle
 const handleEditingToggle = (value: string | boolean) => {
   emit('update:editing-enabled', Boolean(value))
 }

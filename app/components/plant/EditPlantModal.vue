@@ -27,14 +27,11 @@ const toast = useToast()
 const { updatePlant, deletePlant, addMultiplePlants } = usePlant()
 const { fetchVarieties } = useVariety()
 
-// Varieties state
 const varieties = ref<VarietyData[]>([])
 const varietiesLoading = ref(false)
 
-// Delete confirmation state
 const showDeleteConfirmation = ref(false)
 
-// Validation schema with Zod (same as AddPlantModal)
 const schema = z.object({
   name: z
     .string()
@@ -61,7 +58,6 @@ const schema = z.object({
 
 export type EditPlantSchema = z.output<typeof schema>
 
-// Form state - initialize with existing plant data
 const state = reactive<Partial<EditPlantSchema>>({
   name: props.plant.name,
   description: props.plant.description,
@@ -72,18 +68,14 @@ const state = reactive<Partial<EditPlantSchema>>({
   width: props.plant.width,
 })
 
-// Submission state
 const loading = ref(false)
 const deleting = ref(false)
 
-// Multiple plant copying
 const multipleCopyingCount = ref(1)
 const copying = ref(false)
 
-// Form reference
 const form = ref()
 
-// Computed varieties options for select
 const varietyOptions = computed(() => {
   return varieties.value.map(variety => ({
     label: `${variety.name} ${
@@ -93,9 +85,8 @@ const varietyOptions = computed(() => {
   }))
 })
 
-// Load varieties when modal opens
 const loadVarieties = async () => {
-  if (varieties.value.length > 0) return // Already loaded
+  if (varieties.value.length > 0) return
   varietiesLoading.value = true
   try {
     varieties.value = await fetchVarieties()
@@ -113,19 +104,16 @@ const loadVarieties = async () => {
   }
 }
 
-// Watch for modal opening to load varieties
 onMounted(() => {
   loadVarieties()
 })
 
-// Handle new variety added
 const onVarietyAdded = (newVariety: VarietyData) => {
   varieties.value.unshift(newVariety)
-  // Auto-select the new variety
+
   state.variety_id = newVariety.id.toString()
 }
 
-// Handle variety updated
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   const index = varieties.value.findIndex(v => v.id === updatedVariety.id)
   if (index !== -1) {
@@ -134,7 +122,6 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
   emit('varietyUpdated', updatedVariety)
 }
 
-// Get currently selected variety
 const selectedVariety = computed(() => {
   if (!state.variety_id) return null
   return (
@@ -142,7 +129,6 @@ const selectedVariety = computed(() => {
   )
 })
 
-// Watch for prop changes to update form state
 watch(
   () => props.plant,
   (newPlant) => {
@@ -159,15 +145,12 @@ watch(
   { deep: true },
 )
 
-// Submission function
 async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
   loading.value = true
 
   try {
-    // Data is already validated by the schema
     const validatedData = event.data
 
-    // Use the composable to update the plant
     const plantData = await updatePlant(props.plant.id, {
       name: validatedData.name,
       description: validatedData.description || '',
@@ -181,7 +164,6 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
     emit('plantUpdated', plantData)
     open.value = false
 
-    // Success notification
     toast.add({
       title: 'Plant Updated',
       description: 'The plant has been successfully updated',
@@ -191,7 +173,6 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
   catch (error) {
     console.error('Error updating plant:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while updating the plant',
@@ -203,7 +184,6 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
   }
 }
 
-// Delete function
 async function onDelete() {
   deleting.value = true
 
@@ -214,7 +194,6 @@ async function onDelete() {
     open.value = false
     showDeleteConfirmation.value = false
 
-    // Success notification
     toast.add({
       title: 'Plant Deleted',
       description: 'The plant has been successfully deleted',
@@ -224,7 +203,6 @@ async function onDelete() {
   catch (error) {
     console.error('Error deleting plant:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while deleting the plant',
@@ -236,17 +214,14 @@ async function onDelete() {
   }
 }
 
-// Confirm delete function
 function confirmDelete() {
   showDeleteConfirmation.value = true
 }
 
-// Copy plant function
 async function copyPlant() {
   copying.value = true
 
   try {
-    // Use the original plant data as fallback for required fields
     const validatedData = {
       name: state.name || props.plant.name,
       description: state.description || props.plant.description || '',
@@ -259,9 +234,8 @@ async function copyPlant() {
       width: state.width || props.plant.width,
     }
 
-    // Calculate spacing based on plant width in pixels
-    const plantWidthMeters = validatedData.width || 1 // Default to 1 meter if no width
-    const spacingMultiplier = 1.5 // Space plants 1.5x their width apart
+    const plantWidthMeters = validatedData.width || 1
+    const spacingMultiplier = 1.5
     const spacingMeters
       = plantWidthMeters * spacingMultiplier + plantWidthMeters
 
@@ -275,7 +249,7 @@ async function copyPlant() {
         planted_date: validatedData.planted_date,
         height: validatedData.height,
         width: validatedData.width,
-        // Position copies based on plant width - 3 plants per row
+
         x_position: (props.plant.x_position || 0) + (index % 3) * spacingMeters,
         y_position:
           (props.plant.y_position || 0) + Math.floor(index / 3) * spacingMeters,
@@ -285,10 +259,8 @@ async function copyPlant() {
 
     const createdPlants = await addMultiplePlants(plantsToCreate)
 
-    // Emit each copied plant individually so the parent can add them
     createdPlants.forEach((plant: PlantData) => emit('plantCopied', plant))
 
-    // Success notification
     const plantCount = multipleCopyingCount.value
     toast.add({
       title: plantCount === 1 ? 'Plant Copied' : 'Plants Copied',
@@ -299,13 +271,11 @@ async function copyPlant() {
       color: 'success',
     })
 
-    // Reset copy count
     multipleCopyingCount.value = 1
   }
   catch (error) {
     console.error('Error copying plant:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while copying the plant',
@@ -463,7 +433,6 @@ async function copyPlant() {
 
     <template #footer="{ close }">
       <div class="flex justify-between w-full">
-        <!-- Left side: Delete button -->
         <div v-if="!showDeleteConfirmation">
           <UButton
             color="error"
@@ -476,7 +445,6 @@ async function copyPlant() {
           </UButton>
         </div>
 
-        <!-- Delete confirmation -->
         <div
           v-else
           class="flex gap-2"
@@ -501,7 +469,6 @@ async function copyPlant() {
           </UButton>
         </div>
 
-        <!-- Right side: Cancel, Update and Copy buttons -->
         <div class="flex gap-0.5">
           <UButton
             color="neutral"

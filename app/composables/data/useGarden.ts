@@ -76,11 +76,9 @@ export const useGarden = () => {
     let uploadedImagePath: string | null = null
 
     try {
-      // Upload image
       const uploadResult = await uploadGardenImage(formData.backgroundImage, uuid)
       uploadedImagePath = uploadResult.path
 
-      // Create garden in database
       const gardenDbData = {
         id: uuid,
         name: formData.name,
@@ -95,14 +93,12 @@ export const useGarden = () => {
 
       const createdGarden = await createGarden(gardenDbData)
 
-      // Return garden data with public URL
       return {
         ...createdGarden,
         background_image_url: getImagePublicUrl(uploadResult.path),
       }
     }
     catch (error) {
-      // Clean up uploaded image if database insertion failed
       if (uploadedImagePath) {
         await removeGardenImage(uploadedImagePath)
       }
@@ -123,7 +119,6 @@ export const useGarden = () => {
       throw new Error(`Failed to fetch gardens: ${error.message}`)
     }
 
-    // Transform the data to include public URLs
     return data.map(garden => ({
       ...garden,
       background_image_url: getImagePublicUrl(garden.background_image_url),
@@ -142,13 +137,11 @@ export const useGarden = () => {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // No rows returned
         return null
       }
       throw new Error(`Failed to fetch garden: ${error.message}`)
     }
 
-    // Transform the data to include public URL
     return {
       ...data,
       background_image_url: getImagePublicUrl(data.background_image_url),
@@ -167,19 +160,16 @@ export const useGarden = () => {
     let shouldCleanupOldImage = false
 
     try {
-      // Check if a new image was uploaded
       const hasNewImage = !!formData.backgroundImage
       let imagePath = currentImagePath || ''
 
       if (hasNewImage && formData.backgroundImage) {
-        // Upload new image
         const uploadResult = await uploadGardenImage(formData.backgroundImage, `${gardenId}_updated_${Date.now()}`)
         uploadedImagePath = uploadResult.path
         imagePath = uploadResult.path
         shouldCleanupOldImage = true
       }
 
-      // Update garden in database
       const gardenDbData = {
         name: formData.name,
         x_position: 0,
@@ -187,7 +177,6 @@ export const useGarden = () => {
         background_color: formData.backgroundColor,
         pixels_per_meters: formData.PixelsPerMeters,
         ...(hasNewImage && { background_image_url: imagePath }),
-        // Keep existing dimensions for now
       }
 
       const { data, error } = await $supabase
@@ -198,26 +187,22 @@ export const useGarden = () => {
         .single()
 
       if (error) {
-        // Clean up uploaded image if database update failed
         if (uploadedImagePath) {
           await removeGardenImage(uploadedImagePath)
         }
         throw new Error(`Failed to update garden: ${error.message}`)
       }
 
-      // Clean up old image if new one was uploaded successfully
       if (shouldCleanupOldImage && currentImagePath && currentImagePath !== imagePath) {
         await removeGardenImage(currentImagePath)
       }
 
-      // Return updated garden data with public URL
       return {
         ...data,
         background_image_url: getImagePublicUrl(data.background_image_url),
       }
     }
     catch (error) {
-      // Clean up uploaded image if update failed
       if (uploadedImagePath) {
         await removeGardenImage(uploadedImagePath)
       }
@@ -229,7 +214,6 @@ export const useGarden = () => {
    * Delete a garden and its associated image
    */
   const deleteGarden = async (gardenId: string, imagePath?: string) => {
-    // Delete from database
     const { error } = await $supabase
       .from('garden_config')
       .delete()
@@ -239,7 +223,6 @@ export const useGarden = () => {
       throw new Error(`Failed to delete garden: ${error.message}`)
     }
 
-    // Clean up image if provided
     if (imagePath) {
       await removeGardenImage(imagePath)
     }

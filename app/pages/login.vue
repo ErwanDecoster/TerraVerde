@@ -102,9 +102,6 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
             tabindex="-1"
           >Forgot password?</ULink>
         </template>
-        <template #validation>
-          <!-- <UAlert color="error" icon="i-lucide-info" title="Error signing in" /> -->
-        </template>
       </UAuthForm>
     </UPageCard>
   </div>

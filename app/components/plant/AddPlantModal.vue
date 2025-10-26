@@ -28,11 +28,9 @@ const toast = useToast()
 const { addPlant, addMultiplePlants } = usePlant()
 const { fetchVarieties } = useVariety()
 
-// Varieties state
 const varieties = ref<VarietyData[]>([])
 const varietiesLoading = ref(false)
 
-// Validation schema with Zod
 const schema = z.object({
   name: z
     .string()
@@ -59,27 +57,22 @@ const schema = z.object({
 
 export type PlantSchema = z.output<typeof schema>
 
-// Form state
 const state = reactive<Partial<PlantSchema>>({
   name: '',
   description: '',
   variety_id: '',
   status: 'planted' as PlantStatus,
-  planted_date: new Date().toISOString().split('T')[0], // Today's date
+  planted_date: new Date().toISOString().split('T')[0],
   height: 0.5,
   width: 0.5,
 })
 
-// Submission state
 const loading = ref(false)
 
-// Multiple plants creation
 const multipleAddingCount = ref(1)
 
-// Form reference
 const form = ref()
 
-// Computed varieties options for select
 const varietyOptions = computed(() => {
   return varieties.value.map(variety => ({
     label: `${variety.name} ${
@@ -89,9 +82,8 @@ const varietyOptions = computed(() => {
   }))
 })
 
-// Load varieties when modal opens
 const loadVarieties = async () => {
-  if (varieties.value.length > 0) return // Already loaded
+  if (varieties.value.length > 0) return
   varietiesLoading.value = true
   try {
     varieties.value = await fetchVarieties()
@@ -109,19 +101,16 @@ const loadVarieties = async () => {
   }
 }
 
-// Watch for modal opening to load varieties
 onMounted(() => {
   loadVarieties()
 })
 
-// Handle new variety added
 const onVarietyAdded = (newVariety: VarietyData) => {
   varieties.value.unshift(newVariety)
-  // Auto-select the new variety
+
   state.variety_id = newVariety.id.toString()
 }
 
-// Handle variety updated
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   const index = varieties.value.findIndex(v => v.id === updatedVariety.id)
   if (index !== -1) {
@@ -130,7 +119,6 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
   emit('varietyUpdated', updatedVariety)
 }
 
-// Get currently selected variety
 const selectedVariety = computed(() => {
   if (!state.variety_id) return null
   return (
@@ -138,16 +126,13 @@ const selectedVariety = computed(() => {
   )
 })
 
-// Submission function
 async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
   loading.value = true
 
   try {
-    // Data is already validated by the schema
     const validatedData = event.data
 
     if (multipleAddingCount.value === 1) {
-      // Single plant creation
       const plantData = await addPlant({
         name: validatedData.name,
         description: validatedData.description || '',
@@ -164,17 +149,14 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       emit('plantAdded', plantData)
     }
     else {
-      // Multiple plants creation
       const baseX = props.clickCoordinates?.x || 0
       const baseY = props.clickCoordinates?.y || 0
 
-      // Calculate spacing based on plant width for realistic positioning
       const plantWidthMeters = validatedData.width
-      const spacingMultiplier = 1.5 // Space plants 1.5x their width apart
+      const spacingMultiplier = 1.5
       const spacingMeters
         = plantWidthMeters * spacingMultiplier + plantWidthMeters
 
-      // Create array of plant data for bulk insert
       const plantsToCreate = Array.from(
         { length: multipleAddingCount.value },
         (_, index) => ({
@@ -185,20 +167,18 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           planted_date: validatedData.planted_date,
           height: validatedData.height,
           width: validatedData.width,
-          // Distribute plants in a grid pattern with spacing based on plant width
-          x_position: baseX + (index % 3) * spacingMeters, // 3 plants per row
-          y_position: baseY + Math.floor(index / 3) * spacingMeters, // New row every 3 plants
+
+          x_position: baseX + (index % 3) * spacingMeters,
+          y_position: baseY + Math.floor(index / 3) * spacingMeters,
           garden_id: props.gardenId || '',
         }),
       )
 
       const createdPlants = await addMultiplePlants(plantsToCreate)
 
-      // Emit each plant individually so the parent can add them
       createdPlants.forEach((plant: PlantData) => emit('plantAdded', plant))
     }
 
-    // Success notification
     const plantCount = multipleAddingCount.value
     toast.add({
       title: plantCount === 1 ? 'Plant Added' : 'Plants Added',
@@ -211,7 +191,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
 
     open.value = false
 
-    // Reset form
     Object.assign(state, {
       name: '',
       description: '',
@@ -222,13 +201,11 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
       width: 0,
     })
 
-    // Reset multiple count
     multipleAddingCount.value = 1
   }
   catch (error) {
     console.error('Error adding plant:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while adding the plant',

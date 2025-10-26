@@ -149,13 +149,11 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Computed for v-model
 const isOpen = computed({
   get: () => props.open,
   set: value => emit('update:open', value),
 })
 
-// Utility functions
 const getStatusLabel = (status: string) => {
   const statusInfo = PLANT_STATUSES.find(s => s.value === status)
   return statusInfo?.label || status
@@ -190,7 +188,6 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Handle edit request
 const openEditModal = () => {
   emit('edit-requested', props.plant)
   isOpen.value = false

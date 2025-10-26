@@ -14,7 +14,6 @@ const open = ref(false)
 const toast = useToast()
 const { addGarden } = useGarden()
 
-// Validation schema with Zod
 const schema = z.object({
   name: z
     .string()
@@ -40,7 +39,6 @@ const schema = z.object({
 
 export type GardenSchema = z.output<typeof schema>
 
-// Form state
 const state = reactive<Partial<GardenSchema>>({
   name: '',
   backgroundColor: '#ffffff',
@@ -48,24 +46,18 @@ const state = reactive<Partial<GardenSchema>>({
   backgroundImage: undefined,
 })
 
-// Computed for color chip
 const chip = computed(() => ({ backgroundColor: state.backgroundColor }))
 
-// Submission state
 const loading = ref(false)
 
-// Form reference
 const form = ref()
 
-// Submission function
 async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
   loading.value = true
 
   try {
-    // Data is already validated by the schema
     const validatedData = event.data
 
-    // Use the composable to add the garden
     const gardenData = await addGarden({
       name: validatedData.name,
       backgroundColor: validatedData.backgroundColor,
@@ -76,14 +68,12 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     emit('gardenAdded', gardenData)
     open.value = false
 
-    // Reset form
     Object.assign(state, {
       name: '',
       backgroundColor: '#ffffff',
       backgroundImage: undefined,
     })
 
-    // Success notification
     toast.add({
       title: 'Garden Added',
       description: 'The garden has been successfully added',
@@ -93,7 +83,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
   catch (error) {
     console.error('Error adding garden:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while adding the garden',
@@ -139,7 +128,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <!-- Background color -->
         <UFormField
           label="Background Color"
           name="backgroundColor"
@@ -170,7 +158,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           </UPopover>
         </UFormField>
 
-        <!-- Scale (Pixels per Meters) -->
         <UFormField
           label="Scale (Pixels per Meters)"
           name="PixelsPerMeters"
@@ -189,7 +176,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <!-- Background Image Upload -->
         <UFormField
           name="backgroundImage"
           label="Background Image"

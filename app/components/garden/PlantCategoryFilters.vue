@@ -46,7 +46,6 @@
 <script setup lang="ts">
 import { plantCategories } from '~/utils/plantCategories'
 
-// Props & Emits
 interface Props {
   visibleCategories: string[]
 }
@@ -58,13 +57,11 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Computed for reactive access to visible categories
 const visibleCategories = computed({
   get: () => props.visibleCategories,
   set: (value: string[]) => emit('update:visibleCategories', value),
 })
 
-// Toggle single category visibility
 const toggleCategory = (categoryValue: string) => {
   const currentCategories = [...visibleCategories.value]
   const index = currentCategories.indexOf(categoryValue)
@@ -79,7 +76,6 @@ const toggleCategory = (categoryValue: string) => {
   emit('update:visibleCategories', currentCategories)
 }
 
-// Toggle all categories
 const toggleAllCategories = () => {
   if (visibleCategories.value.length === plantCategories.length) {
     emit('update:visibleCategories', [])

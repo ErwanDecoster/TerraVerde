@@ -9,37 +9,33 @@ export const usePlantMarkers = (
   visibleCategories: Ref<string[]>,
   garden: Ref<GardenData>,
 ) => {
-  // Helper function to get stroke color based on plant status
   const getPlantStatusStroke = (status: string) => {
     switch (status) {
       case 'healthy':
         return '#00000000'
       case 'sick':
-        return '#f59e0b' // amber
+        return '#f59e0b'
       case 'dead':
-        return '#ef4444' // red
+        return '#ef4444'
       case 'planted':
         return '#00000000'
       default:
-        return '#6b7280' // gray
+        return '#6b7280'
     }
   }
 
-  // Helper function to get category letter based on plant category
   const getCategoryLetter = (category: string) => {
     return getCategoryKey(category)
   }
 
-  // Plant markers computed from plants data
   const plantMarkers = computed(() => {
     if (!garden.value) return []
 
-    const PixelsPerMeters = garden.value.pixels_per_meters || 20 // Default to 20 pixels per meter
+    const PixelsPerMeters = garden.value.pixels_per_meters
 
     return plants.value
       .filter(plant => visibleCategories.value.includes(plant.variety.category))
       .map((plant) => {
-        // Convert plant position from meters to pixels using the garden's scale
         const pixelX = plant.x_position
         const pixelY = plant.y_position
 
@@ -50,7 +46,7 @@ export const usePlantMarkers = (
 
         return {
           id: plant.id,
-          plant: plant, // Keep reference to the plant data
+          plant: plant,
           name: `plant-${plant.id}`,
           config: {
             x: pixelX,
@@ -59,7 +55,6 @@ export const usePlantMarkers = (
             fill: plant.variety.main_color || '#ffffff',
             stroke: getPlantStatusStroke(plant.status),
             strokeWidth: 1,
-            // Add hover effects
             opacity: plant.status === 'dead' ? 0.6 : 1,
           },
         }

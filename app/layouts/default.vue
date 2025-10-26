@@ -9,8 +9,6 @@ const { user, logout, loading } = useAuth()
         <BrandLogo />
       </template>
 
-      <!-- <UNavigationMenu :items="items" /> -->
-
       <template #right>
         <UColorModeSelect />
 

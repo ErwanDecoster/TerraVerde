@@ -1,5 +1,3 @@
-// Types for Garden/Map management
-
 export interface GardenData {
   id: string
   name: string
@@ -23,7 +21,6 @@ export interface GardenPosition {
   y: number
 }
 
-// Form data types
 export interface GardenFormData {
   name: string
   position: GardenPosition
@@ -32,7 +29,6 @@ export interface GardenFormData {
   PixelsPerMeters: number
 }
 
-// Update form data types (backgroundImage is optional)
 export interface GardenUpdateFormData {
   name: string
   position: GardenPosition

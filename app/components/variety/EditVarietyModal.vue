@@ -21,10 +21,8 @@ const open = ref(false)
 const toast = useToast()
 const { updateVariety, deleteVariety } = useVariety()
 
-// Delete confirmation state
 const showDeleteConfirmation = ref(false)
 
-// Validation schema with Zod (same as AddVarietyModal)
 const schema = z.object({
   name: z
     .string()
@@ -66,7 +64,6 @@ const schema = z.object({
 
 export type EditVarietySchema = z.output<typeof schema>
 
-// Form state - initialize with existing variety data
 const state = reactive<Partial<EditVarietySchema>>({
   name: props.variety.name,
   scientific_name: props.variety.scientific_name || '',
@@ -76,17 +73,13 @@ const state = reactive<Partial<EditVarietySchema>>({
   category: props.variety.category,
 })
 
-// Computed for color chip
 const chip = computed(() => ({ backgroundColor: state.main_color }))
 
-// Submission state
 const loading = ref(false)
 const deleting = ref(false)
 
-// Form reference
 const form = ref()
 
-// Watch for prop changes to update form state
 watch(
   () => props.variety,
   (newVariety) => {
@@ -102,15 +95,12 @@ watch(
   { deep: true },
 )
 
-// Submission function
 async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
   loading.value = true
 
   try {
-    // Data is already validated by the schema
     const validatedData = event.data
 
-    // Use the composable to update the variety
     const varietyData = await updateVariety(props.variety.id, {
       name: validatedData.name,
       scientific_name: validatedData.scientific_name || null,
@@ -123,7 +113,6 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
     emit('varietyUpdated', varietyData)
     open.value = false
 
-    // Success notification
     toast.add({
       title: 'Variety Updated',
       description: 'The variety has been successfully updated',
@@ -133,7 +122,6 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
   catch (error) {
     console.error('Error updating variety:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while updating the variety',
@@ -145,7 +133,6 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
   }
 }
 
-// Delete function
 async function onDelete() {
   deleting.value = true
 
@@ -156,7 +143,6 @@ async function onDelete() {
     open.value = false
     showDeleteConfirmation.value = false
 
-    // Success notification
     toast.add({
       title: 'Variety Deleted',
       description: 'The variety has been successfully deleted',
@@ -166,7 +152,6 @@ async function onDelete() {
   catch (error) {
     console.error('Error deleting variety:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while deleting the variety',
@@ -178,7 +163,6 @@ async function onDelete() {
   }
 }
 
-// Confirm delete function
 function confirmDelete() {
   showDeleteConfirmation.value = true
 }
@@ -303,7 +287,6 @@ function confirmDelete() {
 
     <template #footer="{ close }">
       <div class="flex justify-between w-full">
-        <!-- Left side: Delete button -->
         <div v-if="!showDeleteConfirmation">
           <UButton
             color="error"
@@ -316,7 +299,6 @@ function confirmDelete() {
           </UButton>
         </div>
 
-        <!-- Delete confirmation -->
         <div
           v-else
           class="flex gap-2"
@@ -341,7 +323,6 @@ function confirmDelete() {
           </UButton>
         </div>
 
-        <!-- Right side: Cancel and Update buttons -->
         <div class="flex gap-0.5">
           <UButton
             color="neutral"

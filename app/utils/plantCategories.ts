@@ -1,6 +1,5 @@
 import type { PlantCategory } from '~/types/variety'
 
-// Plant categories data - SOURCE UNIQUE DE VÉRITÉ
 export const PLANT_CATEGORIES = [
   { key: 'A', label: 'Tree', value: 'tree' as PlantCategory },
   { key: 'F', label: 'Fruit Tree', value: 'fruit_tree' as PlantCategory },
@@ -13,10 +12,7 @@ export const PLANT_CATEGORIES = [
   { key: 'X', label: 'Other', value: 'other' as PlantCategory },
 ] as const
 
-// Backward compatibility
 export const plantCategories = PLANT_CATEGORIES
-
-// Helper functions
 export const getCategoryInfo = (categoryValue: string) => {
   return PLANT_CATEGORIES.find(cat => cat.value === categoryValue)
 }
@@ -44,11 +40,9 @@ export const getCategoryColor = (categoryValue: string) => {
   return categoryColors[categoryValue as keyof typeof categoryColors] || 'neutral'
 }
 
-// Formats for different use cases
 export const VARIETY_CATEGORIES_FOR_SELECT = PLANT_CATEGORIES.map(cat => ({
   value: cat.value,
   label: cat.label,
 }))
 
-// Type helpers
 export type PlantCategoryInfo = typeof PLANT_CATEGORIES[number]

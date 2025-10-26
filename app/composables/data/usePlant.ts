@@ -42,7 +42,6 @@ export const usePlant = () => {
   const addPlant = async (formData: PlantFormData): Promise<PlantData> => {
     const uuid = crypto.randomUUID()
 
-    // Create plant in database
     const plantDbData = {
       id: uuid,
       name: formData.name,
@@ -98,7 +97,6 @@ export const usePlant = () => {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // No rows returned
         return null
       }
       throw new Error(`Failed to fetch plant: ${error.message}`)
@@ -114,7 +112,6 @@ export const usePlant = () => {
     plantId: string,
     formData: PlantUpdateFormData,
   ): Promise<PlantData> => {
-    // Update plant in database
     const plantDbData = {
       name: formData.name,
       description: formData.description,
@@ -149,7 +146,6 @@ export const usePlant = () => {
    * Delete a plant
    */
   const deletePlant = async (plantId: string) => {
-    // Delete from database
     const { error } = await $supabase
       .from('plants')
       .delete()
@@ -164,7 +160,6 @@ export const usePlant = () => {
    * Add multiple plants in bulk
    */
   const addMultiplePlants = async (plantsData: PlantFormData[]): Promise<PlantData[]> => {
-    // Generate UUIDs and create database data for all plants
     const plantsDbData = plantsData.map(plantData => ({
       id: crypto.randomUUID(),
       name: plantData.name,
@@ -180,7 +175,6 @@ export const usePlant = () => {
       garden_id: plantData.garden_id,
     }))
 
-    // Bulk insert using Supabase
     const { data, error } = await $supabase
       .from('plants')
       .insert(plantsDbData)

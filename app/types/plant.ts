@@ -1,5 +1,3 @@
-// Types for Plant management
-
 import type { VarietyData } from './variety'
 
 export interface PlantData {
@@ -15,14 +13,13 @@ export interface PlantData {
   width: number
   x_position?: number
   y_position?: number
-  garden_id?: string // Which garden this plant belongs to
+  garden_id?: string
   created_at: string
   updated_at: string
 }
 
 export type PlantStatus = 'healthy' | 'sick' | 'dead' | 'planted'
 
-// Form data types
 export interface PlantFormData {
   name: string
   description: string
@@ -36,7 +33,6 @@ export interface PlantFormData {
   garden_id?: string
 }
 
-// Update form data types (all fields editable)
 export interface PlantUpdateFormData {
   name: string
   description: string

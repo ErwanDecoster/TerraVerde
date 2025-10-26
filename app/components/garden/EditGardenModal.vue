@@ -20,10 +20,8 @@ const open = ref(false)
 const toast = useToast()
 const { updateGarden, deleteGarden } = useGarden()
 
-// Delete confirmation state
 const showDeleteConfirmation = ref(false)
 
-// Validation schema with Zod (same as AddGardenModal but backgroundImage is optional)
 const schema = z.object({
   name: z
     .string()
@@ -50,7 +48,6 @@ const schema = z.object({
 
 export type EditGardenSchema = z.output<typeof schema>
 
-// Form state - initialize with existing garden data
 const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   backgroundColor: props.garden.background_color,
@@ -58,17 +55,13 @@ const state = reactive<Partial<EditGardenSchema>>({
   backgroundImage: undefined,
 })
 
-// Computed for color chip
 const chip = computed(() => ({ backgroundColor: state.backgroundColor }))
 
-// Submission state
 const loading = ref(false)
 const deleting = ref(false)
 
-// Form reference
 const form = ref()
 
-// Watch for prop changes to update form state
 watch(
   () => props.garden,
   (newGarden) => {
@@ -81,15 +74,12 @@ watch(
   { deep: true },
 )
 
-// Submission function
 async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
   loading.value = true
 
   try {
-    // Data is already validated by the schema
     const validatedData = event.data
 
-    // Use the composable to update the garden
     const gardenData = await updateGarden(
       props.garden.id,
       {
@@ -98,16 +88,14 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
         backgroundImage: validatedData.backgroundImage,
         PixelsPerMeters: validatedData.PixelsPerMeters,
       },
-      props.garden.background_image_url, // Pass current image path for cleanup
+      props.garden.background_image_url,
     )
 
     emit('gardenUpdated', gardenData)
     open.value = false
 
-    // Reset backgroundImage field only (keep other fields as they are the updated values)
     state.backgroundImage = undefined
 
-    // Success notification
     toast.add({
       title: 'Garden Updated',
       description: 'The garden has been successfully updated',
@@ -117,7 +105,6 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
   catch (error) {
     console.error('Error updating garden:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while updating the garden',
@@ -129,12 +116,10 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
   }
 }
 
-// Delete function
 async function onDelete() {
   deleting.value = true
 
   try {
-    // Extract the image path from the URL for cleanup
     const imagePath = props.garden.background_image_url.split('/').pop() || ''
 
     await deleteGarden(props.garden.id, imagePath)
@@ -143,7 +128,6 @@ async function onDelete() {
     open.value = false
     showDeleteConfirmation.value = false
 
-    // Success notification
     toast.add({
       title: 'Garden Deleted',
       description: 'The garden has been successfully deleted',
@@ -153,7 +137,6 @@ async function onDelete() {
   catch (error) {
     console.error('Error deleting garden:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while deleting the garden',
@@ -165,7 +148,6 @@ async function onDelete() {
   }
 }
 
-// Confirm delete function
 function confirmDelete() {
   showDeleteConfirmation.value = true
 }
@@ -205,7 +187,6 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <!-- Background color -->
         <UFormField
           label="Background Color"
           name="backgroundColor"
@@ -254,7 +235,6 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <!-- Current Background Image Preview -->
         <div class="space-y-2 col-span-2">
           <label class="block text-sm font-medium text-gray-700">Current Background Image</label>
           <img
@@ -264,7 +244,6 @@ function confirmDelete() {
           >
         </div>
 
-        <!-- Background Image Upload -->
         <UFormField
           name="backgroundImage"
           label="New Background Image (Optional)"
@@ -282,7 +261,6 @@ function confirmDelete() {
 
     <template #footer="{ close }">
       <div class="flex justify-between w-full">
-        <!-- Left side: Delete button -->
         <div v-if="!showDeleteConfirmation">
           <UButton
             color="error"
@@ -295,7 +273,6 @@ function confirmDelete() {
           </UButton>
         </div>
 
-        <!-- Delete confirmation -->
         <div
           v-else
           class="flex gap-2"
@@ -320,7 +297,6 @@ function confirmDelete() {
           </UButton>
         </div>
 
-        <!-- Right side: Cancel and Update buttons -->
         <div class="flex gap-2">
           <UButton
             color="neutral"

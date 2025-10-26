@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Loading state -->
     <div
       v-if="pending"
       class="flex justify-center items-center h-screen"
@@ -12,7 +11,6 @@
       <span class="ml-2">Loading plants...</span>
     </div>
 
-    <!-- Error state -->
     <div
       v-else-if="error"
       class="flex justify-center items-center h-screen"
@@ -26,12 +24,10 @@
       />
     </div>
 
-    <!-- Main content -->
     <div
       v-else
       class="p-4"
     >
-      <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <div>
           <div class="flex items-center gap-2">
@@ -66,7 +62,6 @@
         </AddPlantModal>
       </div>
 
-      <!-- Statistics -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <UCard>
           <div class="flex items-center gap-3">
@@ -137,7 +132,6 @@
         </UCard>
       </div>
 
-      <!-- Plants table -->
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -244,28 +238,23 @@ import { useVarietySync } from '~/composables/data/useVarietySync'
 import AddPlantModal from '~/components/plant/AddPlantModal.vue'
 import EditPlantModal from '~/components/plant/EditPlantModal.vue'
 
-// Page meta
 definePageMeta({
   middleware: ['auth'],
 })
 
-// Get route params
 const route = useRoute()
 const gardenId = route.params.id as string
 
-// Composables
 const { fetchGardenById } = useGarden()
 const { fetchPlants } = usePlant()
 const { syncVarietyInPlants } = useVarietySync()
 
-// State
 const garden = ref<GardenData | null>(null)
 const plants = ref<PlantData[]>([])
 const pending = ref(true)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
 
-// Table columns configuration
 const columns = [
   {
     accessorKey: 'name',
@@ -297,7 +286,6 @@ const columns = [
   },
 ]
 
-// Computed properties
 const filteredPlants = computed(() => {
   if (!searchQuery.value) return plants.value
 
@@ -328,7 +316,6 @@ const varietiesCount = computed(() => {
   return uniqueVarietyIds.size
 })
 
-// Helper functions
 const getStatusColor = (status: string) => {
   const statusConfig = PLANT_STATUSES.find(s => s.value === status)
   return statusConfig?.color || 'neutral'
@@ -343,7 +330,6 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('fr-FR')
 }
 
-// Event handlers
 const onPlantAdded = (plant: PlantData) => {
   plants.value.unshift(plant)
 }
@@ -359,19 +345,16 @@ const onPlantDeleted = (plantId: string) => {
   plants.value = plants.value.filter(p => p.id !== plantId)
 }
 
-// Handle variety updates for synchronization
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   syncVarietyInPlants(plants, updatedVariety)
   console.log('Variety updated in plants page:', updatedVariety.name)
 }
 
-// Load data
 const loadData = async () => {
   try {
     pending.value = true
     error.value = null
 
-    // Load garden data
     const gardenData = await fetchGardenById(gardenId)
     if (!gardenData) {
       error.value = 'Garden not found'
@@ -379,7 +362,6 @@ const loadData = async () => {
     }
     garden.value = gardenData
 
-    // Load plants
     plants.value = await fetchPlants(gardenId)
     console.log('Plants loaded:', plants.value)
   }
@@ -392,7 +374,6 @@ const loadData = async () => {
   }
 }
 
-// Initialize
 onMounted(() => {
   loadData()
 })

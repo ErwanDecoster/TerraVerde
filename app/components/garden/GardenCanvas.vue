@@ -6,7 +6,6 @@
     @click="handleBackgroundClick"
   >
     <v-layer ref="layer">
-      <!-- Image de fond -->
       <v-image
         v-if="background"
         :config="backgroundConfig"
@@ -27,7 +26,6 @@
         @mouseenter="() => handlePlantHover(marker, true)"
         @mouseleave="() => handlePlantHover(marker, false)"
       >
-        <!-- Plant Circle -->
         <v-circle
           :config="{
             x: 0,
@@ -39,7 +37,6 @@
             opacity: marker.config.opacity,
           }"
         />
-        <!-- Plant Category Label -->
         <v-text
           :config="{
             text: getCategoryLetter(marker.plant.variety.category),
@@ -111,7 +108,6 @@ interface Props {
 
 defineProps<Props>()
 
-// Exposer les refs pour le parent
 const stage = ref(null)
 const layer = ref(null)
 

@@ -3,7 +3,6 @@ import type { VarietyData, VarietyFormData } from '~/types/variety'
 export const useVariety = () => {
   const { $supabase } = useNuxtApp()
 
-  // Fetch all varieties
   const fetchVarieties = async (): Promise<VarietyData[]> => {
     const { data, error } = await $supabase
       .from('variety')
@@ -18,7 +17,6 @@ export const useVariety = () => {
     return data || []
   }
 
-  // Fetch variety by ID
   const fetchVarietyById = async (id: string): Promise<VarietyData | null> => {
     const { data, error } = await $supabase
       .from('variety')
@@ -34,7 +32,6 @@ export const useVariety = () => {
     return data
   }
 
-  // Add new variety
   const addVariety = async (varietyData: VarietyFormData): Promise<VarietyData> => {
     const { data, error } = await $supabase
       .from('variety')
@@ -50,7 +47,6 @@ export const useVariety = () => {
     return data
   }
 
-  // Update existing variety
   const updateVariety = async (id: string, varietyData: Partial<VarietyFormData>): Promise<VarietyData> => {
     const { data, error } = await $supabase
       .from('variety')
@@ -67,7 +63,6 @@ export const useVariety = () => {
     return data
   }
 
-  // Delete variety
   const deleteVariety = async (id: string): Promise<void> => {
     const { error } = await $supabase
       .from('variety')

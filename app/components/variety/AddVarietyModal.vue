@@ -15,7 +15,6 @@ const open = ref(false)
 const toast = useToast()
 const { addVariety } = useVariety()
 
-// Validation schema with Zod
 const schema = z.object({
   name: z
     .string()
@@ -57,7 +56,6 @@ const schema = z.object({
 
 export type VarietySchema = z.output<typeof schema>
 
-// Form state
 const state = reactive<Partial<VarietySchema>>({
   name: '',
   scientific_name: '',
@@ -67,21 +65,16 @@ const state = reactive<Partial<VarietySchema>>({
   category: 'flower',
 })
 
-// Computed for color chip
 const chip = computed(() => ({ backgroundColor: state.main_color }))
 
-// Submission state
 const loading = ref(false)
 
-// Form reference
 const form = ref()
 
-// Submission function
 async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
   loading.value = true
 
   try {
-    // Data is already validated by the schema
     const validatedData = event.data
 
     const varietyData = await addVariety({
@@ -95,7 +88,6 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
 
     emit('varietyAdded', varietyData)
 
-    // Success notification
     toast.add({
       title: 'Variety Added',
       description: 'The variety has been successfully added',
@@ -104,7 +96,6 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
 
     open.value = false
 
-    // Reset form
     Object.assign(state, {
       name: '',
       scientific_name: '',
@@ -117,7 +108,6 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
   catch (error) {
     console.error('Error adding variety:', error)
 
-    // Error notification
     toast.add({
       title: 'Error',
       description: 'An error occurred while adding the variety',

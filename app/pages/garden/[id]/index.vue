@@ -129,21 +129,17 @@ import AddPlantModal from '~/components/plant/AddPlantModal.vue'
 import EditPlantModal from '~/components/plant/EditPlantModal.vue'
 import PlantInfoModal from '~/components/plant/PlantInfoModal.vue'
 
-// Page meta
 definePageMeta({
   middleware: ['auth'],
 })
 
-// Get route params
 const route = useRoute()
 const gardenId = route.params.id as string
 
-// Composables
 const { fetchGardenById } = useGarden()
 const { fetchPlants, updatePlant } = usePlant()
 const { syncVarietyInPlants } = useVarietySync()
 
-// Plant category filters state
 const visibleCategories = ref<string[]>([
   'tree',
   'fruit_tree',
@@ -156,33 +152,18 @@ const visibleCategories = ref<string[]>([
   'other',
 ])
 
-// Reactive state
 const garden = ref<GardenData>({} as GardenData)
 const plants = ref<PlantData[]>([])
 const pending = ref(true)
 const error = ref<string | null>(null)
 
-// Modal states
 const showAddPlantModal = ref(false)
 const showEditPlantModal = ref(false)
 const showPlantInfoModal = ref(false)
 const selectedPlant = ref<PlantData | null>(null)
 
-// Debug watchers
-watch(showPlantInfoModal, (newVal) => {
-  console.log('showPlantInfoModal changed to:', newVal)
-})
-watch(showEditPlantModal, (newVal) => {
-  console.log('showEditPlantModal changed to:', newVal)
-})
-watch(selectedPlant, (newVal) => {
-  console.log('selectedPlant changed to:', newVal?.name)
-})
-
-// Editing mode state
 const isEditingEnabled = ref(false)
 
-// Canvas ref
 interface KonvaStage {
   scaleX: () => number
   scaleY: () => number
@@ -198,7 +179,6 @@ interface KonvaStage {
 
 const canvas = ref<{ stage: { getStage: () => KonvaStage } } | null>(null)
 
-// Initialize composables
 const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize }
   = useGardenZoom(
     computed(() => canvas.value?.stage || null),
@@ -214,10 +194,8 @@ const { plantMarkers, getCategoryLetter } = usePlantMarkers(
   garden,
 )
 
-// Coordonnées pour les nouvelles plantes
 const clickCoordinates = ref<{ x: number, y: number } | null>(null)
 
-// Modal interaction handlers
 const onPlantClick = (plant: PlantData) => {
   console.log('onPlantClick called with plant:', plant.name)
   console.log('isEditingEnabled.value:', isEditingEnabled.value)
@@ -225,28 +203,23 @@ const onPlantClick = (plant: PlantData) => {
   selectedPlant.value = plant
 
   if (isEditingEnabled.value) {
-    // In editing mode, open edit modal directly
     console.log('Opening edit modal')
     showEditPlantModal.value = true
   }
   else {
-    // In view mode, open info modal
     console.log('Opening info modal')
     showPlantInfoModal.value = true
   }
 }
 
 const handleBackgroundClick = (event: Event) => {
-  // Only allow adding plants if editing mode is enabled
   if (!isEditingEnabled.value) return
 
   if (!event.target) return
 
-  // Vérifier que le clic est sur le background et non sur un marker
   const stage = event.target.getStage()
   const clickedElement = event.target
 
-  // Si le clic est sur le stage ou l'image de fond (pas sur un marker)
   if (clickedElement === stage || clickedElement.attrs?.name === 'background') {
     const pointer = stage.getPointerPosition()
 
@@ -269,7 +242,6 @@ const handleBackgroundClick = (event: Event) => {
   }
 }
 
-// Plant CRUD handlers
 const onPlantAdded = (newPlant: PlantData) => {
   plants.value.push(newPlant)
   showAddPlantModal.value = false
@@ -302,14 +274,12 @@ const onPlantCopied = (copiedPlant: PlantData) => {
   plants.value.push(copiedPlant)
 }
 
-// Handle edit request from info modal
 const onEditRequested = (plant: PlantData) => {
   selectedPlant.value = plant
   showPlantInfoModal.value = false
   showEditPlantModal.value = true
 }
 
-// Handle variety updates from modals (for synchronization)
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   syncVarietyInPlants(plants, updatedVariety)
   console.log('Variety updated in garden plants:', updatedVariety.name)
@@ -330,13 +300,11 @@ const {
   onPlantPositionUpdated,
 )
 
-// Load garden data and plants
 const loadGarden = async () => {
   try {
     pending.value = true
     error.value = null
 
-    // Load garden data
     const gardenData = await fetchGardenById(gardenId)
 
     if (!gardenData) {
@@ -346,12 +314,10 @@ const loadGarden = async () => {
 
     garden.value = gardenData
 
-    // Load the garden's background image
     if (gardenData.background_image_url) {
       loadBackgroundImage(gardenData.background_image_url, gardenData)
     }
 
-    // Update stage config with garden dimensions if available
     if (gardenData.image_width && gardenData.image_height) {
       stageConfig.width = gardenData.image_width
       stageConfig.height = gardenData.image_height
@@ -359,7 +325,6 @@ const loadGarden = async () => {
       backgroundConfig.height = gardenData.image_height
     }
 
-    // Load plants for this garden
     await loadPlants()
   }
   catch (err) {
@@ -371,12 +336,10 @@ const loadGarden = async () => {
   }
 }
 
-// Load plants
 const loadPlants = async () => {
   try {
     plants.value = await fetchPlants(gardenId)
 
-    // Appliquer le resetZoom après que tout soit chargé
     await nextTick()
     setTimeout(() => {
       resetZoom()
@@ -384,11 +347,9 @@ const loadPlants = async () => {
   }
   catch (err) {
     console.error('Error loading plants:', err)
-    // Don't show error for plants, just continue without them
   }
 }
 
-// Setup resize listener
 onMounted(() => {
   loadGarden()
 
@@ -397,7 +358,6 @@ onMounted(() => {
   }
 })
 
-// Cleanup on unmount
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('resize', handleResize)
