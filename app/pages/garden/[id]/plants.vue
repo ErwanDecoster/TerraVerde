@@ -172,7 +172,7 @@
             <div class="flex items-center gap-2">
               <div
                 class="w-4 h-4 rounded-full border"
-                :style="{ backgroundColor: row.original.main_color }"
+                :style="{ backgroundColor: row.original.variety.main_color || '#CCCCCC' }"
               />
               <span class="font-medium">{{ row.original.name }}</span>
             </div>
