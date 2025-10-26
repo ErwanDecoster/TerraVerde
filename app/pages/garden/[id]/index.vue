@@ -86,6 +86,7 @@
       :garden-id="gardenId"
       :click-coordinates="clickCoordinates"
       @plant-added="onPlantAdded"
+      @variety-updated="onVarietyUpdated"
     />
 
     <PlantInfoModal
@@ -102,6 +103,7 @@
       @plant-updated="onPlantUpdated"
       @plant-deleted="onPlantDeleted"
       @plant-copied="onPlantCopied"
+      @variety-updated="onVarietyUpdated"
     />
   </div>
 </template>
@@ -110,12 +112,14 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
+import type { VarietyData } from '~/types/variety'
 import { useGarden } from '~/composables/data/useGarden'
 import { usePlant } from '~/composables/data/usePlant'
 import { useGardenZoom } from '~/composables/garden/useGardenZoom'
 import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
 import { usePlantMarkers } from '~/composables/garden/usePlantMarkers'
 import { usePlantInteractions } from '~/composables/garden/usePlantInteractions'
+import { useVarietySync } from '~/composables/data/useVarietySync'
 import GardenHeader from '~/components/garden/GardenHeader.vue'
 import GardenZoomControls from '~/components/garden/GardenZoomControls.vue'
 import GardenCanvas from '~/components/garden/GardenCanvas.vue'
@@ -137,6 +141,7 @@ const gardenId = route.params.id as string
 // Composables
 const { fetchGardenById } = useGarden()
 const { fetchPlants, updatePlant } = usePlant()
+const { syncVarietyInPlants } = useVarietySync()
 
 // Plant category filters state
 const visibleCategories = ref<string[]>([
@@ -302,6 +307,12 @@ const onEditRequested = (plant: PlantData) => {
   selectedPlant.value = plant
   showPlantInfoModal.value = false
   showEditPlantModal.value = true
+}
+
+// Handle variety updates from modals (for synchronization)
+const onVarietyUpdated = (updatedVariety: VarietyData) => {
+  syncVarietyInPlants(plants, updatedVariety)
+  console.log('Variety updated in garden plants:', updatedVariety.name)
 }
 
 const {

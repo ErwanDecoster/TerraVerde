@@ -257,6 +257,7 @@ import type { GardenData } from '~/types/garden'
 import { useGarden } from '~/composables/data/useGarden'
 import { usePlant } from '~/composables/data/usePlant'
 import { useVariety } from '~/composables/data/useVariety'
+import { useVarietySync } from '~/composables/data/useVarietySync'
 import { getCategoryColor, getCategoryLabel } from '~/utils/plantCategories'
 import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 import EditVarietyModal from '~/components/variety/EditVarietyModal.vue'
@@ -274,6 +275,12 @@ const gardenId = route.params.id as string
 const { fetchGardenById } = useGarden()
 const { fetchPlants } = usePlant()
 const { fetchVarieties } = useVariety()
+const {
+  syncVarietyInList,
+  addVarietyToList,
+  removeVarietyFromList,
+  syncVarietyInPlants,
+} = useVarietySync()
 
 // State
 const garden = ref<GardenData | null>(null)
@@ -346,19 +353,18 @@ const getPlantCountForVariety = (varietyId: number) => {
 
 // Event handlers
 const onVarietyAdded = (variety: VarietyData) => {
-  varieties.value.unshift(variety)
+  addVarietyToList(varieties, variety)
 }
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  const index = varieties.value.findIndex(v => v.id === updatedVariety.id)
-  if (index !== -1) {
-    varieties.value[index] = updatedVariety
-  }
+  syncVarietyInList(varieties, updatedVariety)
+  syncVarietyInPlants(plants, updatedVariety)
 }
 
 const onVarietyDeleted = (varietyId: string) => {
-  varieties.value = varieties.value.filter(
-    v => v.id.toString() !== varietyId,
+  removeVarietyFromList(varieties, varietyId)
+  plants.value = plants.value.filter(
+    plant => plant.variety_id.toString() !== varietyId,
   )
 }
 

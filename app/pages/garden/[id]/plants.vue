@@ -55,6 +55,7 @@
         <AddPlantModal
           :garden-id="gardenId"
           @plant-added="onPlantAdded"
+          @variety-updated="onVarietyUpdated"
         >
           <UButton
             color="primary"
@@ -215,6 +216,7 @@
                 @plant-updated="onPlantUpdated"
                 @plant-deleted="onPlantDeleted"
                 @plant-copied="onPlantAdded"
+                @variety-updated="onVarietyUpdated"
               >
                 <UButton
                   icon="i-heroicons-pencil-square-20-solid"
@@ -233,10 +235,12 @@
 
 <script setup lang="ts">
 import type { PlantData } from '~/types/plant'
+import type { VarietyData } from '~/types/variety'
 import type { GardenData } from '~/types/garden'
 import { PLANT_STATUSES } from '~/types/plant'
 import { useGarden } from '~/composables/data/useGarden'
 import { usePlant } from '~/composables/data/usePlant'
+import { useVarietySync } from '~/composables/data/useVarietySync'
 import AddPlantModal from '~/components/plant/AddPlantModal.vue'
 import EditPlantModal from '~/components/plant/EditPlantModal.vue'
 
@@ -252,6 +256,7 @@ const gardenId = route.params.id as string
 // Composables
 const { fetchGardenById } = useGarden()
 const { fetchPlants } = usePlant()
+const { syncVarietyInPlants } = useVarietySync()
 
 // State
 const garden = ref<GardenData | null>(null)
@@ -352,6 +357,12 @@ const onPlantUpdated = (updatedPlant: PlantData) => {
 
 const onPlantDeleted = (plantId: string) => {
   plants.value = plants.value.filter(p => p.id !== plantId)
+}
+
+// Handle variety updates for synchronization
+const onVarietyUpdated = (updatedVariety: VarietyData) => {
+  syncVarietyInPlants(plants, updatedVariety)
+  console.log('Variety updated in plants page:', updatedVariety.name)
 }
 
 // Load data

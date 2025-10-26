@@ -17,6 +17,7 @@ interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'plantUpdated' | 'plantCopied', data: PlantData): void
   (e: 'plantDeleted', plantId: string): void
+  (e: 'varietyUpdated', data: VarietyData): void
 }
 
 const props = defineProps<Props>()
@@ -130,6 +131,7 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
   if (index !== -1) {
     varieties.value[index] = updatedVariety
   }
+  emit('varietyUpdated', updatedVariety)
 }
 
 // Get currently selected variety
