@@ -1,6 +1,7 @@
 export interface GardenData {
   id: string
   name: string
+  user_id: string
   x_position?: number
   y_position?: number
   background_image_url: string

@@ -42,13 +42,28 @@
           </div>
           <h1 class="text-3xl font-bold mt-2">
             Varieties - {{ garden?.name }}
+            <UBadge
+              v-if="garden?.is_public && !isOwner"
+              color="info"
+              variant="subtle"
+              class="ml-2"
+            >
+              Public Garden
+            </UBadge>
           </h1>
           <p class="text-gray-600 dark:text-gray-400 mt-1">
-            Manage all varieties used in the garden
+            {{
+              isOwner
+                ? "Manage all varieties used in the garden"
+                : "View all varieties used in this public garden"
+            }}
           </p>
         </div>
 
-        <AddVarietyModal @variety-added="onVarietyAdded">
+        <AddVarietyModal
+          v-if="isOwner"
+          @variety-added="onVarietyAdded"
+        >
           <UButton
             color="primary"
             icon="i-heroicons-plus-20-solid"
@@ -256,13 +271,10 @@ import { getCategoryColor, getCategoryLabel } from '~/utils/plantCategories'
 import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 import EditVarietyModal from '~/components/variety/EditVarietyModal.vue'
 
-definePageMeta({
-  middleware: ['auth'],
-})
-
 const route = useRoute()
 const gardenId = route.params.id as string
 
+const { user } = useAuth()
 const { fetchGardenById } = useGarden()
 const { fetchPlants } = usePlant()
 const { fetchVarieties } = useVariety()
@@ -273,6 +285,14 @@ const {
   syncVarietyInPlants,
 } = useVarietySync()
 
+const isOwner = computed(() => {
+  return Boolean(
+    user.value
+    && garden.value?.user_id
+    && user.value.id === garden.value.user_id,
+  )
+})
+
 const garden = ref<GardenData | null>(null)
 const varieties = ref<VarietyData[]>([])
 const plants = ref<PlantData[]>([])
@@ -280,32 +300,39 @@ const pending = ref(true)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
 
-const columns = [
-  {
-    accessorKey: 'name',
-    header: 'Name',
-  },
-  {
-    accessorKey: 'category',
-    header: 'Category',
-  },
-  {
-    accessorKey: 'harvest_period',
-    header: 'Harvest Period',
-  },
-  {
-    id: 'plant_count',
-    header: 'Plants Count',
-  },
-  {
-    accessorKey: 'reference_url',
-    header: 'Reference',
-  },
-  {
-    id: 'actions',
-    header: 'Actions',
-  },
-]
+const columns = computed(() => {
+  const baseColumns = [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+    },
+    {
+      accessorKey: 'category',
+      header: 'Category',
+    },
+    {
+      accessorKey: 'harvest_period',
+      header: 'Harvest Period',
+    },
+    {
+      id: 'plant_count',
+      header: 'Plants Count',
+    },
+    {
+      accessorKey: 'reference_url',
+      header: 'Reference',
+    },
+  ]
+
+  if (isOwner.value) {
+    baseColumns.push({
+      id: 'actions',
+      header: 'Actions',
+    })
+  }
+
+  return baseColumns
+})
 
 const filteredVarieties = computed(() => {
   if (!searchQuery.value) return varieties.value
@@ -365,6 +392,15 @@ const loadData = async () => {
       error.value = 'Garden not found'
       return
     }
+
+    if (
+      !gardenData.is_public
+      && (!user.value || user.value.id !== gardenData.user_id)
+    ) {
+      error.value = 'Access denied. This garden is private.'
+      return
+    }
+
     garden.value = gardenData
 
     const [varietiesData, plantsData] = await Promise.all([

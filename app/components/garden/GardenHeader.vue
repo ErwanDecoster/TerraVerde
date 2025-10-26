@@ -18,6 +18,16 @@
       <h1 class="text-xl font-semibold">
         {{ garden?.name }}
       </h1>
+      <div
+        v-if="garden?.is_public && !isOwner"
+        class="flex items-center gap-2 text-sm text-muted"
+      >
+        <UIcon
+          name="i-heroicons-globe-alt-20-solid"
+          class="w-4 h-4 text-blue-500"
+        />
+        <span>Public Garden</span>
+      </div>
       <USeparator />
       <div class="grid grid-cols-2 gap-2">
         <div class="flex items-center gap-2 justify-center">
@@ -39,22 +49,23 @@
           variant="outline"
           class="justify-center"
         >
-          View Plants
+          {{ isOwner ? "Manage Plants" : "View Plants" }}
         </UButton>
         <UButton
           :to="`/garden/${garden?.id}/varieties`"
           variant="outline"
           class="justify-center"
         >
-          View Varieties
+          {{ isOwner ? "Manage Varieties" : "View Varieties" }}
         </UButton>
       </div>
       <EditGardenModal
-        v-if="garden"
+        v-if="garden && isOwner"
         :garden="garden"
         @garden-updated="$emit('garden-updated')"
       />
       <USwitch
+        v-if="isOwner"
         label="Map editing"
         :model-value="isEditingEnabled"
         @update:model-value="handleEditingToggle"
@@ -72,6 +83,7 @@ interface Props {
   garden?: GardenData | null
   plants: PlantData[]
   isEditingEnabled?: boolean
+  isOwner?: boolean
 }
 
 interface Emits {

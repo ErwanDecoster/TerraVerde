@@ -40,7 +40,7 @@ const navigationItems = computed(() => [
 
         <ClientOnly>
           <div class="flex items-center gap-3">
-            <template v-if="loading && !user">
+            <template v-if="loading">
               <USkeleton class="h-8 w-24" />
             </template>
             <template v-else>

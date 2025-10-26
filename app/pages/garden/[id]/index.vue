@@ -45,6 +45,7 @@
         :garden="garden"
         :plants="plants"
         :is-editing-enabled="isEditingEnabled"
+        :is-owner="isOwner"
         @garden-updated="loadGarden"
         @update:editing-enabled="isEditingEnabled = $event"
       />
@@ -69,7 +70,7 @@
         :background="background"
         :background-config="backgroundConfig"
         :plant-markers="plantMarkers"
-        :is-editing-enabled="isEditingEnabled"
+        :is-editing-enabled="canEdit"
         :handle-wheel="handleWheel"
         :handle-plant-click="handlePlantClick"
         :handle-plant-drag-start="handlePlantDragStart"
@@ -81,7 +82,7 @@
     </div>
 
     <AddPlantModal
-      v-if="showAddPlantModal"
+      v-if="showAddPlantModal && isOwner"
       v-model:open="showAddPlantModal"
       :garden-id="gardenId"
       :click-coordinates="clickCoordinates"
@@ -93,11 +94,12 @@
       v-if="selectedPlant && showPlantInfoModal"
       v-model:open="showPlantInfoModal"
       :plant="selectedPlant"
+      :is-owner="isOwner"
       @edit-requested="onEditRequested"
     />
 
     <EditPlantModal
-      v-if="selectedPlant && showEditPlantModal"
+      v-if="selectedPlant && showEditPlantModal && isOwner"
       v-model:open="showEditPlantModal"
       :plant="selectedPlant"
       @plant-updated="onPlantUpdated"
@@ -129,16 +131,23 @@ import AddPlantModal from '~/components/plant/AddPlantModal.vue'
 import EditPlantModal from '~/components/plant/EditPlantModal.vue'
 import PlantInfoModal from '~/components/plant/PlantInfoModal.vue'
 
-definePageMeta({
-  middleware: ['auth'],
-})
-
 const route = useRoute()
 const gardenId = route.params.id as string
 
+const { user } = useAuth()
 const { fetchGardenById } = useGarden()
 const { fetchPlants, updatePlant } = usePlant()
 const { syncVarietyInPlants } = useVarietySync()
+
+const isOwner = computed(() => {
+  return Boolean(
+    user.value && garden.value.user_id && user.value.id === garden.value.user_id,
+  )
+})
+
+const canEdit = computed(
+  () => Boolean(isEditingEnabled.value) && Boolean(isOwner.value),
+)
 
 const visibleCategories = ref<string[]>([
   'tree',
@@ -199,7 +208,7 @@ const clickCoordinates = ref<{ x: number, y: number } | null>(null)
 const onPlantClick = (plant: PlantData) => {
   selectedPlant.value = plant
 
-  if (isEditingEnabled.value) {
+  if (isOwner.value && isEditingEnabled.value) {
     showEditPlantModal.value = true
   }
   else {
@@ -208,7 +217,7 @@ const onPlantClick = (plant: PlantData) => {
 }
 
 const handleBackgroundClick = (event: Event) => {
-  if (!isEditingEnabled.value) return
+  if (!isEditingEnabled.value || !isOwner.value) return
 
   if (!event.target) return
 
@@ -266,6 +275,8 @@ const onPlantCopied = (copiedPlant: PlantData) => {
 }
 
 const onEditRequested = (plant: PlantData) => {
+  if (!isOwner.value) return
+
   selectedPlant.value = plant
   showPlantInfoModal.value = false
   showEditPlantModal.value = true
@@ -286,7 +297,7 @@ const {
   gardenId,
   updatePlant,
   onPlantClick,
-  isEditingEnabled,
+  canEdit,
   onPlantPositionUpdated,
 )
 
@@ -299,6 +310,14 @@ const loadGarden = async () => {
 
     if (!gardenData) {
       error.value = 'Garden not found'
+      return
+    }
+
+    if (
+      !gardenData.is_public
+      && (!user.value || user.value.id !== gardenData.user_id)
+    ) {
+      error.value = 'Access denied. This garden is private.'
       return
     }
 
