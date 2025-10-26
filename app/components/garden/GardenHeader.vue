@@ -6,7 +6,7 @@
       <UButton
         color="neutral"
         variant="subtle"
-        @click="$emit('back')"
+        @click="navigateTo(`/gardens`)"
       >
         Back to Gardens
       </UButton>
@@ -75,7 +75,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'back' | 'garden-updated'): void
+  (e: 'garden-updated'): void
   (e: 'update:editing-enabled', value: boolean): void
 }
 
