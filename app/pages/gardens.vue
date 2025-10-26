@@ -29,18 +29,18 @@ function handleGardenDeleted(gardenId: string) {
 }
 
 const gardens = ref<GardenData[]>([])
-const { fetchGardens } = useGarden()
+const { fetchMyGardens } = useGarden()
 
 onMounted(async () => {
-  gardens.value = await fetchGardens()
+  gardens.value = await fetchMyGardens()
 })
 </script>
 
 <template>
   <div class="container mx-auto p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">
-        Garden Management
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold mb-2">
+        My Gardens
       </h1>
       <AddGardenModal @garden-added="handleGardenAdded" />
     </div>
@@ -48,33 +48,49 @@ onMounted(async () => {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <UCard
         v-for="garden in gardens"
-        :key="garden.name"
-        variant="subtle"
+        :key="garden.id"
+        class="overflow-hidden hover:shadow-lg transition-shadow duration-200"
       >
         <template #header>
-          <h2 class="text-lg font-semibold">
-            {{ garden.name }}
-          </h2>
+          <div class="aspect-video relative overflow-hidden">
+            <img
+              :src="garden.background_image_url"
+              :alt="garden.name + ' background image'"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            >
+            <div class="absolute top-2 right-2">
+              <UBadge
+                color="primary"
+                variant="solid"
+                size="xs"
+              >
+                Public
+              </UBadge>
+            </div>
+          </div>
         </template>
 
-        <img
-          :src="garden.background_image_url"
-          alt="Garden Image"
-          class="w-full h-48 object-cover rounded"
-        >
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            {{ garden.name }}
+          </h3>
 
-        <template #footer>
           <div class="flex justify-end gap-2">
             <EditGardenModal
               :garden="garden"
               @garden-updated="handleGardenUpdated"
               @garden-deleted="handleGardenDeleted"
             />
-            <UButton :to="`/garden/${garden.id}`">
+            <UButton
+              :to="`/garden/${garden.id}`"
+              color="primary"
+              icon="i-heroicons-eye-20-solid"
+            >
               View
             </UButton>
           </div>
-        </template>
+        </div>
       </UCard>
     </div>
   </div>

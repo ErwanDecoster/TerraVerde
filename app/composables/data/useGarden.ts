@@ -107,16 +107,41 @@ export const useGarden = () => {
   }
 
   /**
-   * Fetch all gardens
+   * Fetch user's own gardens
    */
-  const fetchGardens = async (): Promise<GardenData[]> => {
+  const fetchMyGardens = async (): Promise<GardenData[]> => {
+    const { user } = useAuth()
+    if (!user.value) {
+      throw new Error('User not authenticated')
+    }
     const { data, error } = await $supabase
       .from('garden_config')
       .select('*')
+      .eq('user_id', user.value.id)
       .order('created_at', { ascending: false })
 
     if (error) {
       throw new Error(`Failed to fetch gardens: ${error.message}`)
+    }
+
+    return data.map(garden => ({
+      ...garden,
+      background_image_url: getImagePublicUrl(garden.background_image_url),
+    }))
+  }
+
+  /**
+   * Fetch all public gardens from all users
+   */
+  const fetchPublicGardens = async (): Promise<GardenData[]> => {
+    const { data, error } = await $supabase
+      .from('garden_config')
+      .select(`*`)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      throw new Error(`Failed to fetch public gardens: ${error.message}`)
     }
 
     return data.map(garden => ({
@@ -231,7 +256,8 @@ export const useGarden = () => {
   return {
     addGarden,
     updateGarden,
-    fetchGardens,
+    fetchMyGardens,
+    fetchPublicGardens,
     fetchGardenById,
     deleteGarden,
     uploadGardenImage,

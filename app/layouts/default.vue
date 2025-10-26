@@ -1,13 +1,39 @@
 <script lang="ts" setup>
 const { user, logout, loading } = useAuth()
+
+const navigationItems = computed(() => [
+  {
+    label: 'My Gardens',
+    to: '/gardens',
+    icon: 'i-heroicons-home',
+  },
+  {
+    label: 'Public Gardens',
+    to: '/public-gardens',
+    icon: 'i-heroicons-globe-alt',
+  },
+])
 </script>
 
 <template>
   <UApp>
     <UHeader>
       <template #title>
-        <BrandLogo />
+        <NuxtLink
+          to="/"
+          class="hover:opacity-80"
+        >
+          <BrandLogo />
+        </NuxtLink>
       </template>
+
+      <ClientOnly>
+        <UNavigationMenu
+          v-if="user"
+          :items="navigationItems"
+          class="hidden md:flex"
+        />
+      </ClientOnly>
 
       <template #right>
         <UColorModeSelect />
@@ -37,9 +63,16 @@ const { user, logout, loading } = useAuth()
         </ClientOnly>
       </template>
 
-      <!-- <template #body>
-        <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" />
-      </template> -->
+      <template #body>
+        <ClientOnly>
+          <UNavigationMenu
+            v-if="user"
+            :items="navigationItems"
+            orientation="vertical"
+            class="-mx-2.5 md:hidden"
+          />
+        </ClientOnly>
+      </template>
     </UHeader>
 
     <UMain>
