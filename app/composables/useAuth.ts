@@ -76,7 +76,6 @@ export const useAuth = () => {
       const { error } = await $supabase.auth.updateUser({
         password: newPassword,
       })
-      console.log('error', error)
 
       if (error) throw error
 

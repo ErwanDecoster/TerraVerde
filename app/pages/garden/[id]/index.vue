@@ -197,17 +197,12 @@ const { plantMarkers, getCategoryLetter } = usePlantMarkers(
 const clickCoordinates = ref<{ x: number, y: number } | null>(null)
 
 const onPlantClick = (plant: PlantData) => {
-  console.log('onPlantClick called with plant:', plant.name)
-  console.log('isEditingEnabled.value:', isEditingEnabled.value)
-
   selectedPlant.value = plant
 
   if (isEditingEnabled.value) {
-    console.log('Opening edit modal')
     showEditPlantModal.value = true
   }
   else {
-    console.log('Opening info modal')
     showPlantInfoModal.value = true
   }
 }
@@ -231,10 +226,6 @@ const handleBackgroundClick = (event: Event) => {
 
       const imageX = (pointer.x - stageX) / scaleX
       const imageY = (pointer.y - stageY) / scaleY
-
-      console.log('Screen coordinates:', pointer.x, pointer.y)
-      console.log('Stage transform:', { x: stageX, y: stageY, scaleX, scaleY })
-      console.log('Image coordinates:', imageX, imageY)
 
       clickCoordinates.value = { x: imageX, y: imageY }
     }
@@ -282,7 +273,6 @@ const onEditRequested = (plant: PlantData) => {
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   syncVarietyInPlants(plants, updatedVariety)
-  console.log('Variety updated in garden plants:', updatedVariety.name)
 }
 
 const {

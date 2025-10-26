@@ -347,7 +347,6 @@ const onPlantDeleted = (plantId: string) => {
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   syncVarietyInPlants(plants, updatedVariety)
-  console.log('Variety updated in plants page:', updatedVariety.name)
 }
 
 const loadData = async () => {
@@ -363,7 +362,6 @@ const loadData = async () => {
     garden.value = gardenData
 
     plants.value = await fetchPlants(gardenId)
-    console.log('Plants loaded:', plants.value)
   }
   catch (err) {
     console.error('Error loading data:', err)

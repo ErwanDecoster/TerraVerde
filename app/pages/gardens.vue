@@ -9,12 +9,10 @@ definePageMeta({
 })
 
 function handleGardenAdded(data: GardenData) {
-  console.log('New garden added:', data)
   gardens.value.unshift(data)
 }
 
 function handleGardenUpdated(updatedGarden: GardenData) {
-  console.log('Garden updated:', updatedGarden)
   const index = gardens.value.findIndex(
     garden => garden.id === updatedGarden.id,
   )
@@ -24,7 +22,6 @@ function handleGardenUpdated(updatedGarden: GardenData) {
 }
 
 function handleGardenDeleted(gardenId: string) {
-  console.log('Garden deleted:', gardenId)
   const index = gardens.value.findIndex(garden => garden.id === gardenId)
   if (index !== -1) {
     gardens.value.splice(index, 1)

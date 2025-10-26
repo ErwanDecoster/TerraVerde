@@ -97,13 +97,11 @@ export const useGardenZoom = (
 
   const resetZoom = () => {
     if (!stageRef?.value) {
-      console.log('Stage ref not available for reset zoom')
       return
     }
 
     const stage = stageRef.value.getStage()
     if (!stage) {
-      console.log('Stage not available for reset zoom')
       return
     }
 
@@ -114,10 +112,7 @@ export const useGardenZoom = (
     const imageWidth = bgConfig.width || stageWidth
     const imageHeight = bgConfig.height || stageHeight
 
-    console.log('Reset zoom - Stage:', stageWidth, 'x', stageHeight, 'Image:', imageWidth, 'x', imageHeight)
-
     if (!bgConfig.width || !bgConfig.height) {
-      console.log('Background dimensions not available, skipping reset')
       return
     }
 
@@ -130,8 +125,6 @@ export const useGardenZoom = (
 
     const x = Math.max(0, (stageWidth - scaledImageWidth) / 2)
     const y = Math.max(0, (stageHeight - scaledImageHeight) / 2)
-
-    console.log('Applying - Scale:', scale, 'Position:', x, y)
 
     stage.scale({ x: scale, y: scale })
     stage.position({ x, y })

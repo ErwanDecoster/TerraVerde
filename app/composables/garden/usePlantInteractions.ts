@@ -14,7 +14,6 @@ export const usePlantInteractions = (
   const hoveredPlant = ref<PlantData | null>(null)
 
   const handlePlantClick = (marker: PlantMarker) => {
-    console.log(`Plant ${marker.plant.name} clicked!`, marker.plant)
     if (onPlantClick) {
       onPlantClick(marker.plant)
     }
