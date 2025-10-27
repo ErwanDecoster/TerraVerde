@@ -215,7 +215,7 @@ function confirmDelete() {
         </UFormField>
 
         <div class="space-y-2 col-span-2">
-          <label class="block text-sm font-medium text-gray-700">Current Background Image</label>
+          <label class="block text-sm font-medium">Current Background Image</label>
           <img
             :src="garden.background_image_url"
             :alt="garden.name"
