@@ -12,6 +12,7 @@ export interface GardenData {
   max_zoom: number
   pixels_per_meters: number
   is_public: boolean
+  show_markers_letters?: boolean
   created_at: string
   updated_at: string
   imagePath: string
@@ -34,4 +35,5 @@ export interface GardenUpdateFormData {
   isPublic: boolean
   backgroundImage?: File
   PixelsPerMeters: number
+  showMarkersLetters: boolean
 }

@@ -198,6 +198,7 @@ const { background, backgroundConfig, loadBackgroundImage }
   = useGardenCanvas(resetZoom)
 
 const { plantMarkers, getCategoryLetter } = usePlantMarkers(
+  isOwner,
   plants,
   visibleCategories,
   garden,

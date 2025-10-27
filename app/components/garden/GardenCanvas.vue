@@ -38,6 +38,7 @@
           }"
         />
         <v-text
+          v-if="marker.showLetter"
           :config="{
             text: getCategoryLetter(marker.plant.variety.category),
             fontSize: Math.max(10, Math.min(marker.config.radius / 2, 16)),
@@ -79,6 +80,7 @@ interface BackgroundConfig {
 export interface PlantMarker {
   id: string
   plant: PlantData
+  showLetter: boolean
   config: {
     x: number
     y: number

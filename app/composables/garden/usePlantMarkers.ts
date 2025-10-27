@@ -5,6 +5,7 @@ import { metersToPixels } from '~/utils/coordinates'
 import { getCategoryKey } from '~/utils/plantCategories'
 
 export const usePlantMarkers = (
+  isOwner: Ref<boolean>,
   plants: Ref<PlantData[]>,
   visibleCategories: Ref<string[]>,
   garden: Ref<GardenData>,
@@ -32,6 +33,7 @@ export const usePlantMarkers = (
     if (!garden.value) return []
 
     const PixelsPerMeters = garden.value.pixels_per_meters
+    const showMarkersLetters = !isOwner.value && !garden.value.show_markers_letters
 
     return plants.value
       .filter(plant => visibleCategories.value.includes(plant.variety.category))
@@ -48,6 +50,7 @@ export const usePlantMarkers = (
           id: plant.id,
           plant: plant,
           name: `plant-${plant.id}`,
+          showLetter: showMarkersLetters,
           config: {
             x: pixelX,
             y: pixelY,

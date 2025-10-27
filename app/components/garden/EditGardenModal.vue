@@ -28,6 +28,7 @@ const schema = z.object({
     .min(1, 'Name is required')
     .max(100, 'Name cannot exceed 100 characters'),
   isPublic: z.boolean().optional(),
+  showMarkersLetters: z.boolean().optional(),
   PixelsPerMeters: z
     .number()
     .min(1, 'Scale must be at least 1 Pixels per Meters')
@@ -51,6 +52,7 @@ export type EditGardenSchema = z.output<typeof schema>
 const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   isPublic: props.garden.is_public || false,
+  showMarkersLetters: props.garden.show_markers_letters ?? true,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
   backgroundImage: undefined,
 })
@@ -66,6 +68,7 @@ watch(
     Object.assign(state, {
       name: newGarden.name,
       isPublic: newGarden.is_public || false,
+      showMarkersLetters: newGarden.show_markers_letters ?? true,
       backgroundImage: undefined,
     })
   },
@@ -83,6 +86,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
       {
         name: validatedData.name,
         isPublic: validatedData.isPublic || false,
+        showMarkersLetters: validatedData.showMarkersLetters ?? true,
         backgroundImage: validatedData.backgroundImage,
         PixelsPerMeters: validatedData.PixelsPerMeters,
       },
@@ -193,6 +197,17 @@ function confirmDelete() {
           <USwitch
             v-model="state.isPublic"
             label="Make this garden visible to other"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Show Marker Letters"
+          name="showMarkersLetters"
+          class="col-span-2"
+        >
+          <USwitch
+            v-model="state.showMarkersLetters"
+            label="Display category letters on plant markers"
           />
         </UFormField>
 

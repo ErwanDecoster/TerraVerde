@@ -201,6 +201,7 @@ export const useGarden = () => {
         y_position: 0,
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
+        show_markers_letters: formData.showMarkersLetters,
         ...(hasNewImage && { background_image_url: imagePath }),
       }
 
