@@ -86,12 +86,39 @@ export const useAuth = () => {
     }
   }
 
+  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+    try {
+      loading.value = true
+      const { data, error } = await $supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+        },
+      })
+
+      if (error) throw error
+
+      return { data, error: null }
+    }
+    catch (error: unknown) {
+      return { data: null, error }
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     user: readonly(user),
     loading: readonly(loading),
     getUser,
     logout,
     login,
+    register,
     resetPassword,
     updatePassword,
     isAuthenticated: computed(() => !!user.value),

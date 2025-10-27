@@ -40,18 +40,14 @@ const navigationItems = computed(() => [
 
         <ClientOnly>
           <div class="flex items-center gap-3">
-            <template v-if="loading">
-              <USkeleton class="h-8 w-24" />
+            <template v-if="loading && !user">
+              <UButton
+                to="/register"
+              >
+                Get Started
+              </UButton>
             </template>
             <template v-else>
-              <UUser
-                v-if="user"
-                :name="
-                  user.user_metadata?.first_name
-                    + ' '
-                    + user.user_metadata?.last_name
-                "
-              />
               <UButton
                 v-if="user"
                 @click="logout"

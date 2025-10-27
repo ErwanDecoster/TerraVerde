@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
-import { supabaseClient } from '~/plugins/supabase'
 
 definePageMeta({
   middleware: ['guest'],
@@ -79,16 +78,15 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
-  const { error } = await supabaseClient.auth.signUp({
-    email: payload.data.email,
-    password: payload.data.password,
-    options: {
-      data: {
-        first_name: payload.data.first_name,
-        last_name: payload.data.last_name,
-      },
-    },
-  })
+  const { register } = useAuth()
+
+  const { error } = await register(
+    payload.data.email,
+    payload.data.password,
+    payload.data.first_name,
+    payload.data.last_name,
+  )
+
   if (error) {
     toast.add({
       title: 'Error',
@@ -114,8 +112,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         :schema="schema"
         :fields="fields"
         :providers="providers"
-        title="Welcome back!"
-        icon="i-lucide-lock"
+        title="Create your account"
+        icon="i-lucide-user-plus"
         @submit="onSubmit"
       >
         <template #description>
