@@ -296,7 +296,6 @@ async function copyPlant() {
   >
     <UButton
       label="Edit Plant"
-      color="neutral"
       variant="subtle"
       icon="i-heroicons-pencil-square-20-solid"
     />
@@ -341,7 +340,6 @@ async function copyPlant() {
                 <UButton
                   icon="i-heroicons-plus-20-solid"
                   size="sm"
-                  color="neutral"
                   variant="outline"
                   :disabled="loading"
                 />
@@ -354,7 +352,6 @@ async function copyPlant() {
                 <UButton
                   icon="i-heroicons-pencil-square-20-solid"
                   size="sm"
-                  color="neutral"
                   variant="outline"
                   :disabled="loading"
                 />
@@ -450,7 +447,6 @@ async function copyPlant() {
           class="flex gap-2"
         >
           <UButton
-            color="neutral"
             variant="ghost"
             size="sm"
             @click="showDeleteConfirmation = false"
@@ -471,7 +467,6 @@ async function copyPlant() {
 
         <div class="flex gap-0.5">
           <UButton
-            color="neutral"
             variant="ghost"
             :disabled="loading || deleting || copying"
             @click="close"

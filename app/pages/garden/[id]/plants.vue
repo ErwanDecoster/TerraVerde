@@ -32,7 +32,6 @@
         <div>
           <div class="flex items-center gap-2">
             <UButton
-              color="neutral"
               variant="ghost"
               icon="i-heroicons-arrow-left-20-solid"
               @click="navigateTo(`/garden/${gardenId}`)"
@@ -96,7 +95,7 @@
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
-              name="i-heroicons-heart-20-solid"
+              name="lucide-smile"
               class="w-8 h-8 text-emerald-500"
             />
             <div>
@@ -113,7 +112,7 @@
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
-              name="i-heroicons-exclamation-triangle-20-solid"
+              name="lucide-annoyed"
               class="w-8 h-8 text-yellow-500"
             />
             <div>
@@ -172,7 +171,9 @@
             <div class="flex items-center gap-2">
               <div
                 class="w-4 h-4 rounded-full border"
-                :style="{ backgroundColor: row.original.variety.main_color || '#CCCCCC' }"
+                :style="{
+                  backgroundColor: row.original.variety.main_color || '#CCCCCC',
+                }"
               />
               <span class="font-medium">{{ row.original.name }}</span>
             </div>
@@ -228,7 +229,6 @@
                 <UButton
                   icon="i-heroicons-pencil-square-20-solid"
                   size="sm"
-                  color="neutral"
                   variant="ghost"
                 />
               </EditPlantModal>

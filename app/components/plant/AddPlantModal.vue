@@ -226,7 +226,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
   >
     <UButton
       label="Add Plant"
-      color="neutral"
       variant="subtle"
       icon="i-heroicons-plus-20-solid"
     />
@@ -271,7 +270,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
                 <UButton
                   icon="i-heroicons-plus-20-solid"
                   size="sm"
-                  color="neutral"
                   variant="outline"
                   :disabled="loading"
                 />
@@ -284,7 +282,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
                 <UButton
                   icon="i-heroicons-pencil-square-20-solid"
                   size="sm"
-                  color="neutral"
                   variant="outline"
                   :disabled="loading"
                 />
@@ -364,7 +361,6 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     <template #footer="{ close }">
       <div class="flex justify-end gap-0.5 w-full">
         <UButton
-          color="neutral"
           variant="ghost"
           :disabled="loading"
           @click="close"

@@ -257,7 +257,6 @@ function confirmDelete() {
           class="flex gap-2"
         >
           <UButton
-            color="neutral"
             variant="ghost"
             size="sm"
             @click="showDeleteConfirmation = false"
@@ -278,7 +277,6 @@ function confirmDelete() {
 
         <div class="flex gap-2">
           <UButton
-            color="neutral"
             variant="ghost"
             :disabled="loading || deleting"
             @click="close"

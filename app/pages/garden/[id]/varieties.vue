@@ -32,7 +32,6 @@
         <div>
           <div class="flex items-center gap-2">
             <UButton
-              color="neutral"
               variant="ghost"
               icon="i-heroicons-arrow-left-20-solid"
               @click="navigateTo(`/garden/${gardenId}`)"
@@ -94,7 +93,7 @@
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
-              name="i-heroicons-tree-pine-20-solid"
+              name="lucide-trees"
               class="w-8 h-8 text-green-600"
             />
             <div>
@@ -111,7 +110,7 @@
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
-              name="i-heroicons-sparkles-20-solid"
+              name="lucide-flower-2"
               class="w-8 h-8 text-pink-500"
             />
             <div>
@@ -128,7 +127,7 @@
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
-              name="i-heroicons-beaker-20-solid"
+              name="lucide-carrot"
               class="w-8 h-8 text-orange-500"
             />
             <div>
@@ -226,7 +225,6 @@
               v-if="row.original.reference_url"
               icon="i-heroicons-link-20-solid"
               size="sm"
-              color="neutral"
               variant="ghost"
               :to="row.original.reference_url"
               target="_blank"
@@ -247,7 +245,6 @@
                 <UButton
                   icon="i-heroicons-pencil-square-20-solid"
                   size="sm"
-                  color="neutral"
                   variant="ghost"
                 />
               </EditVarietyModal>

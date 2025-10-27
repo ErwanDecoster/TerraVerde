@@ -6,7 +6,6 @@
   >
     <UButton
       label="View Plant"
-      color="neutral"
       variant="subtle"
       icon="i-heroicons-eye-20-solid"
     />
@@ -113,7 +112,6 @@
     <template #footer="{ close }">
       <div class="flex justify-end space-x-3">
         <UButton
-          color="neutral"
           variant="ghost"
           @click="close"
         >

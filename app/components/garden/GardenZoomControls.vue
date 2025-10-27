@@ -5,7 +5,6 @@
     <UButton
       icon="i-heroicons-minus-20-solid"
       size="sm"
-      color="neutral"
       variant="outline"
       @click="zoomOut"
     />
@@ -15,14 +14,12 @@
     <UButton
       icon="i-heroicons-plus-20-solid"
       size="sm"
-      color="neutral"
       variant="outline"
       @click="zoomIn"
     />
     <UButton
       icon="i-heroicons-arrows-pointing-out-20-solid"
       size="sm"
-      color="neutral"
       variant="outline"
       title="Reset zoom"
       @click="resetZoom"

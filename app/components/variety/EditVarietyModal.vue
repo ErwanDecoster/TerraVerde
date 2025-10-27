@@ -176,7 +176,6 @@ function confirmDelete() {
   >
     <UButton
       label="Edit Variety"
-      color="neutral"
       variant="subtle"
       icon="i-heroicons-pencil-square-20-solid"
     />
@@ -258,7 +257,6 @@ function confirmDelete() {
             <UButton
               label="Choose color"
               class="w-full"
-              color="neutral"
               variant="outline"
             >
               <template #leading>
@@ -304,7 +302,6 @@ function confirmDelete() {
           class="flex gap-2"
         >
           <UButton
-            color="neutral"
             variant="ghost"
             size="sm"
             @click="showDeleteConfirmation = false"
@@ -325,7 +322,6 @@ function confirmDelete() {
 
         <div class="flex gap-0.5">
           <UButton
-            color="neutral"
             variant="ghost"
             :disabled="loading || deleting"
             @click="close"

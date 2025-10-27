@@ -4,7 +4,6 @@
       class="rounded-xl p-2 grid gap-1 bg-default/75 backdrop-blur border border-default"
     >
       <UButton
-        color="neutral"
         variant="subtle"
         @click="navigateTo(`/gardens`)"
       >
@@ -66,7 +65,9 @@
       />
       <USwitch
         v-if="isOwner"
-        label="Map editing"
+        :label="
+          isEditingEnabled ? 'Switch to View Mode' : 'Switch to Edit Mode'
+        "
         :model-value="isEditingEnabled"
         @update:model-value="handleEditingToggle"
       />

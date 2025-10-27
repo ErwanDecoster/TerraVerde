@@ -101,7 +101,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
   >
     <UButton
       label="Add Garden"
-      color="neutral"
       variant="subtle"
     />
 
@@ -172,7 +171,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
 
     <template #footer="{ close }">
       <UButton
-        color="neutral"
         variant="ghost"
         :disabled="loading"
         @click="close"

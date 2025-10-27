@@ -128,7 +128,6 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
   >
     <UButton
       label="Add Variety"
-      color="neutral"
       variant="subtle"
       icon="i-heroicons-plus-20-solid"
     />
@@ -210,7 +209,6 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
             <UButton
               label="Choose color"
               class="w-full"
-              color="neutral"
               variant="outline"
             >
               <template #leading>
@@ -240,7 +238,6 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
     <template #footer="{ close }">
       <div class="flex justify-end gap-0.5 w-full">
         <UButton
-          color="neutral"
           variant="ghost"
           :disabled="loading"
           @click="close"

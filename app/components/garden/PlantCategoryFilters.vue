@@ -9,7 +9,6 @@
       <UButton
         size="xs"
         variant="ghost"
-        color="neutral"
         @click="toggleAllCategories"
       >
         {{
