@@ -69,7 +69,7 @@ definePageMeta({
               >
                 <UIcon
                   name="i-heroicons-home-20-solid"
-                  class="w-5 h-5 mr-2"
+                  class="size-5"
                 />
                 My Gardens
               </UButton>
@@ -82,7 +82,7 @@ definePageMeta({
               >
                 <UIcon
                   name="i-heroicons-user-20-solid"
-                  class="w-5 h-5 mr-2"
+                  class="size-5"
                 />
                 Get Started
               </UButton>
@@ -95,7 +95,7 @@ definePageMeta({
               >
                 <UIcon
                   name="i-heroicons-globe-alt-20-solid"
-                  class="w-5 h-5 mr-2"
+                  class="size-5"
                 />
                 Explore Public Gardens
               </UButton>
