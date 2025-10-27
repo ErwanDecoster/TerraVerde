@@ -60,7 +60,7 @@ const state = reactive<Partial<VarietySchema>>({
   name: '',
   scientific_name: '',
   harvest_period: '',
-  main_color: '#22c55e',
+  main_color: '#009689',
   reference_url: '',
   category: 'flower',
 })

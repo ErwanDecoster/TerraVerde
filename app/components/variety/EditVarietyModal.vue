@@ -68,7 +68,7 @@ const state = reactive<Partial<EditVarietySchema>>({
   name: props.variety.name,
   scientific_name: props.variety.scientific_name || '',
   harvest_period: props.variety.harvest_period || '',
-  main_color: props.variety.main_color || '#22c55e',
+  main_color: props.variety.main_color || '#009689',
   reference_url: props.variety.reference_url || '',
   category: props.variety.category,
 })
