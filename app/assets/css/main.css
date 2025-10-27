@@ -2,17 +2,17 @@
 @import "@nuxt/ui";
 
 :root {
-  --ui-color-primary-50: var(--color-rose-50);
-  --ui-color-primary-100: var(--color-rose-100);
-  --ui-color-primary-200: var(--color-rose-200);
-  --ui-color-primary-300: var(--color-rose-300);
-  --ui-color-primary-400: var(--color-rose-400);
-  --ui-color-primary-500: var(--color-rose-500);
-  --ui-color-primary-600: var(--color-rose-600);
-  --ui-color-primary-700: var(--color-rose-700);
-  --ui-color-primary-800: var(--color-rose-800);
-  --ui-color-primary-900: var(--color-rose-900);
-  --ui-color-primary-950: var(--color-rose-950);
+  --ui-color-primary-50: var(--color-teal-50);
+  --ui-color-primary-100: var(--color-teal-100);
+  --ui-color-primary-200: var(--color-teal-200);
+  --ui-color-primary-300: var(--color-teal-300);
+  --ui-color-primary-400: var(--color-teal-400);
+  --ui-color-primary-500: var(--color-teal-500);
+  --ui-color-primary-600: var(--color-teal-600);
+  --ui-color-primary-700: var(--color-teal-700);
+  --ui-color-primary-800: var(--color-teal-800);
+  --ui-color-primary-900: var(--color-teal-900);
+  --ui-color-primary-950: var(--color-teal-950);
   --ui-color-secondary-50: var(--color-blue-50, oklch(97% 0.014 254.604));
   --ui-color-secondary-100: var(--color-blue-100, oklch(93.2% 0.032 255.585));
   --ui-color-secondary-200: var(--color-blue-200, oklch(88.2% 0.059 254.128));
@@ -84,7 +84,7 @@
 /* Color Palette */
 
 :root {
-  --ui-primary: var(--ui-color-primary-500);
+  --ui-primary: var(--color-teal-600);
   --ui-secondary: var(--ui-color-secondary-500);
   --ui-success: var(--ui-color-success-500);
   --ui-info: var(--ui-color-info-500);
@@ -93,7 +93,7 @@
 }
 
 .dark {
-  --ui-primary: var(--ui-color-primary-400);
+  --ui-primary: var(--color-teal-600);
   --ui-secondary: var(--ui-color-secondary-400);
   --ui-success: var(--ui-color-success-400);
   --ui-info: var(--ui-color-info-400);

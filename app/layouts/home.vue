@@ -1,5 +1,3 @@
 <template>
-  <UMain class="px-4">
-    <slot />
-  </UMain>
+  <slot />
 </template>
