@@ -110,7 +110,7 @@
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-end space-x-3">
+      <div class="flex justify-end gap-0.5 w-full">
         <UButton
           variant="ghost"
           @click="close"

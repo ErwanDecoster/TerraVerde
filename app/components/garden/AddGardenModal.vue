@@ -170,23 +170,25 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     </template>
 
     <template #footer="{ close }">
-      <UButton
-        variant="ghost"
-        :disabled="loading"
-        @click="close"
-      >
-        Cancel
-      </UButton>
-      <UButton
-        type="submit"
-        form="map-form"
-        :loading="loading"
-        :disabled="loading"
-        icon="i-heroicons-plus-20-solid"
-        @click="form.submit()"
-      >
-        Add Garden
-      </UButton>
+      <div class="flex justify-end gap-0.5 w-full">
+        <UButton
+          variant="ghost"
+          :disabled="loading"
+          @click="close"
+        >
+          Cancel
+        </UButton>
+        <UButton
+          type="submit"
+          form="map-form"
+          :loading="loading"
+          :disabled="loading"
+          icon="i-heroicons-plus-20-solid"
+          @click="form.submit()"
+        >
+          Add Garden
+        </UButton>
+      </div>
     </template>
   </UModal>
 </template>
