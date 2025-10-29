@@ -1,5 +1,4 @@
 import { ref, reactive } from 'vue'
-import type { GardenData } from '~/types/garden'
 
 export const useGardenCanvas = (resetZoom: () => void) => {
   const background = ref<HTMLImageElement | null>(null)
@@ -11,7 +10,7 @@ export const useGardenCanvas = (resetZoom: () => void) => {
     height: 0,
   })
 
-  const loadBackgroundImage = (imageUrl: string, garden: GardenData) => {
+  const loadBackgroundImage = (imageUrl: string) => {
     const img = new window.Image()
     img.crossOrigin = 'anonymous' // For CORS if needed
     img.src = imageUrl

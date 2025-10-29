@@ -1,4 +1,5 @@
 import type { GardenData, GardenFormData, GardenUpdateFormData } from '~/types/garden'
+import { useTeam } from '~/composables/data/useTeam'
 
 export const useGarden = () => {
   const { $supabase } = useNuxtApp()
@@ -11,11 +12,9 @@ export const useGarden = () => {
     const { data, error } = await $supabase.storage
       .from('maps')
       .upload(fileName, file)
-
     if (error) {
       throw new Error(`Failed to upload image: ${error.message}`)
     }
-
     return data
   }
 
@@ -76,6 +75,8 @@ export const useGarden = () => {
   const addGarden = async (formData: GardenFormData): Promise<GardenData> => {
     const uuid = crypto.randomUUID()
     let uploadedImagePath: string | null = null
+    const { createTeam, addTeamMember } = useTeam()
+    const { user } = useAuth()
 
     try {
       const uploadResult = await uploadGardenImage(formData.backgroundImage, uuid)
@@ -96,6 +97,13 @@ export const useGarden = () => {
       }
 
       const createdGarden = await createGarden(gardenDbData)
+
+      // Create a team for this garden and add the current user as a member
+      if (!user.value) throw new Error('User not authenticated')
+      const team = await createTeam(createdGarden.id, `${createdGarden.name} Team`)
+      console.log('team', team)
+
+      await addTeamMember(team.id, user.value.id, 'owner')
 
       return {
         ...createdGarden,
@@ -118,20 +126,34 @@ export const useGarden = () => {
     if (!user.value) {
       throw new Error('User not authenticated')
     }
+    // Fetch gardens where the user is a member of a team
     const { data, error } = await $supabase
-      .from('gardens')
-      .select('*')
+      .from('teams_members')
+      .select('team_id, teams(id, garden_id, gardens(*))')
       .eq('user_id', user.value.id)
-      .order('created_at', { ascending: false })
 
     if (error) {
       throw new Error(`Failed to fetch gardens: ${error.message}`)
     }
 
-    return data.map(garden => ({
-      ...garden,
-      background_image_url: getImagePublicUrl(garden.background_image_url),
-    }))
+    // Flatten and filter out nulls
+    type TeamsMembersRow = {
+      teams?: {
+        gardens?: GardenData
+      }
+    }
+    const gardens: GardenData[] = (data as TeamsMembersRow[] || [])
+      .map(row => row.teams?.gardens)
+      .filter((g): g is GardenData => !!g)
+      .map(g => ({
+        ...g,
+        background_image_url: getImagePublicUrl(g.background_image_url),
+      }))
+
+    // Optionally, sort by created_at descending
+    gardens.sort((a, b) => (b.created_at > a.created_at ? 1 : -1))
+
+    return gardens
   }
 
   /**

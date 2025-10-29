@@ -116,6 +116,7 @@ import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
 import type { VarietyData } from '~/types/variety'
 import { useGarden } from '~/composables/data/useGarden'
+import { useTeam } from '~/composables/data/useTeam'
 import { usePlant } from '~/composables/data/usePlant'
 import { useGardenZoom } from '~/composables/garden/useGardenZoom'
 import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
@@ -145,8 +146,10 @@ const isOwner = computed(() => {
   )
 })
 
+const isTeamMember = ref(false)
+
 const canEdit = computed(
-  () => Boolean(isEditingEnabled.value) && Boolean(isOwner.value),
+  () => Boolean(isEditingEnabled.value) && (isOwner.value || isTeamMember.value),
 )
 
 const visibleCategories = ref<string[]>([
@@ -302,6 +305,8 @@ const {
   onPlantPositionUpdated,
 )
 
+const { fetchTeamsByGarden, fetchTeamMembers } = useTeam()
+
 const loadGarden = async () => {
   try {
     pending.value = true
@@ -314,10 +319,28 @@ const loadGarden = async () => {
       return
     }
 
-    if (
-      !gardenData.is_public
-      && (!user.value || user.value.id !== gardenData.user_id)
-    ) {
+    // Check access: public, owner, or team member
+    let allowed = false
+    if (gardenData.is_public) {
+      allowed = true
+    }
+    else if (user.value && user.value.id === gardenData.user_id) {
+      allowed = true
+    }
+    else if (user.value) {
+      // Check if user is a team member for this garden
+      const teams = await fetchTeamsByGarden(gardenId)
+      for (const team of teams) {
+        const members = await fetchTeamMembers(team.id)
+        if (members.some(m => m.user_id === user.value.id)) {
+          allowed = true
+          isTeamMember.value = true
+          break
+        }
+      }
+    }
+
+    if (!allowed) {
       error.value = 'Access denied. This garden is private.'
       return
     }
