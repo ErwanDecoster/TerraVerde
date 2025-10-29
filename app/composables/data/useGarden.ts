@@ -56,7 +56,7 @@ export const useGarden = () => {
     is_public: boolean
   }) => {
     const { data, error } = await $supabase
-      .from('garden_config')
+      .from('gardens')
       .insert(gardenData)
       .select()
       .single()
@@ -115,7 +115,7 @@ export const useGarden = () => {
       throw new Error('User not authenticated')
     }
     const { data, error } = await $supabase
-      .from('garden_config')
+      .from('gardens')
       .select('*')
       .eq('user_id', user.value.id)
       .order('created_at', { ascending: false })
@@ -135,7 +135,7 @@ export const useGarden = () => {
    */
   const fetchPublicGardens = async (): Promise<GardenData[]> => {
     const { data, error } = await $supabase
-      .from('garden_config')
+      .from('gardens')
       .select(`*`)
       .eq('is_public', true)
       .order('created_at', { ascending: false })
@@ -155,7 +155,7 @@ export const useGarden = () => {
    */
   const fetchGardenById = async (gardenId: string): Promise<GardenData | null> => {
     const { data, error } = await $supabase
-      .from('garden_config')
+      .from('gardens')
       .select('*')
       .eq('id', gardenId)
       .single()
@@ -206,7 +206,7 @@ export const useGarden = () => {
       }
 
       const { data, error } = await $supabase
-        .from('garden_config')
+        .from('gardens')
         .update(gardenDbData)
         .eq('id', gardenId)
         .select()
@@ -241,7 +241,7 @@ export const useGarden = () => {
    */
   const deleteGarden = async (gardenId: string, imagePath?: string) => {
     const { error } = await $supabase
-      .from('garden_config')
+      .from('gardens')
       .delete()
       .eq('id', gardenId)
 
