@@ -54,6 +54,12 @@ export const useGarden = () => {
     image_height: number
     pixels_per_meters: number
     is_public: boolean
+    show_markers_letters: boolean
+    description?: string | null
+    zip_code?: string | null
+    country?: string | null
+    street_name?: string | null
+    street_number?: string | null
   }) => {
     const { data, error } = await $supabase
       .from('gardens')
@@ -89,6 +95,12 @@ export const useGarden = () => {
         image_height: 0, // TODO: Get actual dimensions
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
+        show_markers_letters: true,
+        description: formData.description ?? null,
+        zip_code: formData.zip_code ?? null,
+        country: formData.country ?? null,
+        street_name: formData.street_name ?? null,
+        street_number: formData.street_number ?? null,
       }
 
       const createdGarden = await createGarden(gardenDbData)
@@ -202,6 +214,11 @@ export const useGarden = () => {
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
         show_markers_letters: formData.showMarkersLetters,
+        description: formData.description ?? null,
+        zip_code: formData.zip_code ?? null,
+        country: formData.country ?? null,
+        street_name: formData.street_name ?? null,
+        street_number: formData.street_number ?? null,
         ...(hasNewImage && { background_image_url: imagePath }),
       }
 

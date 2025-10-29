@@ -2,20 +2,17 @@ export interface GardenData {
   id: string
   name: string
   user_id: string
-  x_position?: number
-  y_position?: number
   background_image_url: string
-  image_width: number
-  image_height: number
-  default_zoom: number
-  min_zoom: number
-  max_zoom: number
   pixels_per_meters: number
   is_public: boolean
   show_markers_letters?: boolean
   created_at: string
   updated_at: string
-  imagePath: string
+  description?: string | null
+  zip_code?: string | null
+  country?: string | null
+  street_name?: string | null
+  street_number?: string | null
 }
 
 export interface GardenPosition {
@@ -28,6 +25,11 @@ export interface GardenFormData {
   isPublic: boolean
   backgroundImage: File
   PixelsPerMeters: number
+  description?: string | null
+  zip_code?: string | null
+  country?: string | null
+  street_name?: string | null
+  street_number?: string | null
 }
 
 export interface GardenUpdateFormData {
@@ -36,4 +38,9 @@ export interface GardenUpdateFormData {
   backgroundImage?: File
   PixelsPerMeters: number
   showMarkersLetters: boolean
+  description?: string | null
+  zip_code?: string | null
+  country?: string | null
+  street_name?: string | null
+  street_number?: string | null
 }

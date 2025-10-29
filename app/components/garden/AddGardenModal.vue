@@ -35,6 +35,31 @@ const schema = z.object({
         !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
       'Unsupported image format (JPEG, PNG, WebP only)',
     ),
+  description: z
+    .string()
+    .max(500, 'Description cannot exceed 500 characters')
+    .optional()
+    .nullable(),
+  zip_code: z
+    .string()
+    .max(20, 'Zip code cannot exceed 20 characters')
+    .optional()
+    .nullable(),
+  country: z
+    .string()
+    .max(100, 'Country cannot exceed 100 characters')
+    .optional()
+    .nullable(),
+  street_name: z
+    .string()
+    .max(100, 'Street name cannot exceed 100 characters')
+    .optional()
+    .nullable(),
+  street_number: z
+    .string()
+    .max(20, 'Street number cannot exceed 20 characters')
+    .optional()
+    .nullable(),
 })
 
 export type GardenSchema = z.output<typeof schema>
@@ -44,6 +69,11 @@ const state = reactive<Partial<GardenSchema>>({
   isPublic: false,
   PixelsPerMeters: 20,
   backgroundImage: undefined,
+  description: '',
+  zip_code: '',
+  country: '',
+  street_name: '',
+  street_number: '',
 })
 
 const loading = ref(false)
@@ -61,6 +91,11 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       isPublic: validatedData.isPublic || false,
       backgroundImage: validatedData.backgroundImage,
       PixelsPerMeters: validatedData.PixelsPerMeters,
+      description: validatedData.description ?? null,
+      zip_code: validatedData.zip_code ?? null,
+      country: validatedData.country ?? null,
+      street_name: validatedData.street_name ?? null,
+      street_number: validatedData.street_number ?? null,
     })
 
     emit('gardenAdded', gardenData)
@@ -69,7 +104,13 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     Object.assign(state, {
       name: '',
       isPublic: false,
+      PixelsPerMeters: 20,
       backgroundImage: undefined,
+      description: '',
+      zip_code: '',
+      country: '',
+      street_name: '',
+      street_number: '',
     })
 
     toast.add({
@@ -122,6 +163,72 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
             v-model="state.name"
             class="w-full"
             placeholder="Enter garden name"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Description"
+          name="description"
+          class="col-span-2"
+        >
+          <UTextarea
+            v-model="state.description"
+            class="w-full"
+            placeholder="Enter a description (optional)"
+            :maxlength="500"
+            :rows="2"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Zip Code"
+          name="zip_code"
+          class="col-span-1"
+        >
+          <UInput
+            v-model="state.zip_code"
+            class="w-full"
+            placeholder="Zip code"
+            :maxlength="20"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Country"
+          name="country"
+          class="col-span-1"
+        >
+          <UInput
+            v-model="state.country"
+            class="w-full"
+            placeholder="Country"
+            :maxlength="100"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Street Name"
+          name="street_name"
+          class="col-span-1"
+        >
+          <UInput
+            v-model="state.street_name"
+            class="w-full"
+            placeholder="Street name"
+            :maxlength="100"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Street Number"
+          name="street_number"
+          class="col-span-1"
+        >
+          <UInput
+            v-model="state.street_number"
+            class="w-full"
+            placeholder="Street number"
+            :maxlength="20"
           />
         </UFormField>
 
