@@ -63,6 +63,10 @@
         :garden="garden"
         @garden-updated="$emit('garden-updated')"
       />
+      <ManageTeamsModal
+        v-if="garden && isOwner"
+        :garden="garden"
+      />
       <USwitch
         v-if="isOwner"
         :label="
@@ -79,6 +83,7 @@
 import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
 import EditGardenModal from './EditGardenModal.vue'
+import ManageTeamsModal from './ManageTeamsModal.vue'
 
 interface Props {
   garden?: GardenData | null

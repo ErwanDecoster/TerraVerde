@@ -17,6 +17,16 @@ export interface TeamMemberData {
 
 export const useTeam = () => {
   const { $supabase } = useNuxtApp()
+  /**
+     * Remove a team by id
+     */
+  const removeTeam = async (teamId: number) => {
+    const { error } = await $supabase
+      .from('teams')
+      .delete()
+      .eq('id', teamId)
+    if (error) throw new Error(`Failed to remove team: ${error.message}`)
+  }
 
   /**
    * Create a team for a garden
@@ -101,6 +111,7 @@ export const useTeam = () => {
     createTeam,
     addTeamMember,
     removeTeamMember,
+    removeTeam,
     fetchTeamsByGarden,
     fetchTeamMembers,
     fetchTeamsByUser,
