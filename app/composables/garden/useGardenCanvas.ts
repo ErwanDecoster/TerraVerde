@@ -21,15 +21,6 @@ export const useGardenCanvas = (resetZoom: () => void) => {
       backgroundConfig.width = img.naturalWidth
       backgroundConfig.height = img.naturalHeight
 
-      if (!garden?.image_width || !garden?.image_height) {
-        backgroundConfig.width = img.naturalWidth
-        backgroundConfig.height = img.naturalHeight
-      }
-      else {
-        backgroundConfig.width = garden.image_width
-        backgroundConfig.height = garden.image_height
-      }
-
       setTimeout(() => {
         resetZoom()
       }, 100)

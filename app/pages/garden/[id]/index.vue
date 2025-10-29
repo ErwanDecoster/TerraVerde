@@ -328,13 +328,6 @@ const loadGarden = async () => {
       loadBackgroundImage(gardenData.background_image_url, gardenData)
     }
 
-    if (gardenData.image_width && gardenData.image_height) {
-      stageConfig.width = gardenData.image_width
-      stageConfig.height = gardenData.image_height
-      backgroundConfig.width = gardenData.image_width
-      backgroundConfig.height = gardenData.image_height
-    }
-
     await loadPlants()
   }
   catch (err) {

@@ -47,11 +47,7 @@ export const useGarden = () => {
   const createGarden = async (gardenData: {
     id: string
     name: string
-    x_position: number
-    y_position: number
     background_image_url: string
-    image_width: number
-    image_height: number
     pixels_per_meters: number
     is_public: boolean
     show_markers_letters: boolean
@@ -88,11 +84,7 @@ export const useGarden = () => {
       const gardenDbData = {
         id: uuid,
         name: formData.name,
-        x_position: 0,
-        y_position: 0,
         background_image_url: uploadResult.path,
-        image_width: 0, // TODO: Get actual dimensions
-        image_height: 0, // TODO: Get actual dimensions
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
         show_markers_letters: true,
@@ -209,8 +201,6 @@ export const useGarden = () => {
 
       const gardenDbData = {
         name: formData.name,
-        x_position: 0,
-        y_position: 0,
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
         show_markers_letters: formData.showMarkersLetters,
