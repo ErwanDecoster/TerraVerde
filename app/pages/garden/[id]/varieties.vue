@@ -267,11 +267,11 @@ import { useVarietySync } from '~/composables/data/useVarietySync'
 import { getCategoryColor, getCategoryLabel } from '~/utils/plantCategories'
 import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
 import EditVarietyModal from '~/components/variety/EditVarietyModal.vue'
+import { useIsOwner } from '~/composables/useIsOwner'
 
 const route = useRoute()
 const gardenId = route.params.id as string
 
-const { user } = useAuth()
 const { fetchGardenById } = useGarden()
 const { fetchPlants } = usePlant()
 const { fetchVarieties } = useVariety()
@@ -281,14 +281,7 @@ const {
   removeVarietyFromList,
   syncVarietyInPlants,
 } = useVarietySync()
-
-const isOwner = computed(() => {
-  return Boolean(
-    user.value
-    && garden.value?.user_id
-    && user.value.id === garden.value.user_id,
-  )
-})
+const { isOwner } = useIsOwner(gardenId)
 
 const garden = ref<GardenData | null>(null)
 const varieties = ref<VarietyData[]>([])
@@ -390,15 +383,19 @@ const loadData = async () => {
       return
     }
 
-    if (
-      !gardenData.is_public
-      && (!user.value || user.value.id !== gardenData.user_id)
-    ) {
+    // Check access: public, owner, or team member
+    let allowed = false
+    if (gardenData.is_public) {
+      allowed = true
+    }
+    if (!allowed) {
       error.value = 'Access denied. This garden is private.'
       return
     }
 
     garden.value = gardenData
+
+    // Ownership check auto-runs via watchEffect in useIsOwner
 
     const [varietiesData, plantsData] = await Promise.all([
       fetchVarieties(),

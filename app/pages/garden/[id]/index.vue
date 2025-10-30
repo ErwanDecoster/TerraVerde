@@ -117,6 +117,7 @@ import type { PlantData } from '~/types/plant'
 import type { VarietyData } from '~/types/variety'
 import { useGarden } from '~/composables/data/useGarden'
 import { useTeam } from '~/composables/data/useTeam'
+import { useIsOwner } from '~/composables/useIsOwner'
 import { usePlant } from '~/composables/data/usePlant'
 import { useGardenZoom } from '~/composables/garden/useGardenZoom'
 import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
@@ -140,11 +141,7 @@ const { fetchGardenById } = useGarden()
 const { fetchPlants, updatePlant } = usePlant()
 const { syncVarietyInPlants } = useVarietySync()
 
-const isOwner = computed(() => {
-  return Boolean(
-    user.value && garden.value.user_id && user.value.id === garden.value.user_id,
-  )
-})
+const { isOwner, checkIsOwner } = useIsOwner(gardenId)
 
 const isTeamMember = ref(false)
 
@@ -324,15 +321,12 @@ const loadGarden = async () => {
     if (gardenData.is_public) {
       allowed = true
     }
-    else if (user.value && user.value.id === gardenData.user_id) {
-      allowed = true
-    }
     else if (user.value) {
       // Check if user is a team member for this garden
       const teams = await fetchTeamsByGarden(gardenId)
       for (const team of teams) {
         const members = await fetchTeamMembers(team.id)
-        if (members.some(m => m.user_id === user.value.id)) {
+        if (user.value && members.some(m => m.user_id === user.value!.id)) {
           allowed = true
           isTeamMember.value = true
           break
@@ -348,9 +342,9 @@ const loadGarden = async () => {
     garden.value = gardenData
 
     if (gardenData.background_image_url) {
-      loadBackgroundImage(gardenData.background_image_url, gardenData)
+      loadBackgroundImage(gardenData.background_image_url)
     }
-
+    await checkIsOwner()
     await loadPlants()
   }
   catch (err) {

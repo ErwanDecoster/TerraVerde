@@ -1,7 +1,6 @@
 export interface GardenData {
   id: string
   name: string
-  user_id: string
   background_image_url: string
   pixels_per_meters: number
   is_public: boolean
