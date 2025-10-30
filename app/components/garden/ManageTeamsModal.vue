@@ -217,10 +217,11 @@ watch(() => props.garden.id, loadTeams)
             <div class="font-bold">
               {{ team.name || "Unnamed Team" }}
             </div>
-            <div>
+            <div v-if="!showDeleteTeamConfirm[team.id]">
               <UButton
                 size="xs"
                 color="error"
+                variant="outline"
                 icon="i-heroicons-trash-20-solid"
                 :loading="deletingTeam[team.id]"
                 @click="showDeleteTeamConfirm[team.id] = true"
@@ -228,27 +229,26 @@ watch(() => props.garden.id, loadTeams)
                 Delete Team
               </UButton>
             </div>
-          </div>
-          <div
-            v-if="showDeleteTeamConfirm[team.id]"
-            class="mb-2 flex gap-2 items-center"
-          >
-            <span>Are you sure you want to delete this team?</span>
-            <UButton
-              size="xs"
-              color="error"
-              :loading="deletingTeam[team.id]"
-              @click="onRemoveTeam(team.id)"
+            <div
+              v-else
+              class="mb-2 flex gap-2 items-center"
             >
-              Confirm
-            </UButton>
-            <UButton
-              size="xs"
-              variant="ghost"
-              @click="showDeleteTeamConfirm[team.id] = false"
-            >
-              Cancel
-            </UButton>
+              <UButton
+                size="xs"
+                color="error"
+                :loading="deletingTeam[team.id]"
+                @click="onRemoveTeam(team.id)"
+              >
+                Confirm Delete
+              </UButton>
+              <UButton
+                size="xs"
+                variant="ghost"
+                @click="showDeleteTeamConfirm[team.id] = false"
+              >
+                Cancel
+              </UButton>
+            </div>
           </div>
           <div class="mb-2">
             Members:
@@ -267,6 +267,7 @@ watch(() => props.garden.id, loadTeams)
               <UButton
                 size="xs"
                 color="error"
+                variant="outline "
                 icon="i-heroicons-trash-20-solid"
                 @click="onRemoveMember(team.id, member.id)"
               >
