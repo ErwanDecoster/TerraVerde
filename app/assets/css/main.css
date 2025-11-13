@@ -79,6 +79,8 @@
   --ui-color-neutral-800: var(--color-slate-800, oklch(27.9% 0.041 260.031));
   --ui-color-neutral-900: var(--color-slate-900, oklch(20.8% 0.042 265.755));
   --ui-color-neutral-950: var(--color-slate-950, oklch(12.9% 0.042 264.695));
+
+  --container-lg: 628px;
 }
 
 /* Color Palette */
