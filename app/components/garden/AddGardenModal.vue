@@ -37,7 +37,7 @@ const schema = z.object({
     ),
   description: z
     .string()
-    .max(500, 'Description cannot exceed 500 characters')
+    .max(2000, 'Description cannot exceed 2000 characters')
     .optional()
     .nullable(),
   zip_code: z
@@ -171,12 +171,10 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           name="description"
           class="col-span-2"
         >
-          <UTextarea
+          <TiptapEditor
             v-model="state.description"
-            class="w-full"
+            :max-length="2000"
             placeholder="Enter a description (optional)"
-            :maxlength="500"
-            :rows="2"
           />
         </UFormField>
 
