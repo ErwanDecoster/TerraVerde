@@ -4,14 +4,13 @@ export interface GardenData {
   background_image_url: string
   pixels_per_meters: number
   is_public: boolean
-  show_markers_letters?: boolean
   created_at: string
   updated_at: string
   description?: string | null
   zip_code?: string | null
   country?: string | null
-  street_name?: string | null
-  street_number?: string | null
+  city?: string | null
+  street_address?: string | null
 }
 
 export interface GardenPosition {
@@ -27,8 +26,8 @@ export interface GardenFormData {
   description?: string | null
   zip_code?: string | null
   country?: string | null
-  street_name?: string | null
-  street_number?: string | null
+  city?: string | null
+  street_address?: string | null
 }
 
 export interface GardenUpdateFormData {
@@ -36,10 +35,9 @@ export interface GardenUpdateFormData {
   isPublic: boolean
   backgroundImage?: File
   PixelsPerMeters: number
-  showMarkersLetters: boolean
   description?: string | null
   zip_code?: string | null
   country?: string | null
-  street_name?: string | null
-  street_number?: string | null
+  city?: string | null
+  street_address?: string | null
 }

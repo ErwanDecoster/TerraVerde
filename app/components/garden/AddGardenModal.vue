@@ -50,14 +50,14 @@ const schema = z.object({
     .max(100, 'Country cannot exceed 100 characters')
     .optional()
     .nullable(),
-  street_name: z
+  city: z
     .string()
-    .max(100, 'Street name cannot exceed 100 characters')
+    .max(100, 'City cannot exceed 100 characters')
     .optional()
     .nullable(),
-  street_number: z
+  street_address: z
     .string()
-    .max(20, 'Street number cannot exceed 20 characters')
+    .max(100, 'Street address cannot exceed 100 characters')
     .optional()
     .nullable(),
 })
@@ -72,8 +72,8 @@ const state = reactive<Partial<GardenSchema>>({
   description: '',
   zip_code: '',
   country: '',
-  street_name: '',
-  street_number: '',
+  city: '',
+  street_address: '',
 })
 
 const loading = ref(false)
@@ -94,8 +94,8 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       description: validatedData.description ?? null,
       zip_code: validatedData.zip_code ?? null,
       country: validatedData.country ?? null,
-      street_name: validatedData.street_name ?? null,
-      street_number: validatedData.street_number ?? null,
+      city: validatedData.city ?? null,
+      street_address: validatedData.street_address ?? null,
     })
 
     emit('gardenAdded', gardenData)
@@ -109,8 +109,8 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       description: '',
       zip_code: '',
       country: '',
-      street_name: '',
-      street_number: '',
+      city: '',
+      street_address: '',
     })
 
     toast.add({
@@ -179,19 +179,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
         </UFormField>
 
         <UFormField
-          label="Zip Code"
-          name="zip_code"
-          class="col-span-1"
-        >
-          <UInput
-            v-model="state.zip_code"
-            class="w-full"
-            placeholder="Zip code"
-            :maxlength="20"
-          />
-        </UFormField>
-
-        <UFormField
           label="Country"
           name="country"
           class="col-span-1"
@@ -205,28 +192,42 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
         </UFormField>
 
         <UFormField
-          label="Street Name"
-          name="street_name"
+          label="City"
+          name="city"
           class="col-span-1"
         >
           <UInput
-            v-model="state.street_name"
+            v-model="state.city"
             class="w-full"
-            placeholder="Street name"
+            placeholder="City"
             :maxlength="100"
           />
         </UFormField>
 
         <UFormField
-          label="Street Number"
-          name="street_number"
+          label="Zip Code"
+          name="zip_code"
           class="col-span-1"
         >
           <UInput
-            v-model="state.street_number"
+            v-model="state.zip_code"
             class="w-full"
-            placeholder="Street number"
+            placeholder="Zip code"
             :maxlength="20"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Street Name"
+          name="street_address"
+          class="col-span-1"
+        >
+          <UInput
+            v-model="state.street_address"
+            class="w-full"
+            placeholder="Street name"
+            autocomplete="street-address"
+            :maxlength="100"
           />
         </UFormField>
 

@@ -28,7 +28,6 @@ const schema = z.object({
     .min(1, 'Name is required')
     .max(100, 'Name cannot exceed 100 characters'),
   isPublic: z.boolean().optional(),
-  showMarkersLetters: z.boolean().optional(),
   PixelsPerMeters: z
     .number()
     .min(1, 'Scale must be at least 1 Pixels per Meters')
@@ -60,14 +59,14 @@ const schema = z.object({
     .max(100, 'Country cannot exceed 100 characters')
     .optional()
     .nullable(),
-  street_name: z
+  city: z
     .string()
-    .max(100, 'Street name cannot exceed 100 characters')
+    .max(100, 'City cannot exceed 100 characters')
     .optional()
     .nullable(),
-  street_number: z
+  street_address: z
     .string()
-    .max(20, 'Street number cannot exceed 20 characters')
+    .max(100, 'Street address cannot exceed 100 characters')
     .optional()
     .nullable(),
 })
@@ -77,14 +76,13 @@ export type EditGardenSchema = z.output<typeof schema>
 const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   isPublic: props.garden.is_public || false,
-  showMarkersLetters: props.garden.show_markers_letters ?? true,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
   backgroundImage: undefined,
   description: props.garden.description ?? '',
   zip_code: props.garden.zip_code ?? '',
   country: props.garden.country ?? '',
-  street_name: props.garden.street_name ?? '',
-  street_number: props.garden.street_number ?? '',
+  city: props.garden.city ?? '',
+  street_address: props.garden.street_address ?? '',
 })
 
 const loading = ref(false)
@@ -98,14 +96,13 @@ watch(
     Object.assign(state, {
       name: newGarden.name,
       isPublic: newGarden.is_public || false,
-      showMarkersLetters: newGarden.show_markers_letters ?? true,
       PixelsPerMeters: newGarden.pixels_per_meters || 20,
       backgroundImage: undefined,
       description: newGarden.description ?? '',
       zip_code: newGarden.zip_code ?? '',
       country: newGarden.country ?? '',
-      street_name: newGarden.street_name ?? '',
-      street_number: newGarden.street_number ?? '',
+      city: newGarden.city ?? '',
+      street_address: newGarden.street_address ?? '',
     })
   },
   { deep: true },
@@ -122,14 +119,13 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
       {
         name: validatedData.name,
         isPublic: validatedData.isPublic || false,
-        showMarkersLetters: validatedData.showMarkersLetters ?? true,
         backgroundImage: validatedData.backgroundImage,
         PixelsPerMeters: validatedData.PixelsPerMeters,
         description: validatedData.description ?? null,
         zip_code: validatedData.zip_code ?? null,
         country: validatedData.country ?? null,
-        street_name: validatedData.street_name ?? null,
-        street_number: validatedData.street_number ?? null,
+        city: validatedData.city ?? null,
+        street_address: validatedData.street_address ?? null,
       },
       props.garden.background_image_url,
     )
@@ -141,8 +137,8 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
     state.description = gardenData.description ?? ''
     state.zip_code = gardenData.zip_code ?? ''
     state.country = gardenData.country ?? ''
-    state.street_name = gardenData.street_name ?? ''
-    state.street_number = gardenData.street_number ?? ''
+    state.city = gardenData.city ?? ''
+    state.street_address = gardenData.street_address ?? ''
 
     toast.add({
       title: 'Garden Updated',
@@ -248,19 +244,6 @@ function confirmDelete() {
         </UFormField>
 
         <UFormField
-          label="Zip Code"
-          name="zip_code"
-          class="col-span-1"
-        >
-          <UInput
-            v-model="state.zip_code"
-            class="w-full"
-            placeholder="Zip code"
-            :maxlength="20"
-          />
-        </UFormField>
-
-        <UFormField
           label="Country"
           name="country"
           class="col-span-1"
@@ -274,28 +257,42 @@ function confirmDelete() {
         </UFormField>
 
         <UFormField
-          label="Street Name"
-          name="street_name"
+          label="City"
+          name="city"
           class="col-span-1"
         >
           <UInput
-            v-model="state.street_name"
+            v-model="state.city"
             class="w-full"
-            placeholder="Street name"
+            placeholder="City"
             :maxlength="100"
           />
         </UFormField>
 
         <UFormField
-          label="Street Number"
-          name="street_number"
+          label="Zip Code"
+          name="zip_code"
           class="col-span-1"
         >
           <UInput
-            v-model="state.street_number"
+            v-model="state.zip_code"
             class="w-full"
-            placeholder="Street number"
+            placeholder="Zip code"
             :maxlength="20"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Street Address"
+          name="street_address"
+          class="col-span-1"
+        >
+          <UInput
+            v-model="state.street_address"
+            class="w-full"
+            autocomplete="street-address"
+            placeholder="Street name"
+            :maxlength="100"
           />
         </UFormField>
 
@@ -307,17 +304,6 @@ function confirmDelete() {
           <USwitch
             v-model="state.isPublic"
             label="Make this garden visible to other"
-          />
-        </UFormField>
-
-        <UFormField
-          label="Show Marker Letters"
-          name="showMarkersLetters"
-          class="col-span-2"
-        >
-          <USwitch
-            v-model="state.showMarkersLetters"
-            label="Display category letters on plant markers"
           />
         </UFormField>
 

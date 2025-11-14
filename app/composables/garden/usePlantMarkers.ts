@@ -33,7 +33,7 @@ export const usePlantMarkers = (
     if (!garden.value) return []
 
     const PixelsPerMeters = garden.value.pixels_per_meters
-    const showMarkersLetters = !isOwner.value && !garden.value.show_markers_letters
+    const showMarkersLetters = !isOwner.value && !garden.value.show_markers_letters // TODO use user preference here
 
     return plants.value
       .filter(plant => visibleCategories.value.includes(plant.variety.category))
