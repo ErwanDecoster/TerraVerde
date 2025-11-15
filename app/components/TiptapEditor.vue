@@ -100,7 +100,7 @@
 
     <div
       :class="[
-        'rounded-md border p-2 focus-within:ring-1 focus-within:ring-primary-500',
+        'rounded-md border-accented ring focus-within:ring-2 ring-accented p-2 focus-within:ring-primary',
         disabled && 'opacity-60 pointer-events-none',
       ]"
     >
