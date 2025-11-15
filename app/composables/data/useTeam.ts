@@ -1,19 +1,6 @@
 // import type { GardenData } from '~/types/garden'
 
-export interface TeamData {
-  id: number
-  created_at: string
-  garden_id: string
-  name?: string | null
-}
-
-export interface TeamMemberData {
-  id: number
-  created_at: string
-  team_id: number
-  user_id: string
-  role?: string | null
-}
+import type { TeamData, TeamMemberData } from '~/types/team'
 
 export const useTeam = () => {
   const { $supabase } = useNuxtApp()
@@ -71,10 +58,10 @@ export const useTeam = () => {
   const fetchTeamsByGarden = async (gardenId: string): Promise<TeamData[]> => {
     const { data, error } = await $supabase
       .from('teams')
-      .select('*')
+      .select('*, teams_members(*, profile:profiles(*))')
       .eq('garden_id', gardenId)
     if (error) throw new Error(`Failed to fetch teams: ${error.message}`)
-    return data
+    return data as TeamData[]
   }
 
   /**

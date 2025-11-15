@@ -1,4 +1,3 @@
-// Separated interfaces for better clarity and reuse.
 export interface GardenTeamMemberProfile {
   id: string
   first_name?: string | null

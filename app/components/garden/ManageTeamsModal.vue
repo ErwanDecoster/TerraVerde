@@ -2,7 +2,7 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { z } from 'zod'
 import { useTeam } from '~/composables/data/useTeam'
-import type { TeamData, TeamMemberData } from '~/composables/data/useTeam'
+import type { TeamData, TeamMemberData } from '~/types/team'
 import type { GardenData } from '~/types/garden'
 
 interface Props {
@@ -15,7 +15,6 @@ const open = ref(false)
 const toast = useToast()
 const {
   fetchTeamsByGarden,
-  fetchTeamMembers,
   createTeam,
   addTeamMember,
   removeTeamMember,
@@ -29,7 +28,6 @@ async function onRemoveTeam(teamId: number) {
   try {
     await removeTeam(teamId)
     teams.value = teams.value.filter(t => t.id !== teamId)
-    teamMembers[teamId] = [] // Instead of delete, clear the array for reactivity
     toast.add({
       title: 'Team Removed',
       description: 'Team deleted successfully',
@@ -52,7 +50,6 @@ async function onRemoveTeam(teamId: number) {
 }
 
 const teams = ref<TeamData[]>([])
-const teamMembers = reactive<Record<number, TeamMemberData[]>>({})
 const loading = ref(false)
 const addingTeam = ref(false)
 const addingMember = ref<Record<number, boolean>>({})
@@ -76,9 +73,6 @@ async function loadTeams() {
   loading.value = true
   try {
     teams.value = await fetchTeamsByGarden(props.garden.id)
-    for (const team of teams.value) {
-      teamMembers[team.id] = await fetchTeamMembers(team.id)
-    }
   }
   catch (err) {
     const errorMsg
@@ -96,7 +90,6 @@ async function onAddTeam() {
     const parsed = teamNameSchema.parse({ name: newTeamName.value })
     const team = await createTeam(props.garden.id, parsed.name)
     teams.value.push(team)
-    teamMembers[team.id] = []
     newTeamName.value = ''
     toast.add({
       title: 'Team Added',
@@ -122,8 +115,12 @@ async function onAddMember(teamId: number) {
       role: newMemberRole[teamId],
     })
     const member = await addTeamMember(teamId, parsed.userId, parsed.role)
-    if (!teamMembers[teamId]) teamMembers[teamId] = []
-    teamMembers[teamId].push(member)
+    // Attach new member to nested array; initialize if absent.
+    const targetTeam = teams.value.find(t => t.id === teamId)
+    if (targetTeam) {
+      if (!targetTeam.teams_members) targetTeam.teams_members = []
+      targetTeam.teams_members.push(member)
+    }
     newMemberUserId[teamId] = ''
     newMemberRole[teamId] = ''
     toast.add({
@@ -146,8 +143,12 @@ async function onAddMember(teamId: number) {
 async function onRemoveMember(teamId: number, memberId: number) {
   try {
     await removeTeamMember(memberId)
-    if (!teamMembers[teamId]) return
-    teamMembers[teamId] = teamMembers[teamId].filter(m => m.id !== memberId)
+    const targetTeam = teams.value.find(t => t.id === teamId)
+    if (targetTeam?.teams_members) {
+      targetTeam.teams_members = targetTeam.teams_members.filter(
+        m => m.id !== memberId,
+      )
+    }
     toast.add({
       title: 'Member Removed',
       description: 'Member removed from team',
@@ -253,13 +254,28 @@ watch(() => props.garden.id, loadTeams)
           <div class="mb-2">
             Members:
           </div>
-          <ul class="mb-2">
+          <ul
+            v-if="team.teams_members?.length"
+            class="mb-2"
+          >
             <li
-              v-for="member in teamMembers[team.id]"
+              v-for="member in team.teams_members"
               :key="member.id"
               class="flex items-center gap-2"
             >
-              <span>{{ member.user_id }}</span>
+              <span>
+                <!-- Prefer profile name if available -->
+                <template v-if="member.profile">
+                  {{
+                    (member.profile.first_name || "")
+                      + " "
+                      + (member.profile.last_name || "")
+                  }}
+                </template>
+                <template v-else>
+                  {{ member.user_id }}
+                </template>
+              </span>
               <span
                 v-if="member.role"
                 class="text-xs text-gray-500"
@@ -267,7 +283,7 @@ watch(() => props.garden.id, loadTeams)
               <UButton
                 size="xs"
                 color="error"
-                variant="outline "
+                variant="outline"
                 icon="i-heroicons-trash-20-solid"
                 @click="onRemoveMember(team.id, member.id)"
               >
@@ -275,6 +291,12 @@ watch(() => props.garden.id, loadTeams)
               </UButton>
             </li>
           </ul>
+          <p
+            v-else
+            class="text-xs text-gray-500 mb-2"
+          >
+            No members yet
+          </p>
           <UForm
             class="flex gap-2 items-end"
             @submit.prevent="onAddMember(team.id)"
