@@ -160,8 +160,18 @@ export const useGarden = () => {
   const fetchPublicGardens = async (): Promise<GardenData[]> => {
     const { data, error } = await $supabase
       .from('gardens')
-      .select(`*`)
+      .select(`
+      *,
+      teams!inner (
+        teams_members!inner (
+          profile:profiles!inner(
+            first_name, last_name, avatar_url
+          )
+        )
+      )
+    `)
       .eq('is_public', true)
+      .eq('teams.teams_members.role', 'owner')
       .order('created_at', { ascending: false })
 
     if (error) {

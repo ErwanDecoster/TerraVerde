@@ -11,6 +11,17 @@ const gardens = ref<GardenData[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+// Helper to derive a display name for the first team's first member ("owner" concept)
+const gardenPrimaryMemberName = (garden: GardenData): string => {
+  const firstTeam = garden.teams?.[0]
+  if (!firstTeam) return ''
+  const firstMember = firstTeam.teams_members?.[0]
+  if (!firstMember) return ''
+  const first = firstMember.profile?.first_name || ''
+  const last = firstMember.profile?.last_name || ''
+  return (first + ' ' + last).trim()
+}
+
 onMounted(async () => {
   try {
     loading.value = true
@@ -123,8 +134,17 @@ onMounted(async () => {
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
               {{ garden.name }}
             </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              By Anonymous
+            <p
+              v-if="gardenPrimaryMemberName(garden)"
+              class="text-sm text-gray-500 dark:text-gray-400"
+            >
+              {{ gardenPrimaryMemberName(garden) }} Garden
+            </p>
+            <p
+              v-else
+              class="text-sm text-gray-500 dark:text-gray-400"
+            >
+              Community Garden
             </p>
           </div>
 

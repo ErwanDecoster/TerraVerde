@@ -1,3 +1,33 @@
+// Separated interfaces for better clarity and reuse.
+export interface GardenTeamMemberProfile {
+  id: string
+  first_name?: string | null
+  last_name?: string | null
+  avatar_url?: string | null
+  bio?: string | null
+  website?: string | null
+  is_public?: boolean | null
+}
+
+export interface GardenTeamMember {
+  id: string
+  team_id: string
+  profile_id: string
+  role: string
+  created_at: string
+  updated_at: string
+  profile: GardenTeamMemberProfile
+}
+
+export interface GardenTeam {
+  id: string
+  garden_id: string
+  team_name: string
+  created_at: string
+  updated_at: string
+  teams_members: GardenTeamMember[]
+}
+
 export interface GardenData {
   id: string
   name: string
@@ -11,6 +41,7 @@ export interface GardenData {
   country?: string | null
   city?: string | null
   street_address?: string | null
+  teams?: GardenTeam[]
 }
 
 export interface GardenPosition {
