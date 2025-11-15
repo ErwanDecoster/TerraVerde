@@ -2,7 +2,7 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { z } from 'zod'
 import { useTeam } from '~/composables/data/useTeam'
-import type { TeamData, TeamMemberData } from '~/types/team'
+import type { TeamData } from '~/types/team'
 import type { GardenData } from '~/types/garden'
 
 interface Props {

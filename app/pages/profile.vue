@@ -22,8 +22,8 @@ onMounted(async () => {
   try {
     profile.value = await fetchMyProfile()
   }
-  catch (e) {
-    console.warn('No profile found for user')
+  catch (err) {
+    console.warn('No profile found for user', err)
   }
   finally {
     loadingProfile.value = false

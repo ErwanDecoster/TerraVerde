@@ -3,7 +3,7 @@ import type { ProfileData } from '~/types/profile'
 import { useProfile } from '~/composables/data/useProfile'
 
 const { user, logout, loading } = useAuth()
-const { fetchMyProfile, getAvatarPublicUrl } = useProfile()
+const { fetchMyProfile } = useProfile()
 const currentProfile = ref<ProfileData | null>(null)
 
 const navigationItems = computed(() => [
@@ -27,8 +27,8 @@ watch(
       try {
         currentProfile.value = await fetchMyProfile()
       }
-      catch (error) {
-        console.log('No profile found for user')
+      catch (err) {
+        console.log('No profile found for user', err)
         currentProfile.value = null
       }
     }

@@ -1,4 +1,4 @@
-import type { ProfileData, ProfileFormData, ProfileUpdateFormData } from '~/types/profile'
+import type { ProfileData, ProfileUpdateFormData } from '~/types/profile'
 
 export const useProfile = () => {
   const { $supabase } = useNuxtApp()
