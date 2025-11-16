@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { GardenData, GardenTeamMember } from '~/types/garden'
+import type { GardenData } from '~/types/garden'
 import { useAuth } from '~/composables/useAuth'
 import { z } from 'zod'
 import { useGarden } from '~/composables/data/useGarden'
@@ -29,10 +29,7 @@ const isGardenOwner = computed(() => {
   const teams = props.garden.teams || []
   for (const team of teams) {
     if (
-      team.teams_members?.some(
-        (m: GardenTeamMember) =>
-          m.role === 'owner' && m.profile_id === user.value!.id,
-      )
+      team.teams_members?.length > 0
     ) {
       return true
     }

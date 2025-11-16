@@ -129,7 +129,23 @@ export const useGarden = () => {
     // Fetch gardens where the user is a member of a team
     const { data, error } = await $supabase
       .from('teams_members')
-      .select('team_id, teams(id, garden_id, gardens(*))')
+      .select(`
+        team_id, 
+        teams(
+          id, 
+          garden_id, 
+          gardens(
+            *,
+            teams!inner (
+              teams_members!inner (
+                profile:profiles!inner(
+                  id, first_name, last_name, avatar_url
+                )
+              )
+            )
+          )
+        )
+      `)
       .eq('user_id', user.value.id)
 
     if (error) {
@@ -192,8 +208,18 @@ export const useGarden = () => {
   const fetchGardenById = async (gardenId: string): Promise<GardenData | null> => {
     const { data, error } = await $supabase
       .from('gardens')
-      .select('*')
+      .select(`
+        *,
+        teams!inner (
+          teams_members!inner (
+            profile:profiles!inner(
+              id, first_name, last_name, avatar_url
+            )
+          )
+        )
+      `)
       .eq('id', gardenId)
+      .eq('teams.teams_members.role', 'owner')
       .single()
 
     if (error) {
