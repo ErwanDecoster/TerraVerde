@@ -2,7 +2,9 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { z } from 'zod'
 import { useTeam } from '~/composables/data/useTeam'
-import type { TeamData } from '~/types/team'
+import { useAuth } from '~/composables/useAuth'
+import { useProfile } from '~/composables/data/useProfile'
+import type { TeamData, TeamRole } from '~/types/team'
 import type { GardenData } from '~/types/garden'
 
 interface Props {
@@ -23,6 +25,7 @@ const {
 } = useTeam()
 const deletingTeam = ref<Record<number, boolean>>({})
 const showDeleteTeamConfirm = ref<Record<number, boolean>>({})
+const { user } = useAuth()
 
 // Role-based permissions (owner/admin can manage teams & members)
 const canManageTeams = computed(() =>
@@ -94,7 +97,7 @@ const addingTeam = ref(false)
 const addingMember = ref<Record<number, boolean>>({})
 const newTeamName = ref('')
 const newMemberUserId = reactive<Record<number, string>>({})
-const newMemberRole = reactive<Record<number, string>>({})
+const newMemberRole = reactive<Record<number, TeamRole | undefined>>({})
 
 const teamNameSchema = z.object({
   name: z
@@ -103,9 +106,20 @@ const teamNameSchema = z.object({
     .max(100, 'Max 100 characters'),
 })
 
+// Roles list shown in dropdown when adding a member.
+// 'owner' only assignable by existing owner.
+const ALL_ROLES: TeamRole[] = ['owner', 'admin', 'editor', 'viewer']
+const roleOptions = computed(() => {
+  return ALL_ROLES.filter(r =>
+    r !== 'owner' ? true : props.currentRole === 'owner',
+  ).map(r => ({ label: r.charAt(0).toUpperCase() + r.slice(1), value: r }))
+})
+
 const memberSchema = z.object({
   userId: z.string().min(1, 'User ID is required'),
-  role: z.string().max(50, 'Max 50 characters').optional(),
+  role: z.enum(['owner', 'admin', 'editor', 'viewer'], {
+    message: 'Role is required',
+  }),
 })
 
 async function loadTeams() {
@@ -153,9 +167,28 @@ async function onAddMember(teamId: number) {
   try {
     const parsed = memberSchema.parse({
       userId: newMemberUserId[teamId],
-      role: newMemberRole[teamId],
+      role: newMemberRole[teamId] as TeamRole, // required now
     })
     const member = await addTeamMember(teamId, parsed.userId, parsed.role)
+    // Fetch profile to enrich member for display of name instead of raw user_id
+    try {
+      const { fetchProfileById } = useProfile()
+      const profile = await fetchProfileById(parsed.userId)
+      if (profile) {
+        member.profile = {
+          id: profile.id,
+          first_name: profile.first_name || null,
+          last_name: profile.last_name || null,
+          avatar_url: profile.avatar_url || null,
+          bio: profile.bio || null,
+          website: profile.website || null,
+          is_public: profile.is_public || null,
+        }
+      }
+    }
+    catch (e) {
+      console.warn('Could not fetch profile for new member', e)
+    }
     // Attach new member to nested array; initialize if absent.
     const targetTeam = teams.value.find(t => t.id === teamId)
     if (targetTeam) {
@@ -163,7 +196,7 @@ async function onAddMember(teamId: number) {
       targetTeam.teams_members.push(member)
     }
     newMemberUserId[teamId] = ''
-    newMemberRole[teamId] = ''
+    newMemberRole[teamId] = undefined
     toast.add({
       title: 'Member Added',
       description: 'Member added to team',
@@ -188,9 +221,38 @@ async function onRemoveMember(teamId: number, memberId: number) {
     await removeTeamMember(memberId)
     const targetTeam = teams.value.find(t => t.id === teamId)
     if (targetTeam?.teams_members) {
+      const removedMember = targetTeam.teams_members.find(
+        m => m.id === memberId,
+      )
       targetTeam.teams_members = targetTeam.teams_members.filter(
         m => m.id !== memberId,
       )
+
+      if (
+        removedMember
+        && user.value
+        && removedMember.user_id === user.value.id
+      ) {
+        toast.add({
+          title: 'You left the garden',
+          description: 'Redirecting to your gardens list.',
+          color: 'info',
+        })
+        open.value = false
+        return
+      }
+
+      if (props.garden.is_public) {
+        try {
+          await refreshNuxtData()
+        }
+        catch (e) {
+          console.warn('Failed to refresh page data after member removal', e)
+        }
+      }
+      else {
+        await navigateTo('/gardens')
+      }
     }
     toast.add({
       title: 'Member Removed',
@@ -369,14 +431,18 @@ watch(() => props.garden.id, loadTeams)
             <UFormField
               label="Role"
               name="role"
+              required
             >
-              <UInput
+              <USelect
                 v-model="newMemberRole[team.id]"
-                placeholder="Role (optional)"
+                :items="roleOptions"
+                placeholder="Select role"
+                class="min-w-40"
               />
             </UFormField>
             <UButton
               :loading="addingMember[team.id]"
+              :disabled="!newMemberUserId[team.id] || !newMemberRole[team.id]"
               type="submit"
               icon="i-heroicons-plus-20-solid"
             >
