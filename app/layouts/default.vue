@@ -1,10 +1,16 @@
 <script lang="ts" setup>
 import type { ProfileData } from '~/types/profile'
 import { useProfile } from '~/composables/data/useProfile'
+import type { SettingsData } from '~/types/settings'
+import { useSettings } from '~/composables/data/useSettings'
 
 const { user, logout, loading } = useAuth()
 const { fetchMyProfile } = useProfile()
+const { fetchMySettings, updateSettings } = useSettings()
 const currentProfile = ref<ProfileData | null>(null)
+const currentSettings = ref<SettingsData | null>(null)
+const colorMode = useColorMode()
+let lastSavedTheme: string | null = null
 
 const navigationItems = computed(() => [
   {
@@ -23,20 +29,53 @@ const navigationItems = computed(() => [
 watch(
   user,
   async (newUser) => {
-    if (newUser) {
-      try {
-        currentProfile.value = await fetchMyProfile()
-      }
-      catch (err) {
-        console.log('No profile found for user', err)
-        currentProfile.value = null
+    if (!newUser) {
+      currentProfile.value = null
+      currentSettings.value = null
+      lastSavedTheme = null
+      return
+    }
+    try {
+      currentProfile.value = await fetchMyProfile()
+    }
+    catch (err) {
+      console.log('No profile found for user', err)
+      currentProfile.value = null
+    }
+    try {
+      const s = await fetchMySettings()
+      currentSettings.value = s
+      if (
+        s?.default_color_theme
+        && ['system', 'light', 'dark'].includes(s.default_color_theme)
+      ) {
+        colorMode.preference
+          = s.default_color_theme as typeof colorMode.preference
+        lastSavedTheme = s.default_color_theme
       }
     }
-    else {
-      currentProfile.value = null
+    catch (e) {
+      console.warn('Failed to load settings', e)
     }
   },
   { immediate: true },
+)
+
+watch(
+  () => colorMode.preference,
+  async (pref) => {
+    if (!user.value || !currentSettings.value) return
+    if (pref === lastSavedTheme) return
+    lastSavedTheme = pref
+    try {
+      currentSettings.value = await updateSettings({
+        default_color_theme: pref,
+      })
+    }
+    catch (e) {
+      console.warn('Failed to persist theme preference', e)
+    }
+  },
 )
 
 const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
@@ -63,8 +102,6 @@ const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
       </ClientOnly>
 
       <template #right>
-        <UColorModeSelect />
-
         <ClientOnly>
           <div class="flex items-center gap-3">
             <template v-if="loading && !user">
@@ -84,6 +121,11 @@ const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
                         label: 'Profile',
                         icon: 'i-heroicons-user-circle',
                         to: '/profile',
+                      },
+                      {
+                        label: 'Settings',
+                        icon: 'i-heroicons-cog-6-tooth',
+                        to: '/settings',
                       },
                     ],
                     [
