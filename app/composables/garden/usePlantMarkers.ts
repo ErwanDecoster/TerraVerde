@@ -14,7 +14,8 @@ export const usePlantMarkers = (
 ) => {
   const { fetchMySettings } = useSettings()
   const userSettings = ref<SettingsData | null>(null)
-  fetchMySettings().then((s) => { userSettings.value = s }).catch(() => {})
+  fetchMySettings()
+    .then((s) => { userSettings.value = s })
   const getPlantStatusStroke = (status: string) => {
     switch (status) {
       case 'healthy':
