@@ -112,8 +112,6 @@ const varietiesCount = computed(() => {
   return uniqueVarietyIds.size
 })
 
-console.log(props.currentRole)
-
 const canEditGardens = computed(() =>
   ['owner'].includes(props.currentRole || 'viewer'),
 )

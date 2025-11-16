@@ -187,13 +187,6 @@ const canEdit = computed(
   () => Boolean(isEditingEnabled.value) && permissions.value.editPlants,
 )
 
-watch(
-  () => canEdit.value,
-  () => {
-    console.log('canEdit', canEdit.value)
-  },
-)
-
 const visibleCategories = ref<string[]>([
   'tree',
   'fruit_tree',

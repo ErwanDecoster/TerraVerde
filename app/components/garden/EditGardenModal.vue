@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { GardenData } from '~/types/garden'
+import type { GardenData, GardenTeamMember } from '~/types/garden'
+import { useAuth } from '~/composables/useAuth'
 import { z } from 'zod'
 import { useGarden } from '~/composables/data/useGarden'
 
@@ -19,8 +20,22 @@ const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
 const { updateGarden, deleteGarden } = useGarden()
+const { user } = useAuth()
 
 const showDeleteConfirmation = ref(false)
+
+const isGardenOwner = computed(() => {
+  if (!user.value) return false
+  const teams = props.garden.teams || []
+  for (const team of teams) {
+    if (team.teams_members?.some((m: GardenTeamMember) => m.role === 'owner' && m.profile_id === user.value!.id)) {
+      return true
+    }
+  }
+  return false
+})
+
+const canDeleteGarden = isGardenOwner
 
 const schema = z.object({
   name: z
@@ -167,6 +182,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
 }
 
 async function onDelete() {
+  if (!canDeleteGarden.value) return
   deleting.value = true
 
   try {
@@ -199,6 +215,7 @@ async function onDelete() {
 }
 
 function confirmDelete() {
+  if (!canDeleteGarden.value) return
   showDeleteConfirmation.value = true
 }
 </script>
@@ -210,6 +227,7 @@ function confirmDelete() {
     description="Update the garden details below."
   >
     <UButton
+      v-if="isGardenOwner"
       label="Edit Garden"
       variant="outline"
       icon="i-heroicons-pencil-square-20-solid"
@@ -375,7 +393,7 @@ function confirmDelete() {
 
     <template #footer="{ close }">
       <div class="flex justify-between w-full">
-        <div v-if="!showDeleteConfirmation">
+        <div v-if="canDeleteGarden && !showDeleteConfirmation">
           <UButton
             color="error"
             variant="outline"
@@ -388,7 +406,7 @@ function confirmDelete() {
         </div>
 
         <div
-          v-else
+          v-else-if="canDeleteGarden && showDeleteConfirmation"
           class="flex gap-2"
         >
           <UButton
