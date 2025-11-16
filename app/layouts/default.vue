@@ -83,7 +83,7 @@ const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
 
 <template>
   <UApp>
-    <UHeader>
+    <UHeader mode="slideover">
       <template #title>
         <NuxtLink
           to="/"
@@ -93,72 +93,66 @@ const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
         </NuxtLink>
       </template>
 
-      <ClientOnly>
-        <UNavigationMenu
-          v-if="user"
-          :items="navigationItems"
-          class="hidden md:flex"
-        />
-      </ClientOnly>
+      <UNavigationMenu
+        v-if="user"
+        :items="navigationItems"
+        class="hidden lg:flex"
+      />
 
       <template #right>
-        <ClientOnly>
-          <div class="flex items-center gap-3">
-            <template v-if="loading && !user">
-              <UButton to="/register">
-                Get Started
-              </UButton>
-            </template>
-            <template v-else>
-              <div
-                v-if="user"
-                class="flex items-center gap-3"
+        <div class="flex items-center gap-3">
+          <template v-if="loading && !user">
+            <UButton to="/register">
+              Get Started
+            </UButton>
+          </template>
+          <template v-else>
+            <div
+              v-if="user"
+              class="flex items-center gap-3"
+            >
+              <UDropdownMenu
+                :items="[
+                  [
+                    {
+                      label: 'Profile',
+                      icon: 'i-heroicons-user-circle',
+                      to: '/profile',
+                    },
+                    {
+                      label: 'Settings',
+                      icon: 'i-heroicons-cog-6-tooth',
+                      to: '/settings',
+                    },
+                  ],
+                  [
+                    {
+                      label: 'Sign Out',
+                      icon: 'i-heroicons-arrow-right-on-rectangle',
+                      onSelect: logout,
+                    },
+                  ],
+                ]"
               >
-                <UDropdownMenu
-                  :items="[
-                    [
-                      {
-                        label: 'Profile',
-                        icon: 'i-heroicons-user-circle',
-                        to: '/profile',
-                      },
-                      {
-                        label: 'Settings',
-                        icon: 'i-heroicons-cog-6-tooth',
-                        to: '/settings',
-                      },
-                    ],
-                    [
-                      {
-                        label: 'Sign Out',
-                        icon: 'i-heroicons-arrow-right-on-rectangle',
-                        onSelect: logout,
-                      },
-                    ],
-                  ]"
-                >
-                  <UAvatar
-                    :alt="user.email"
-                    icon="i-heroicons-user-circle"
-                    class="cursor-pointer"
-                    :src="avatarUrl"
-                  />
-                </UDropdownMenu>
-              </div>
-            </template>
-          </div>
-        </ClientOnly>
+                <UAvatar
+                  :alt="user.email"
+                  icon="i-heroicons-user-circle"
+                  class="cursor-pointer"
+                  :src="avatarUrl"
+                />
+              </UDropdownMenu>
+            </div>
+          </template>
+        </div>
       </template>
 
       <template #body>
-        <ClientOnly>
-          <UNavigationMenu
-            v-if="user"
-            :items="navigationItems"
-            orientation="vertical"
-            class="-mx-2.5 md:hidden"
-          />
-        </ClientOnly>
+        <UNavigationMenu
+          v-if="user"
+          :items="navigationItems"
+          orientation="vertical"
+          class="-mx-2.5 lg:hidden"
+        />
       </template>
     </UHeader>
 
