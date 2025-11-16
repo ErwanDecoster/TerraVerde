@@ -9,6 +9,9 @@ export interface VarietyData {
   reference_url?: string | null
   category: PlantCategory
   created_at: string
+  user_id: string
+  garden_id?: string | null
+  is_public: boolean
 }
 
 export interface VarietyFormData {
@@ -18,4 +21,7 @@ export interface VarietyFormData {
   main_color?: string
   reference_url?: string
   category: PlantCategory
+  user_id?: string
+  garden_id?: string | null
+  is_public?: boolean
 }

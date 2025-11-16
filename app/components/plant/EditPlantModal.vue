@@ -2,6 +2,7 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { PlantData } from '~/types/plant'
 import type { VarietyData } from '~/types/variety'
+import type { VarietyFilterMode } from '~/types/garden'
 import { PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
@@ -11,6 +12,7 @@ import EditVarietyModal from '~/components/variety/EditVarietyModal.vue'
 
 interface Props {
   plant: PlantData
+  varietyFilterMode?: VarietyFilterMode
 }
 
 interface Emits {
@@ -89,7 +91,10 @@ const loadVarieties = async () => {
   if (varieties.value.length > 0) return
   varietiesLoading.value = true
   try {
-    varieties.value = await fetchVarieties()
+    varieties.value = await fetchVarieties(
+      props.plant.garden_id,
+      props.varietyFilterMode,
+    )
   }
   catch (error) {
     console.error('Error loading varieties:', error)
@@ -336,7 +341,10 @@ async function copyPlant() {
               searchable
             />
             <div class="flex gap-2">
-              <AddVarietyModal @variety-added="onVarietyAdded">
+              <AddVarietyModal
+                :garden-id="props.plant.garden_id"
+                @variety-added="onVarietyAdded"
+              >
                 <UButton
                   icon="i-heroicons-plus-20-solid"
                   size="sm"

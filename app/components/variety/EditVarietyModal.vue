@@ -54,12 +54,14 @@ const schema = z.object({
       'climber',
       'vegetable',
       'grass',
+      'aquatic',
       'other',
     ],
     {
       message: 'Category is required',
     },
   ),
+  is_public: z.boolean().optional(),
 })
 
 export type EditVarietySchema = z.output<typeof schema>
@@ -71,6 +73,7 @@ const state = reactive<Partial<EditVarietySchema>>({
   main_color: props.variety.main_color || '#009689',
   reference_url: props.variety.reference_url || '',
   category: props.variety.category,
+  is_public: props.variety.is_public,
 })
 
 const chip = computed(() => ({ backgroundColor: state.main_color }))
@@ -90,6 +93,7 @@ watch(
       main_color: newVariety.main_color || '#22c55e',
       reference_url: newVariety.reference_url || '',
       category: newVariety.category,
+      is_public: newVariety.is_public,
     })
   },
   { deep: true },
@@ -103,11 +107,12 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
 
     const varietyData = await updateVariety(props.variety.id, {
       name: validatedData.name,
-      scientific_name: validatedData.scientific_name || null,
-      harvest_period: validatedData.harvest_period || null,
-      main_color: validatedData.main_color || null,
-      reference_url: validatedData.reference_url || null,
+      scientific_name: validatedData.scientific_name || undefined,
+      harvest_period: validatedData.harvest_period || undefined,
+      main_color: validatedData.main_color || undefined,
+      reference_url: validatedData.reference_url || undefined,
       category: validatedData.category,
+      is_public: validatedData.is_public,
     })
 
     emit('varietyUpdated', varietyData)
@@ -279,6 +284,14 @@ function confirmDelete() {
             type="string"
             class="w-full"
           />
+        </UFormField>
+
+        <UFormField
+          label="Make variety public"
+          name="is_public"
+          class="col-span-2"
+        >
+          <USwitch v-model="state.is_public" />
         </UFormField>
       </UForm>
     </template>

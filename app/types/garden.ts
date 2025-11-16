@@ -27,12 +27,15 @@ export interface GardenTeam {
   teams_members: GardenTeamMember[]
 }
 
+export type VarietyFilterMode = 'garden' | 'public' | 'all'
+
 export interface GardenData {
   id: string
   name: string
   background_image_url: string
   pixels_per_meters: number
   is_public: boolean
+  variety_filter_mode: VarietyFilterMode
   created_at: string
   updated_at: string
   description?: string | null
@@ -53,6 +56,7 @@ export interface GardenFormData {
   isPublic: boolean
   backgroundImage: File
   PixelsPerMeters: number
+  variety_filter_mode: VarietyFilterMode
   description?: string | null
   zip_code?: string | null
   country?: string | null
@@ -65,6 +69,7 @@ export interface GardenUpdateFormData {
   isPublic: boolean
   backgroundImage?: File
   PixelsPerMeters: number
+  variety_filter_mode: VarietyFilterMode
   description?: string | null
   zip_code?: string | null
   country?: string | null

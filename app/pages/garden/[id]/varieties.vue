@@ -61,6 +61,7 @@
 
         <AddVarietyModal
           v-if="isOwner"
+          :garden-id="gardenId"
           @variety-added="onVarietyAdded"
         >
           <UButton
@@ -398,7 +399,7 @@ const loadData = async () => {
     // Ownership check auto-runs via watchEffect in useIsOwner
 
     const [varietiesData, plantsData] = await Promise.all([
-      fetchVarieties(),
+      fetchVarieties(gardenId, gardenData.variety_filter_mode),
       fetchPlants(gardenId),
     ])
 

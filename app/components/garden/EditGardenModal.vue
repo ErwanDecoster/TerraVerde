@@ -32,6 +32,9 @@ const schema = z.object({
     .number()
     .min(1, 'Scale must be at least 1 Pixels per Meters')
     .max(100, 'Scale cannot exceed 100 Pixels per Meters'),
+  variety_filter_mode: z.enum(['garden', 'public', 'all'], {
+    message: 'Variety filter mode is required',
+  }),
   backgroundImage: z
     .instanceof(File, { message: 'Map file is required' })
     .optional()
@@ -77,6 +80,7 @@ const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   isPublic: props.garden.is_public || false,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
+  variety_filter_mode: props.garden.variety_filter_mode,
   backgroundImage: undefined,
   description: props.garden.description ?? '',
   zip_code: props.garden.zip_code ?? '',
@@ -97,6 +101,7 @@ watch(
       name: newGarden.name,
       isPublic: newGarden.is_public || false,
       PixelsPerMeters: newGarden.pixels_per_meters || 20,
+      variety_filter_mode: newGarden.variety_filter_mode,
       backgroundImage: undefined,
       description: newGarden.description ?? '',
       zip_code: newGarden.zip_code ?? '',
@@ -121,6 +126,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
         isPublic: validatedData.isPublic || false,
         backgroundImage: validatedData.backgroundImage,
         PixelsPerMeters: validatedData.PixelsPerMeters,
+        variety_filter_mode: validatedData.variety_filter_mode,
         description: validatedData.description ?? null,
         zip_code: validatedData.zip_code ?? null,
         country: validatedData.country ?? null,
@@ -304,6 +310,24 @@ function confirmDelete() {
           <USwitch
             v-model="state.isPublic"
             label="Make this garden visible to other"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Variety Filter Mode"
+          name="variety_filter_mode"
+          description="Control which varieties are available for this garden"
+          class="col-span-2"
+          required
+        >
+          <USelect
+            v-model="state.variety_filter_mode"
+            :items="[
+              { label: 'Garden varieties only', value: 'garden' },
+              { label: 'Public varieties only', value: 'public' },
+              { label: 'All varieties', value: 'all' },
+            ]"
+            class="w-full"
           />
         </UFormField>
 

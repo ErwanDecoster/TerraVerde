@@ -2,6 +2,7 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { PlantData, PlantStatus } from '~/types/plant'
 import type { VarietyData } from '~/types/variety'
+import type { VarietyFilterMode } from '~/types/garden'
 import { PLANT_STATUSES } from '~/types/plant'
 import { z } from 'zod'
 import { usePlant } from '~/composables/data/usePlant'
@@ -11,6 +12,7 @@ import EditVarietyModal from '../variety/EditVarietyModal.vue'
 
 interface Props {
   gardenId?: string
+  varietyFilterMode?: VarietyFilterMode
   clickCoordinates?: { x: number, y: number } | null
 }
 
@@ -86,7 +88,10 @@ const loadVarieties = async () => {
   if (varieties.value.length > 0) return
   varietiesLoading.value = true
   try {
-    varieties.value = await fetchVarieties()
+    varieties.value = await fetchVarieties(
+      props.gardenId,
+      props.varietyFilterMode,
+    )
   }
   catch (error) {
     console.error('Error loading varieties:', error)
@@ -266,7 +271,10 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
               searchable
             />
             <div class="flex gap-2">
-              <AddVarietyModal @variety-added="onVarietyAdded">
+              <AddVarietyModal
+                :garden-id="props.gardenId"
+                @variety-added="onVarietyAdded"
+              >
                 <UButton
                   icon="i-heroicons-plus-20-solid"
                   size="sm"

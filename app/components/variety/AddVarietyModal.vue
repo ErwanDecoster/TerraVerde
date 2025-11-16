@@ -5,11 +5,16 @@ import { VARIETY_CATEGORIES_FOR_SELECT } from '~/utils/plantCategories'
 import { z } from 'zod'
 import { useVariety } from '~/composables/data/useVariety'
 
+interface Props {
+  gardenId?: string
+}
+
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'varietyAdded', data: VarietyData): void
 }
 
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const open = ref(false)
 const toast = useToast()
@@ -46,12 +51,14 @@ const schema = z.object({
       'climber',
       'vegetable',
       'grass',
+      'aquatic',
       'other',
     ],
     {
       message: 'Category is required',
     },
   ),
+  is_public: z.boolean().optional(),
 })
 
 export type VarietySchema = z.output<typeof schema>
@@ -62,7 +69,8 @@ const state = reactive<Partial<VarietySchema>>({
   harvest_period: '',
   main_color: '#009689',
   reference_url: '',
-  category: 'flower',
+  category: 'other',
+  is_public: false,
 })
 
 const chip = computed(() => ({ backgroundColor: state.main_color }))
@@ -79,11 +87,13 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
 
     const varietyData = await addVariety({
       name: validatedData.name,
-      scientific_name: validatedData.scientific_name || null,
-      harvest_period: validatedData.harvest_period || null,
-      main_color: validatedData.main_color || null,
-      reference_url: validatedData.reference_url || null,
+      scientific_name: validatedData.scientific_name || undefined,
+      harvest_period: validatedData.harvest_period || undefined,
+      main_color: validatedData.main_color || undefined,
+      reference_url: validatedData.reference_url || undefined,
       category: validatedData.category,
+      garden_id: props.gardenId,
+      is_public: validatedData.is_public,
     })
 
     emit('varietyAdded', varietyData)
@@ -231,6 +241,14 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
             type="string"
             class="w-full"
           />
+        </UFormField>
+
+        <UFormField
+          label="Make variety public"
+          name="is_public"
+          class="col-span-2"
+        >
+          <USwitch v-model="state.is_public" />
         </UFormField>
       </UForm>
     </template>

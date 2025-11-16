@@ -24,6 +24,9 @@ const schema = z.object({
     .number()
     .min(1, 'Scale must be at least 1 Pixels per Meters')
     .max(100, 'Scale cannot exceed 100 Pixels per Meters'),
+  variety_filter_mode: z.enum(['garden', 'public', 'all'], {
+    message: 'Variety filter mode is required',
+  }),
   backgroundImage: z
     .instanceof(File, { message: 'Map file is required' })
     .refine(
@@ -68,6 +71,7 @@ const state = reactive<Partial<GardenSchema>>({
   name: '',
   isPublic: false,
   PixelsPerMeters: 20,
+  variety_filter_mode: 'garden',
   backgroundImage: undefined,
   description: '',
   zip_code: '',
@@ -91,6 +95,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       isPublic: validatedData.isPublic || false,
       backgroundImage: validatedData.backgroundImage,
       PixelsPerMeters: validatedData.PixelsPerMeters,
+      variety_filter_mode: validatedData.variety_filter_mode,
       description: validatedData.description ?? null,
       zip_code: validatedData.zip_code ?? null,
       country: validatedData.country ?? null,
@@ -105,6 +110,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       name: '',
       isPublic: false,
       PixelsPerMeters: 20,
+      variety_filter_mode: 'garden',
       backgroundImage: undefined,
       description: '',
       zip_code: '',
@@ -239,6 +245,24 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           <USwitch
             v-model="state.isPublic"
             label="Make this garden visible to other"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Variety Filter Mode"
+          name="variety_filter_mode"
+          description="Control which varieties are available for this garden"
+          class="col-span-2"
+          required
+        >
+          <USelect
+            v-model="state.variety_filter_mode"
+            :items="[
+              { label: 'Garden varieties only', value: 'garden' },
+              { label: 'Public varieties only', value: 'public' },
+              { label: 'All varieties', value: 'all' },
+            ]"
+            class="w-full"
           />
         </UFormField>
 

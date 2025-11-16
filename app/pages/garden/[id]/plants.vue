@@ -62,6 +62,7 @@
         <AddPlantModal
           v-if="isOwner"
           :garden-id="gardenId"
+          :variety-filter-mode="garden?.variety_filter_mode"
           @plant-added="onPlantAdded"
           @variety-updated="onVarietyUpdated"
         >
@@ -221,6 +222,7 @@
             <div class="flex items-center gap-1">
               <EditPlantModal
                 :plant="row.original"
+                :variety-filter-mode="garden?.variety_filter_mode"
                 @plant-updated="onPlantUpdated"
                 @plant-deleted="onPlantDeleted"
                 @plant-copied="onPlantAdded"

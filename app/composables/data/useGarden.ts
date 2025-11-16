@@ -49,6 +49,7 @@ export const useGarden = () => {
     background_image_url: string
     pixels_per_meters: number
     is_public: boolean
+    variety_filter_mode: string
     description?: string | null
     zip_code?: string | null
     country?: string | null
@@ -87,6 +88,7 @@ export const useGarden = () => {
         background_image_url: uploadResult.path,
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
+        variety_filter_mode: formData.variety_filter_mode,
         description: formData.description ?? null,
         zip_code: formData.zip_code ?? null,
         country: formData.country ?? null,
@@ -233,6 +235,7 @@ export const useGarden = () => {
         name: formData.name,
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
+        variety_filter_mode: formData.variety_filter_mode,
         description: formData.description ?? null,
         zip_code: formData.zip_code ?? null,
         country: formData.country ?? null,
