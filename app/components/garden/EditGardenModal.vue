@@ -28,7 +28,12 @@ const isGardenOwner = computed(() => {
   if (!user.value) return false
   const teams = props.garden.teams || []
   for (const team of teams) {
-    if (team.teams_members?.some((m: GardenTeamMember) => m.role === 'owner' && m.profile_id === user.value!.id)) {
+    if (
+      team.teams_members?.some(
+        (m: GardenTeamMember) =>
+          m.role === 'owner' && m.profile_id === user.value!.id,
+      )
+    ) {
       return true
     }
   }
