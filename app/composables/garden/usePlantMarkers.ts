@@ -1,4 +1,6 @@
 import { computed, type Ref } from 'vue'
+import { useSettings } from '~/composables/data/useSettings'
+import type { SettingsData } from '~/types/settings'
 import type { GardenData } from '~/types/garden'
 import type { PlantData } from '~/types/plant'
 import { metersToPixels } from '~/utils/coordinates'
@@ -10,6 +12,9 @@ export const usePlantMarkers = (
   visibleCategories: Ref<string[]>,
   garden: Ref<GardenData>,
 ) => {
+  const { fetchMySettings } = useSettings()
+  const userSettings = ref<SettingsData | null>(null)
+  fetchMySettings().then((s) => { userSettings.value = s }).catch(() => {})
   const getPlantStatusStroke = (status: string) => {
     switch (status) {
       case 'healthy':
@@ -33,7 +38,8 @@ export const usePlantMarkers = (
     if (!garden.value) return []
 
     const PixelsPerMeters = garden.value.pixels_per_meters
-    const showMarkersLetters = !isOwner.value && !garden.value.show_markers_letters // TODO use user preference here
+    const userPref = userSettings.value?.show_markers_letters
+    const showMarkersLetters = userPref === undefined || userPref === null ? false : userPref
 
     return plants.value
       .filter(plant => visibleCategories.value.includes(plant.variety.category))
