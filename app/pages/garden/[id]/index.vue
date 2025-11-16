@@ -45,7 +45,7 @@
         :garden="garden"
         :plants="plants"
         :is-editing-enabled="isEditingEnabled"
-        :is-owner="isOwner"
+        :current-role="currentRole"
         @garden-updated="loadGarden"
         @update:editing-enabled="isEditingEnabled = $event"
       />
@@ -82,7 +82,7 @@
     </div>
 
     <AddPlantModal
-      v-if="showAddPlantModal && isOwner"
+      v-if="showAddPlantModal && permissions.editPlants"
       v-model:open="showAddPlantModal"
       :garden-id="gardenId"
       :variety-filter-mode="garden?.variety_filter_mode"
@@ -95,12 +95,12 @@
       v-if="selectedPlant && showPlantInfoModal"
       v-model:open="showPlantInfoModal"
       :plant="selectedPlant"
-      :is-owner="isOwner"
+      :can-edit="permissions.editPlants"
       @edit-requested="onEditRequested"
     />
 
     <EditPlantModal
-      v-if="selectedPlant && showEditPlantModal && isOwner"
+      v-if="selectedPlant && showEditPlantModal && permissions.editPlants"
       v-model:open="showEditPlantModal"
       :plant="selectedPlant"
       :variety-filter-mode="garden?.variety_filter_mode"
@@ -119,7 +119,6 @@ import type { PlantData } from '~/types/plant'
 import type { VarietyData } from '~/types/variety'
 import { useGarden } from '~/composables/data/useGarden'
 import { useTeam } from '~/composables/data/useTeam'
-import { useIsOwner } from '~/composables/useIsOwner'
 import { usePlant } from '~/composables/data/usePlant'
 import { useGardenZoom } from '~/composables/garden/useGardenZoom'
 import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
@@ -143,12 +142,56 @@ const { fetchGardenById } = useGarden()
 const { fetchPlants, updatePlant } = usePlant()
 const { syncVarietyInPlants } = useVarietySync()
 
-const { isOwner, checkIsOwner } = useIsOwner(gardenId)
-
+const currentRole = ref<'owner' | 'admin' | 'editor' | 'viewer' | null>(null)
 const isTeamMember = ref(false)
 
+// Permission matrix
+const rolePermissions = {
+  owner: {
+    manageTeams: true,
+    editPlants: true,
+    editVarieties: true,
+    toggleEdit: true,
+    deleteGarden: true,
+  },
+  admin: {
+    manageTeams: true,
+    editPlants: true,
+    editVarieties: true,
+    toggleEdit: true,
+    deleteGarden: false,
+  },
+  editor: {
+    manageTeams: false,
+    editPlants: true,
+    editVarieties: true,
+    toggleEdit: true,
+    deleteGarden: false,
+  },
+  viewer: {
+    manageTeams: false,
+    editPlants: false,
+    editVarieties: false,
+    toggleEdit: false,
+    deleteGarden: false,
+  },
+} as const
+
+const permissions = computed(() =>
+  currentRole.value
+    ? rolePermissions[currentRole.value]
+    : rolePermissions.viewer,
+)
+const isEditingEnabled = ref(false)
 const canEdit = computed(
-  () => Boolean(isEditingEnabled.value) && (isOwner.value || isTeamMember.value),
+  () => Boolean(isEditingEnabled.value) && permissions.value.editPlants,
+)
+
+watch(
+  () => canEdit.value,
+  () => {
+    console.log('canEdit', canEdit.value)
+  },
 )
 
 const visibleCategories = ref<string[]>([
@@ -172,8 +215,6 @@ const showAddPlantModal = ref(false)
 const showEditPlantModal = ref(false)
 const showPlantInfoModal = ref(false)
 const selectedPlant = ref<PlantData | null>(null)
-
-const isEditingEnabled = ref(false)
 
 interface KonvaStage {
   scaleX: () => number
@@ -200,7 +241,6 @@ const { background, backgroundConfig, loadBackgroundImage }
   = useGardenCanvas(resetZoom)
 
 const { plantMarkers, getCategoryLetter } = usePlantMarkers(
-  isOwner,
   plants,
   visibleCategories,
   garden,
@@ -211,7 +251,7 @@ const clickCoordinates = ref<{ x: number, y: number } | null>(null)
 const onPlantClick = (plant: PlantData) => {
   selectedPlant.value = plant
 
-  if (isOwner.value && isEditingEnabled.value) {
+  if (canEdit.value && isEditingEnabled.value) {
     showEditPlantModal.value = true
   }
   else {
@@ -220,7 +260,7 @@ const onPlantClick = (plant: PlantData) => {
 }
 
 const handleBackgroundClick = (event: Event) => {
-  if (!isEditingEnabled.value || !isOwner.value) return
+  if (!isEditingEnabled.value || !canEdit.value) return
 
   if (!event.target) return
 
@@ -278,7 +318,7 @@ const onPlantCopied = (copiedPlant: PlantData) => {
 }
 
 const onEditRequested = (plant: PlantData) => {
-  if (!isOwner.value) return
+  if (!permissions.value.editPlants) return
 
   selectedPlant.value = plant
   showPlantInfoModal.value = false
@@ -323,15 +363,21 @@ const loadGarden = async () => {
     if (gardenData.is_public) {
       allowed = true
     }
-    else if (user.value) {
+    if (user.value) {
       // Check if user is a team member for this garden
       const teams = await fetchTeamsByGarden(gardenId)
       for (const team of teams) {
         const members = await fetchTeamMembers(team.id)
-        if (user.value && members.some(m => m.user_id === user.value!.id)) {
-          allowed = true
-          isTeamMember.value = true
-          break
+        if (user.value) {
+          const me = members.find(m => m.user_id === user.value!.id)
+          if (me) {
+            allowed = true
+            isTeamMember.value = true
+            // Resolve role (fallback viewer if undefined)
+            currentRole.value
+              = (me.role as typeof currentRole.value) || 'viewer'
+            break
+          }
         }
       }
     }
@@ -346,7 +392,6 @@ const loadGarden = async () => {
     if (gardenData.background_image_url) {
       loadBackgroundImage(gardenData.background_image_url)
     }
-    await checkIsOwner()
     await loadPlants()
   }
   catch (err) {

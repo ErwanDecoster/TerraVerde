@@ -7,6 +7,7 @@ import type { GardenData } from '~/types/garden'
 
 interface Props {
   garden: GardenData
+  currentRole?: 'owner' | 'admin' | 'editor' | 'viewer' | null
 }
 
 const props = defineProps<Props>()
@@ -23,7 +24,45 @@ const {
 const deletingTeam = ref<Record<number, boolean>>({})
 const showDeleteTeamConfirm = ref<Record<number, boolean>>({})
 
+// Role-based permissions (owner/admin can manage teams & members)
+const canManageTeams = computed(() =>
+  ['owner', 'admin'].includes(props.currentRole || 'viewer'),
+)
+const canManageMembers = canManageTeams
+
+const totalMembersCount = computed(() => {
+  const ids = new Set<string>()
+  for (const team of teams.value) {
+    for (const member of team.teams_members || []) {
+      ids.add(member.user_id)
+    }
+  }
+  return ids.size
+})
+
+function teamHasOwner(team: TeamData) {
+  return !!team.teams_members?.some(m => m.role === 'owner')
+}
+
+function canDeleteTeam(team: TeamData) {
+  if (!canManageTeams.value) return false
+  if (props.currentRole === 'admin' && teamHasOwner(team)) return false
+  if (totalMembersCount.value === 1) return false
+  return true
+}
+
+function canRemoveMember(team: TeamData, memberId: number) {
+  if (!canManageMembers.value) return false
+  const member = team.teams_members?.find(m => m.id === memberId)
+  if (!member) return false
+  if (props.currentRole === 'admin' && member.role === 'owner') return false
+  if (totalMembersCount.value === 1) return false
+  return true
+}
+
 async function onRemoveTeam(teamId: number) {
+  const team = teams.value.find(t => t.id === teamId)
+  if (!team || !canDeleteTeam(team)) return
   deletingTeam.value = { ...deletingTeam.value, [teamId]: true }
   try {
     await removeTeam(teamId)
@@ -85,6 +124,7 @@ async function loadTeams() {
 }
 
 async function onAddTeam() {
+  if (!canManageTeams.value) return
   addingTeam.value = true
   try {
     const parsed = teamNameSchema.parse({ name: newTeamName.value })
@@ -108,6 +148,7 @@ async function onAddTeam() {
 }
 
 async function onAddMember(teamId: number) {
+  if (!canManageMembers.value) return
   addingMember.value[teamId] = true
   try {
     const parsed = memberSchema.parse({
@@ -141,6 +182,8 @@ async function onAddMember(teamId: number) {
 }
 
 async function onRemoveMember(teamId: number, memberId: number) {
+  const team = teams.value.find(t => t.id === teamId)
+  if (!team || !canRemoveMember(team, memberId)) return
   try {
     await removeTeamMember(memberId)
     const targetTeam = teams.value.find(t => t.id === teamId)
@@ -175,6 +218,7 @@ watch(() => props.garden.id, loadTeams)
   >
     <UButton
       label="Manage Teams"
+      :disabled="!canManageTeams"
       variant="outline"
       icon="i-heroicons-users-20-solid"
       class="justify-center"
@@ -188,26 +232,34 @@ watch(() => props.garden.id, loadTeams)
       </div>
       <div v-else>
         <div class="mb-6">
-          <UForm @submit.prevent="onAddTeam">
-            <UFormField
-              label="New Team Name"
-              name="name"
-            >
-              <UInput
-                v-model="newTeamName"
-                placeholder="Enter team name"
-                class="w-full"
-              />
-            </UFormField>
-            <UButton
-              :loading="addingTeam"
-              type="submit"
-              icon="i-heroicons-plus-20-solid"
-              class="mt-2"
-            >
-              Add Team
-            </UButton>
-          </UForm>
+          <div v-if="canManageTeams">
+            <UForm @submit.prevent="onAddTeam">
+              <UFormField
+                label="New Team Name"
+                name="name"
+              >
+                <UInput
+                  v-model="newTeamName"
+                  placeholder="Enter team name"
+                  class="w-full"
+                />
+              </UFormField>
+              <UButton
+                :loading="addingTeam"
+                type="submit"
+                icon="i-heroicons-plus-20-solid"
+                class="mt-2"
+              >
+                Add Team
+              </UButton>
+            </UForm>
+          </div>
+          <p
+            v-else
+            class="text-xs text-muted mb-4"
+          >
+            You don't have permission to create teams.
+          </p>
         </div>
         <div
           v-for="team in teams"
@@ -218,26 +270,28 @@ watch(() => props.garden.id, loadTeams)
             <div class="font-bold">
               {{ team.name || "Unnamed Team" }}
             </div>
-            <div v-if="!showDeleteTeamConfirm[team.id]">
+            <div v-if="canDeleteTeam(team) && !showDeleteTeamConfirm[team.id]">
               <UButton
                 size="xs"
                 color="error"
                 variant="outline"
                 icon="i-heroicons-trash-20-solid"
                 :loading="deletingTeam[team.id]"
+                :disabled="!canDeleteTeam(team)"
                 @click="showDeleteTeamConfirm[team.id] = true"
               >
                 Delete Team
               </UButton>
             </div>
             <div
-              v-else
+              v-else-if="showDeleteTeamConfirm[team.id]"
               class="mb-2 flex gap-2 items-center"
             >
               <UButton
                 size="xs"
                 color="error"
                 :loading="deletingTeam[team.id]"
+                :disabled="!canDeleteTeam(team)"
                 @click="onRemoveTeam(team.id)"
               >
                 Confirm Delete
@@ -281,6 +335,7 @@ watch(() => props.garden.id, loadTeams)
                 class="text-xs text-gray-500"
               >({{ member.role }})</span>
               <UButton
+                v-if="canRemoveMember(team, member.id)"
                 size="xs"
                 color="error"
                 variant="outline"
@@ -298,6 +353,7 @@ watch(() => props.garden.id, loadTeams)
             No members yet
           </p>
           <UForm
+            v-if="canManageMembers"
             class="flex gap-2 items-end"
             @submit.prevent="onAddMember(team.id)"
           >

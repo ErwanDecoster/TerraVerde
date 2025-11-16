@@ -2,7 +2,9 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { z } from 'zod'
 import { useVariety } from '~/composables/data/useVariety'
+import { useTeam } from '~/composables/data/useTeam'
 import type { VarietyData } from '~/types/variety'
+import type { TeamData, TeamMemberData } from '~/types/team'
 import { VARIETY_CATEGORIES_FOR_SELECT } from '~/utils/plantCategories'
 
 interface Props {
@@ -22,6 +24,43 @@ const toast = useToast()
 const { updateVariety, deleteVariety } = useVariety()
 
 const showDeleteConfirmation = ref(false)
+
+// Determine if current user can edit this variety: must be member (role owner or editor) of the garden owning the variety
+const { user } = useAuth()
+const { fetchTeamsByGarden } = useTeam()
+const isGardenEditorMember = ref(false)
+const permissionLoading = ref(false)
+
+async function computeCanEdit() {
+  // Need garden id and authenticated user
+  if (!props.variety.garden_id || !user.value) {
+    isGardenEditorMember.value = false
+    return
+  }
+  permissionLoading.value = true
+  try {
+    const teams = (await fetchTeamsByGarden(
+      props.variety.garden_id,
+    )) as TeamData[]
+    const canEdit = teams.some((team: TeamData) =>
+      team.teams_members?.some(
+        (member: TeamMemberData) =>
+          member.user_id === user.value!.id
+          && ['owner', 'editor'].includes((member.role || '') as string),
+      ),
+    )
+    isGardenEditorMember.value = canEdit
+  }
+  catch (e) {
+    console.error('Failed to compute variety edit permission', e)
+    isGardenEditorMember.value = false
+  }
+  finally {
+    permissionLoading.value = false
+  }
+}
+
+onMounted(computeCanEdit)
 
 const schema = z.object({
   name: z
@@ -179,11 +218,22 @@ function confirmDelete() {
     title="Edit Variety"
     description="Update the variety details below."
   >
-    <UButton
-      label="Edit Variety"
-      variant="subtle"
-      icon="i-heroicons-pencil-square-20-solid"
-    />
+    <UTooltip
+      :text="
+        !isGardenEditorMember
+          ? 'This variety is imported from another garden. You must be part of that garden’s team to edit it.'
+          : ''
+      "
+      :disabled="isGardenEditorMember"
+    >
+      <UButton
+        label="Edit Variety"
+        variant="subtle"
+        icon="i-heroicons-pencil-square-20-solid"
+        :disabled="!isGardenEditorMember || permissionLoading"
+        :loading="permissionLoading"
+      />
+    </UTooltip>
 
     <template #body>
       <UForm

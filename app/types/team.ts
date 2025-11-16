@@ -1,3 +1,5 @@
+export type TeamRole = 'owner' | 'admin' | 'editor' | 'viewer'
+
 export interface TeamMemberProfile {
   id: string
   first_name?: string | null
@@ -13,7 +15,7 @@ export interface TeamMemberData {
   created_at: string
   team_id: number
   user_id: string
-  role?: string | null
+  role?: TeamRole | null
   profile?: TeamMemberProfile
 }
 

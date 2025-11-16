@@ -18,7 +18,7 @@
         {{ garden?.name }}
       </h1>
       <div
-        v-if="garden?.is_public && !isOwner"
+        v-if="garden?.is_public"
         class="flex items-center gap-2 text-sm text-muted"
       >
         <UIcon
@@ -48,27 +48,28 @@
           variant="outline"
           class="justify-center"
         >
-          {{ isOwner ? "Manage Plants" : "View Plants" }}
+          {{ canEditPlants ? "Manage Plants" : "View Plants" }}
         </UButton>
         <UButton
           :to="`/garden/${garden?.id}/varieties`"
           variant="outline"
           class="justify-center"
         >
-          {{ isOwner ? "Manage Varieties" : "View Varieties" }}
+          {{ canEditVarieties ? "Manage Varieties" : "View Varieties" }}
         </UButton>
       </div>
       <EditGardenModal
-        v-if="garden && isOwner"
+        v-if="garden && canEditGardens"
         :garden="garden"
         @garden-updated="$emit('garden-updated')"
       />
       <ManageTeamsModal
-        v-if="garden && isOwner"
+        v-if="garden && canManageTeams"
         :garden="garden"
+        :current-role="currentRole"
       />
       <USwitch
-        v-if="isOwner"
+        v-if="canToggleEdit"
         :label="
           isEditingEnabled ? 'Switch to View Mode' : 'Switch to Edit Mode'
         "
@@ -89,7 +90,7 @@ interface Props {
   garden?: GardenData | null
   plants: PlantData[]
   isEditingEnabled?: boolean
-  isOwner?: boolean
+  currentRole?: 'owner' | 'admin' | 'editor' | 'viewer' | null
 }
 
 interface Emits {
@@ -110,6 +111,22 @@ const varietiesCount = computed(() => {
   )
   return uniqueVarietyIds.size
 })
+
+console.log(props.currentRole)
+
+const canEditGardens = computed(() =>
+  ['owner'].includes(props.currentRole || 'viewer'),
+)
+const canManageTeams = computed(() =>
+  ['owner', 'admin'].includes(props.currentRole || 'viewer'),
+)
+const canEditPlants = computed(() =>
+  ['owner', 'admin', 'editor'].includes(props.currentRole || 'viewer'),
+)
+const canEditVarieties = canEditPlants
+const canToggleEdit = computed(() =>
+  ['owner', 'admin', 'editor'].includes(props.currentRole || 'viewer'),
+)
 
 const handleEditingToggle = (value: string | boolean) => {
   emit('update:editing-enabled', Boolean(value))

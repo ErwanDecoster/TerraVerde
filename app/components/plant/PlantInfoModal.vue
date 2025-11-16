@@ -118,7 +118,7 @@
           Close
         </UButton>
         <UButton
-          v-if="isOwner"
+          v-if="canEdit"
           color="primary"
           icon="i-heroicons-pencil-square-20-solid"
           @click="openEditModal"
@@ -138,7 +138,7 @@ import { getCategoryLabel } from '~/utils/plantCategories'
 interface Props {
   plant: PlantData
   open: boolean
-  isOwner?: boolean
+  canEdit?: boolean
 }
 
 interface Emits {
