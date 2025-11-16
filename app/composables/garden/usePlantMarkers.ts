@@ -7,7 +7,6 @@ import { metersToPixels } from '~/utils/coordinates'
 import { getCategoryKey } from '~/utils/plantCategories'
 
 export const usePlantMarkers = (
-  isOwner: Ref<boolean>,
   plants: Ref<PlantData[]>,
   visibleCategories: Ref<string[]>,
   garden: Ref<GardenData>,
