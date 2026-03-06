@@ -30,8 +30,8 @@ const schema = z.object({
   backgroundImage: z
     .instanceof(File, { message: 'Map file is required' })
     .refine(
-      file => !file || file.size <= 5 * 1024 * 1024,
-      'File size must not exceed 5MB',
+      file => !file || file.size <= 10 * 1024 * 1024,
+      'File size must not exceed 10MB',
     )
     .refine(
       file =>
