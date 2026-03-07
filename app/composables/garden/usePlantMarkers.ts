@@ -10,6 +10,7 @@ export const usePlantMarkers = (
   plants: Ref<PlantData[]>,
   visibleCategories: Ref<string[]>,
   garden: Ref<GardenData>,
+  pixelsPerMetersPreview?: Ref<number | null>,
 ) => {
   const { fetchMySettings } = useSettings()
   const userSettings = ref<SettingsData | null>(null)
@@ -37,15 +38,17 @@ export const usePlantMarkers = (
   const plantMarkers = computed(() => {
     if (!garden.value) return []
 
-    const PixelsPerMeters = garden.value.pixels_per_meters
+    const basePixelsPerMeters = garden.value.pixels_per_meters || 1
+    const PixelsPerMeters = pixelsPerMetersPreview?.value ?? basePixelsPerMeters
+    const positionScaleRatio = PixelsPerMeters / basePixelsPerMeters
     const userPref = userSettings.value?.show_markers_letters
     const showMarkersLetters = userPref === undefined || userPref === null ? false : userPref
 
     return plants.value
       .filter(plant => visibleCategories.value.includes(plant.variety.category))
       .map((plant) => {
-        const pixelX = plant.x_position
-        const pixelY = plant.y_position
+        const pixelX = (plant.x_position ?? 0) * positionScaleRatio
+        const pixelY = (plant.y_position ?? 0) * positionScaleRatio
 
         const minVisibleWidth = plant.width > 0.7 ? plant.width : 0.7
 

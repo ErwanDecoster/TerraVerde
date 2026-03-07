@@ -47,6 +47,9 @@ export const useGarden = () => {
     id: string
     name: string
     background_image_url: string
+    background_image_rotation: number
+    background_image_offset_x: number
+    background_image_offset_y: number
     pixels_per_meters: number
     is_public: boolean
     variety_filter_mode: string
@@ -86,6 +89,9 @@ export const useGarden = () => {
         id: uuid,
         name: formData.name,
         background_image_url: uploadResult.path,
+        background_image_rotation: formData.backgroundImageRotation ?? 0,
+        background_image_offset_x: formData.backgroundImageOffsetX ?? 0,
+        background_image_offset_y: formData.backgroundImageOffsetY ?? 0,
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
         variety_filter_mode: formData.variety_filter_mode,
@@ -238,10 +244,53 @@ export const useGarden = () => {
   /**
    * Update an existing garden
    */
+  const scalePlantPositionsForGarden = async (
+    gardenId: string,
+    ratio: number,
+  ) => {
+    if (!Number.isFinite(ratio) || ratio === 1) return
+
+    const { data, error } = await $supabase
+      .from('plants')
+      .select('id, x_position, y_position')
+      .eq('garden_id', gardenId)
+
+    if (error) {
+      throw new Error(`Failed to fetch plant positions: ${error.message}`)
+    }
+
+    type PlantPositionRow = {
+      id: string
+      x_position: number | null
+      y_position: number | null
+    }
+
+    const rows = (data || []) as PlantPositionRow[]
+
+    await Promise.all(
+      rows.map(async (plant) => {
+        if (plant.x_position === null || plant.y_position === null) return
+
+        const { error: updateError } = await $supabase
+          .from('plants')
+          .update({
+            x_position: plant.x_position * ratio,
+            y_position: plant.y_position * ratio,
+          })
+          .eq('id', plant.id)
+
+        if (updateError) {
+          throw new Error(`Failed to scale plant ${plant.id}: ${updateError.message}`)
+        }
+      }),
+    )
+  }
+
   const updateGarden = async (
     gardenId: string,
     formData: GardenUpdateFormData,
     currentImagePath?: string,
+    previousPixelsPerMeters?: number,
   ): Promise<GardenData> => {
     let uploadedImagePath: string | null = null
     let shouldCleanupOldImage = false
@@ -257,8 +306,15 @@ export const useGarden = () => {
         shouldCleanupOldImage = true
       }
 
+      const oldPixelsPerMeters = previousPixelsPerMeters ?? formData.PixelsPerMeters
+      const newPixelsPerMeters = formData.PixelsPerMeters
+      const scaleRatio = oldPixelsPerMeters > 0 ? newPixelsPerMeters / oldPixelsPerMeters : 1
+
       const gardenDbData = {
         name: formData.name,
+        background_image_rotation: formData.backgroundImageRotation,
+        background_image_offset_x: formData.backgroundImageOffsetX,
+        background_image_offset_y: formData.backgroundImageOffsetY,
         pixels_per_meters: formData.PixelsPerMeters,
         is_public: formData.isPublic,
         variety_filter_mode: formData.variety_filter_mode,
@@ -282,6 +338,10 @@ export const useGarden = () => {
           await removeGardenImage(uploadedImagePath)
         }
         throw new Error(`Failed to update garden: ${error.message}`)
+      }
+
+      if (scaleRatio !== 1) {
+        await scalePlantPositionsForGarden(gardenId, scaleRatio)
       }
 
       if (shouldCleanupOldImage && currentImagePath && currentImagePath !== imagePath) {

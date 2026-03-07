@@ -33,6 +33,9 @@ export interface GardenData {
   id: string
   name: string
   background_image_url: string
+  background_image_rotation: number
+  background_image_offset_x: number
+  background_image_offset_y: number
   pixels_per_meters: number
   is_public: boolean
   variety_filter_mode: VarietyFilterMode
@@ -55,6 +58,9 @@ export interface GardenFormData {
   name: string
   isPublic: boolean
   backgroundImage: File
+  backgroundImageRotation: number
+  backgroundImageOffsetX: number
+  backgroundImageOffsetY: number
   PixelsPerMeters: number
   variety_filter_mode: VarietyFilterMode
   description?: string | null
@@ -68,6 +74,9 @@ export interface GardenUpdateFormData {
   name: string
   isPublic: boolean
   backgroundImage?: File
+  backgroundImageRotation: number
+  backgroundImageOffsetX: number
+  backgroundImageOffsetY: number
   PixelsPerMeters: number
   variety_filter_mode: VarietyFilterMode
   description?: string | null

@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="pending"
-    class="flex justify-center items-center h-screen"
-  >
+  <div v-if="pending" class="flex justify-center items-center h-screen">
     <UIcon
       name="i-heroicons-arrow-path-20-solid"
       class="animate-spin text-4xl"
@@ -10,10 +7,7 @@
     <span class="ml-2">Loading garden...</span>
   </div>
 
-  <div
-    v-else-if="error"
-    class="flex justify-center items-center h-screen"
-  >
+  <div v-else-if="error" class="flex justify-center items-center h-screen">
     <UAlert
       icon="i-heroicons-exclamation-triangle-20-solid"
       color="error"
@@ -23,10 +17,7 @@
     />
   </div>
 
-  <div
-    v-else-if="!garden"
-    class="flex justify-center items-center h-screen"
-  >
+  <div v-else-if="!garden" class="flex justify-center items-center h-screen">
     <UAlert
       icon="i-heroicons-information-circle-20-solid"
       color="warning"
@@ -36,10 +27,7 @@
     />
   </div>
 
-  <div
-    v-else
-    class="h-screen overflow-hidden"
-  >
+  <div v-else class="h-screen overflow-hidden">
     <div class="flex-1 overflow-hidden relative">
       <GardenHeader
         :garden="garden"
@@ -47,6 +35,9 @@
         :is-editing-enabled="isEditingEnabled"
         :current-role="currentRole"
         @garden-updated="loadGarden"
+        @background-rotation-preview="handleBackgroundRotationPreview"
+        @background-offset-preview="handleBackgroundOffsetPreview"
+        @pixels-per-meters-preview="handlePixelsPerMetersPreview"
         @update:editing-enabled="isEditingEnabled = $event"
       />
 
@@ -59,10 +50,7 @@
 
       <PlantCategoryFilters v-model:visible-categories="visibleCategories" />
 
-      <PlantHoverData
-        v-if="hoveredPlant"
-        :plant="hoveredPlant"
-      />
+      <PlantHoverData v-if="hoveredPlant" :plant="hoveredPlant" />
 
       <GardenCanvas
         ref="canvas"
@@ -113,37 +101,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import type { GardenData } from '~/types/garden'
-import type { PlantData } from '~/types/plant'
-import type { VarietyData } from '~/types/variety'
-import { useGarden } from '~/composables/data/useGarden'
-import { useTeam } from '~/composables/data/useTeam'
-import { usePlant } from '~/composables/data/usePlant'
-import { useGardenZoom } from '~/composables/garden/useGardenZoom'
-import { useGardenCanvas } from '~/composables/garden/useGardenCanvas'
-import { usePlantMarkers } from '~/composables/garden/usePlantMarkers'
-import { usePlantInteractions } from '~/composables/garden/usePlantInteractions'
-import { useVarietySync } from '~/composables/data/useVarietySync'
-import GardenHeader from '~/components/garden/GardenHeader.vue'
-import GardenZoomControls from '~/components/garden/GardenZoomControls.vue'
-import GardenCanvas from '~/components/garden/GardenCanvas.vue'
-import PlantCategoryFilters from '~/components/garden/PlantCategoryFilters.vue'
-import PlantHoverData from '~/components/garden/PlantHoverData.vue'
-import AddPlantModal from '~/components/plant/AddPlantModal.vue'
-import EditPlantModal from '~/components/plant/EditPlantModal.vue'
-import PlantInfoModal from '~/components/plant/PlantInfoModal.vue'
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import type { GardenData } from "~/types/garden";
+import type { PlantData } from "~/types/plant";
+import type { VarietyData } from "~/types/variety";
+import { useGarden } from "~/composables/data/useGarden";
+import { useTeam } from "~/composables/data/useTeam";
+import { usePlant } from "~/composables/data/usePlant";
+import { useGardenZoom } from "~/composables/garden/useGardenZoom";
+import { useGardenCanvas } from "~/composables/garden/useGardenCanvas";
+import { usePlantMarkers } from "~/composables/garden/usePlantMarkers";
+import { usePlantInteractions } from "~/composables/garden/usePlantInteractions";
+import { useVarietySync } from "~/composables/data/useVarietySync";
+import GardenHeader from "~/components/garden/GardenHeader.vue";
+import GardenZoomControls from "~/components/garden/GardenZoomControls.vue";
+import GardenCanvas from "~/components/garden/GardenCanvas.vue";
+import PlantCategoryFilters from "~/components/garden/PlantCategoryFilters.vue";
+import PlantHoverData from "~/components/garden/PlantHoverData.vue";
+import AddPlantModal from "~/components/plant/AddPlantModal.vue";
+import EditPlantModal from "~/components/plant/EditPlantModal.vue";
+import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
 
-const route = useRoute()
-const gardenId = route.params.id as string
+const route = useRoute();
+const gardenId = route.params.id as string;
 
-const { user } = useAuth()
-const { fetchGardenById } = useGarden()
-const { fetchPlants, updatePlant } = usePlant()
-const { syncVarietyInPlants } = useVarietySync()
+const { user } = useAuth();
+const { fetchGardenById } = useGarden();
+const { fetchPlants, updatePlant } = usePlant();
+const { syncVarietyInPlants } = useVarietySync();
 
-const currentRole = ref<'owner' | 'admin' | 'editor' | 'viewer' | null>(null)
-const isTeamMember = ref(false)
+const currentRole = ref<"owner" | "admin" | "editor" | "viewer" | null>(null);
+const isTeamMember = ref(false);
 
 // Permission matrix
 const rolePermissions = {
@@ -175,152 +163,171 @@ const rolePermissions = {
     toggleEdit: false,
     deleteGarden: false,
   },
-} as const
+} as const;
 
 const permissions = computed(() =>
   currentRole.value
     ? rolePermissions[currentRole.value]
     : rolePermissions.viewer,
-)
-const isEditingEnabled = ref(false)
+);
+const isEditingEnabled = ref(false);
 const canEdit = computed(
   () => Boolean(isEditingEnabled.value) && permissions.value.editPlants,
-)
+);
 
 const visibleCategories = ref<string[]>([
-  'tree',
-  'fruit_tree',
-  'shrub',
-  'flower',
-  'climber',
-  'vegetable',
-  'grass',
-  'aquatic',
-  'other',
-])
+  "tree",
+  "fruit_tree",
+  "shrub",
+  "flower",
+  "climber",
+  "vegetable",
+  "grass",
+  "aquatic",
+  "other",
+]);
 
-const garden = ref<GardenData>({} as GardenData)
-const plants = ref<PlantData[]>([])
-const pending = ref(true)
-const error = ref<string | null>(null)
+const garden = ref<GardenData>({} as GardenData);
+const plants = ref<PlantData[]>([]);
+const pending = ref(true);
+const error = ref<string | null>(null);
 
-const showAddPlantModal = ref(false)
-const showEditPlantModal = ref(false)
-const showPlantInfoModal = ref(false)
-const selectedPlant = ref<PlantData | null>(null)
+const showAddPlantModal = ref(false);
+const showEditPlantModal = ref(false);
+const showPlantInfoModal = ref(false);
+const selectedPlant = ref<PlantData | null>(null);
 
 interface KonvaStage {
-  scaleX: () => number
-  scaleY: () => number
-  x: () => number
-  y: () => number
-  width: () => number
-  height: () => number
-  scale: (scale: { x: number, y: number }) => void
-  position: (pos: { x: number, y: number }) => void
-  batchDraw: () => void
-  getPointerPosition: () => { x: number, y: number } | null
+  scaleX: () => number;
+  scaleY: () => number;
+  x: () => number;
+  y: () => number;
+  width: () => number;
+  height: () => number;
+  scale: (scale: { x: number; y: number }) => void;
+  position: (pos: { x: number; y: number }) => void;
+  batchDraw: () => void;
+  getPointerPosition: () => { x: number; y: number } | null;
 }
 
-const canvas = ref<{ stage: { getStage: () => KonvaStage } } | null>(null)
+const canvas = ref<{ stage: { getStage: () => KonvaStage } } | null>(null);
 
-const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize }
-  = useGardenZoom(
+const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize } =
+  useGardenZoom(
     computed(() => canvas.value?.stage || null),
     computed(() => backgroundConfig),
-  )
+  );
 
-const { background, backgroundConfig, loadBackgroundImage }
-  = useGardenCanvas(resetZoom)
+const {
+  background,
+  backgroundConfig,
+  loadBackgroundImage,
+  setBackgroundRotation,
+  setBackgroundOffset,
+} = useGardenCanvas(resetZoom);
+
+const pixelsPerMetersPreview = ref<number | null>(null);
+
+const handleBackgroundRotationPreview = (rotation: number) => {
+  setBackgroundRotation(rotation);
+};
+
+const handleBackgroundOffsetPreview = (payload: { x: number; y: number }) => {
+  setBackgroundOffset(payload.x, payload.y);
+};
+
+const handlePixelsPerMetersPreview = (pixelsPerMeters: number) => {
+  pixelsPerMetersPreview.value = pixelsPerMeters;
+};
 
 const { plantMarkers, getCategoryLetter } = usePlantMarkers(
   plants,
   visibleCategories,
   garden,
-)
+  pixelsPerMetersPreview,
+);
 
-const clickCoordinates = ref<{ x: number, y: number } | null>(null)
+const clickCoordinates = ref<{ x: number; y: number } | null>(null);
 
 const onPlantClick = (plant: PlantData) => {
-  selectedPlant.value = plant
+  selectedPlant.value = plant;
 
   if (canEdit.value && isEditingEnabled.value) {
-    showEditPlantModal.value = true
+    showEditPlantModal.value = true;
+  } else {
+    showPlantInfoModal.value = true;
   }
-  else {
-    showPlantInfoModal.value = true
-  }
-}
+};
 
 const handleBackgroundClick = (event: Event) => {
-  if (!isEditingEnabled.value || !canEdit.value) return
+  if (!isEditingEnabled.value || !canEdit.value) return;
 
-  if (!event.target) return
+  if (!event.target) return;
 
-  const stage = event.target.getStage()
-  const clickedElement = event.target
+  const stage = event.target.getStage();
+  const clickedElement = event.target;
 
-  if (clickedElement === stage || clickedElement.attrs?.name === 'background') {
-    const pointer = stage.getPointerPosition()
+  if (clickedElement === stage || clickedElement.attrs?.name === "background") {
+    const pointer = stage.getPointerPosition();
 
     if (pointer) {
-      const stageX = stage.x()
-      const stageY = stage.y()
-      const scaleX = stage.scaleX()
-      const scaleY = stage.scaleY()
+      const stageX = stage.x();
+      const stageY = stage.y();
+      const scaleX = stage.scaleX();
+      const scaleY = stage.scaleY();
 
-      const imageX = (pointer.x - stageX) / scaleX
-      const imageY = (pointer.y - stageY) / scaleY
+      const imageX = (pointer.x - stageX) / scaleX;
+      const imageY = (pointer.y - stageY) / scaleY;
 
-      clickCoordinates.value = { x: imageX, y: imageY }
+      clickCoordinates.value = { x: imageX, y: imageY };
     }
-    showAddPlantModal.value = true
+    showAddPlantModal.value = true;
   }
-}
+};
 
 const onPlantAdded = (newPlant: PlantData) => {
-  plants.value.push(newPlant)
-  showAddPlantModal.value = false
-  clickCoordinates.value = null
-}
+  plants.value.push(newPlant);
+  showAddPlantModal.value = false;
+  clickCoordinates.value = null;
+};
 
 const onPlantUpdated = (updatedPlant: PlantData) => {
-  const index = plants.value.findIndex(p => p.id === updatedPlant.id)
+  const index = plants.value.findIndex((p) => p.id === updatedPlant.id);
   if (index !== -1) {
-    plants.value[index] = updatedPlant
+    plants.value[index] = updatedPlant;
   }
-  showEditPlantModal.value = false
-  selectedPlant.value = null
-}
+  showEditPlantModal.value = false;
+  selectedPlant.value = null;
+};
 
 const onPlantPositionUpdated = (updatedPlant: PlantData) => {
-  const index = plants.value.findIndex(p => p.id === updatedPlant.id)
+  const index = plants.value.findIndex((p) => p.id === updatedPlant.id);
   if (index !== -1) {
-    plants.value[index] = updatedPlant
+    plants.value[index] = updatedPlant;
   }
-}
+};
 
 const onPlantDeleted = (plantId: string) => {
-  plants.value = plants.value.filter(p => p.id !== plantId)
-  showEditPlantModal.value = false
-  selectedPlant.value = null
-}
+  plants.value = plants.value.filter((p) => p.id !== plantId);
+  showEditPlantModal.value = false;
+  selectedPlant.value = null;
+};
 
 const onPlantCopied = (copiedPlant: PlantData) => {
-  plants.value.push(copiedPlant)
-}
+  plants.value.push(copiedPlant);
+};
 
 const onEditRequested = (plant: PlantData) => {
-  if (!permissions.value.editPlants) return
+  if (!permissions.value.editPlants) return;
 
-  selectedPlant.value = plant
-  showPlantInfoModal.value = false
-  showEditPlantModal.value = true
-}
+  selectedPlant.value = plant;
+  showPlantInfoModal.value = false;
+  showEditPlantModal.value = true;
+};
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  syncVarietyInPlants(plants, updatedVariety)
-}
+  syncVarietyInPlants(plants, updatedVariety);
+};
 
 const {
   hoveredPlant,
@@ -335,92 +342,95 @@ const {
   onPlantClick,
   canEdit,
   onPlantPositionUpdated,
-)
+);
 
-const { fetchTeamsByGarden, fetchTeamMembers } = useTeam()
+const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
 
 const loadGarden = async () => {
   try {
-    pending.value = true
-    error.value = null
+    pending.value = true;
+    error.value = null;
 
-    const gardenData = await fetchGardenById(gardenId)
+    const gardenData = await fetchGardenById(gardenId);
 
     if (!gardenData) {
-      error.value = 'Garden not found'
-      return
+      error.value = "Garden not found";
+      return;
     }
 
     // Check access: public, owner, or team member
-    let allowed = false
+    let allowed = false;
     if (gardenData.is_public) {
-      allowed = true
+      allowed = true;
     }
     if (user.value) {
       // Check if user is a team member for this garden
-      const teams = await fetchTeamsByGarden(gardenId)
+      const teams = await fetchTeamsByGarden(gardenId);
       for (const team of teams) {
-        const members = await fetchTeamMembers(team.id)
+        const members = await fetchTeamMembers(team.id);
         if (user.value) {
-          const me = members.find(m => m.user_id === user.value!.id)
+          const me = members.find((m) => m.user_id === user.value!.id);
           if (me) {
-            allowed = true
-            isTeamMember.value = true
+            allowed = true;
+            isTeamMember.value = true;
             // Resolve role (fallback viewer if undefined)
-            currentRole.value
-              = (me.role as typeof currentRole.value) || 'viewer'
-            break
+            currentRole.value =
+              (me.role as typeof currentRole.value) || "viewer";
+            break;
           }
         }
       }
     }
 
     if (!allowed) {
-      error.value = 'Access denied. This garden is private.'
-      return
+      error.value = "Access denied. This garden is private.";
+      return;
     }
 
-    garden.value = gardenData
+    garden.value = gardenData;
+    pixelsPerMetersPreview.value = null;
 
     if (gardenData.background_image_url) {
-      loadBackgroundImage(gardenData.background_image_url)
+      loadBackgroundImage(
+        gardenData.background_image_url,
+        gardenData.background_image_rotation ?? 0,
+        gardenData.background_image_offset_x ?? 0,
+        gardenData.background_image_offset_y ?? 0,
+      );
     }
-    await loadPlants()
+    await loadPlants();
+  } catch (err) {
+    console.error("Error loading garden:", err);
+    error.value = "Failed to load garden data";
+  } finally {
+    pending.value = false;
   }
-  catch (err) {
-    console.error('Error loading garden:', err)
-    error.value = 'Failed to load garden data'
-  }
-  finally {
-    pending.value = false
-  }
-}
+};
 
 const loadPlants = async () => {
   try {
-    plants.value = await fetchPlants(gardenId)
+    plants.value = await fetchPlants(gardenId);
 
-    await nextTick()
+    await nextTick();
     setTimeout(() => {
-      resetZoom()
-    }, 200)
+      resetZoom();
+    }, 200);
+  } catch (err) {
+    console.error("Error loading plants:", err);
   }
-  catch (err) {
-    console.error('Error loading plants:', err)
-  }
-}
+};
 
 onMounted(() => {
-  loadGarden()
+  loadGarden();
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', handleResize)
+  if (typeof window !== "undefined") {
+    window.addEventListener("resize", handleResize);
   }
-})
+});
 
 onUnmounted(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', handleResize)
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", handleResize);
   }
-})
+});
 </script>

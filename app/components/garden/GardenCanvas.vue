@@ -6,11 +6,7 @@
     @click="handleBackgroundClick"
   >
     <v-layer ref="layer">
-      <v-image
-        v-if="background"
-        :config="backgroundConfig"
-        name="background"
-      />
+      <v-image v-if="background" :config="backgroundConfig" name="background" />
 
       <v-group
         v-for="marker in plantMarkers"
@@ -59,62 +55,65 @@
 </template>
 
 <script setup lang="ts">
-import type { PlantData } from '~/types/plant'
+import type { PlantData } from "~/types/plant";
 
 interface StageConfig {
-  width: number
-  height: number
-  draggable: boolean
-  scaleX: number
-  scaleY: number
+  width: number;
+  height: number;
+  draggable: boolean;
+  scaleX: number;
+  scaleY: number;
 }
 
 interface BackgroundConfig {
-  x: number
-  y: number
-  image: HTMLImageElement | null
-  width: number
-  height: number
+  x: number;
+  y: number;
+  image: HTMLImageElement | null;
+  width: number;
+  height: number;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
 }
 
 export interface PlantMarker {
-  id: string
-  plant: PlantData
-  showLetter: boolean
+  id: string;
+  plant: PlantData;
+  showLetter: boolean;
   config: {
-    x: number
-    y: number
-    radius: number
-    fill: string
-    stroke: string
-    strokeWidth: number
-    opacity: number
-    [key: string]: unknown
-  }
+    x: number;
+    y: number;
+    radius: number;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    opacity: number;
+    [key: string]: unknown;
+  };
 }
 
 interface Props {
-  stageConfig: StageConfig
-  background: HTMLImageElement | null
-  backgroundConfig: BackgroundConfig
-  plantMarkers: PlantMarker[]
-  isEditingEnabled: boolean
-  handleWheel: (e: Event) => void
-  handlePlantClick: (marker: PlantMarker) => void
-  handlePlantDragStart: (marker: PlantMarker) => void
-  handlePlantDragEnd: (marker: PlantMarker, event: Event) => void
-  handlePlantHover: (marker: PlantMarker, isHovering: boolean) => void
-  getCategoryLetter: (category: string) => string
-  handleBackgroundClick?: (e: Event) => void
+  stageConfig: StageConfig;
+  background: HTMLImageElement | null;
+  backgroundConfig: BackgroundConfig;
+  plantMarkers: PlantMarker[];
+  isEditingEnabled: boolean;
+  handleWheel: (e: Event) => void;
+  handlePlantClick: (marker: PlantMarker) => void;
+  handlePlantDragStart: (marker: PlantMarker) => void;
+  handlePlantDragEnd: (marker: PlantMarker, event: Event) => void;
+  handlePlantHover: (marker: PlantMarker, isHovering: boolean) => void;
+  getCategoryLetter: (category: string) => string;
+  handleBackgroundClick?: (e: Event) => void;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 
-const stage = ref(null)
-const layer = ref(null)
+const stage = ref(null);
+const layer = ref(null);
 
 defineExpose({
   stage,
   layer,
-})
+});
 </script>

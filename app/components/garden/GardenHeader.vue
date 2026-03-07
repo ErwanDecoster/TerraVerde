@@ -3,10 +3,7 @@
     <div
       class="rounded-xl p-2 grid gap-1 bg-default/75 backdrop-blur border border-default"
     >
-      <UButton
-        variant="subtle"
-        @click="navigateTo(`/gardens`)"
-      >
+      <UButton variant="subtle" @click="navigateTo(`/gardens`)">
         Back to Gardens
       </UButton>
     </div>
@@ -62,6 +59,11 @@
         v-if="garden && canEditGardens"
         :garden="garden"
         @garden-updated="$emit('garden-updated')"
+        @background-rotation-preview="
+          $emit('background-rotation-preview', $event)
+        "
+        @background-offset-preview="$emit('background-offset-preview', $event)"
+        @pixels-per-meters-preview="$emit('pixels-per-meters-preview', $event)"
       />
       <ManageTeamsModal
         v-if="garden && canManageTeams"
@@ -81,52 +83,55 @@
 </template>
 
 <script setup lang="ts">
-import type { GardenData } from '~/types/garden'
-import type { PlantData } from '~/types/plant'
-import EditGardenModal from './EditGardenModal.vue'
-import ManageTeamsModal from './ManageTeamsModal.vue'
+import type { GardenData } from "~/types/garden";
+import type { PlantData } from "~/types/plant";
+import EditGardenModal from "./EditGardenModal.vue";
+import ManageTeamsModal from "./ManageTeamsModal.vue";
 
 interface Props {
-  garden?: GardenData | null
-  plants: PlantData[]
-  isEditingEnabled?: boolean
-  currentRole?: 'owner' | 'admin' | 'editor' | 'viewer' | null
+  garden?: GardenData | null;
+  plants: PlantData[];
+  isEditingEnabled?: boolean;
+  currentRole?: "owner" | "admin" | "editor" | "viewer" | null;
 }
 
 interface Emits {
-  (e: 'garden-updated'): void
-  (e: 'update:editing-enabled', value: boolean): void
+  (e: "garden-updated"): void;
+  (e: "background-rotation-preview", rotation: number): void;
+  (e: "background-offset-preview", payload: { x: number; y: number }): void;
+  (e: "pixels-per-meters-preview", value: number): void;
+  (e: "update:editing-enabled", value: boolean): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
-const plantsCount = computed(() => props.plants.length)
+const plantsCount = computed(() => props.plants.length);
 
 const varietiesCount = computed(() => {
   const uniqueVarietyIds = new Set(
     props.plants
-      .filter(plant => plant.variety_id)
-      .map(plant => plant.variety_id),
-  )
-  return uniqueVarietyIds.size
-})
+      .filter((plant) => plant.variety_id)
+      .map((plant) => plant.variety_id),
+  );
+  return uniqueVarietyIds.size;
+});
 
 const canEditGardens = computed(() =>
-  ['owner'].includes(props.currentRole || 'viewer'),
-)
+  ["owner"].includes(props.currentRole || "viewer"),
+);
 const canManageTeams = computed(() =>
-  ['owner', 'admin'].includes(props.currentRole || 'viewer'),
-)
+  ["owner", "admin"].includes(props.currentRole || "viewer"),
+);
 const canEditPlants = computed(() =>
-  ['owner', 'admin', 'editor'].includes(props.currentRole || 'viewer'),
-)
-const canEditVarieties = canEditPlants
+  ["owner", "admin", "editor"].includes(props.currentRole || "viewer"),
+);
+const canEditVarieties = canEditPlants;
 const canToggleEdit = computed(() =>
-  ['owner', 'admin', 'editor'].includes(props.currentRole || 'viewer'),
-)
+  ["owner", "admin", "editor"].includes(props.currentRole || "viewer"),
+);
 
 const handleEditingToggle = (value: string | boolean) => {
-  emit('update:editing-enabled', Boolean(value))
-}
+  emit("update:editing-enabled", Boolean(value));
+};
 </script>

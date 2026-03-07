@@ -1,99 +1,136 @@
 <script lang="ts" setup>
-import type { FormSubmitEvent } from '@nuxt/ui'
-import type { GardenData } from '~/types/garden'
-import { z } from 'zod'
-import { useGarden } from '~/composables/data/useGarden'
+import type { FormSubmitEvent } from "@nuxt/ui";
+import type { GardenData } from "~/types/garden";
+import { z } from "zod";
+import { useGarden } from "~/composables/data/useGarden";
+import BackgroundImageTransformModal from "./BackgroundImageTransformModal.vue";
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'gardenAdded', data: GardenData): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "gardenAdded", data: GardenData): void;
 }
 
-const emit = defineEmits<Emits>()
-const open = ref(false)
-const toast = useToast()
-const { addGarden } = useGarden()
+const emit = defineEmits<Emits>();
+const open = ref(false);
+const toast = useToast();
+const { addGarden } = useGarden();
 
 const schema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name cannot exceed 100 characters'),
+    .min(1, "Name is required")
+    .max(100, "Name cannot exceed 100 characters"),
   isPublic: z.boolean().optional(),
   PixelsPerMeters: z
     .number()
-    .min(1, 'Scale must be at least 1 Pixels per Meters')
-    .max(100, 'Scale cannot exceed 100 Pixels per Meters'),
-  variety_filter_mode: z.enum(['garden', 'public', 'all'], {
-    message: 'Variety filter mode is required',
+    .min(1, "Scale must be at least 1 Pixels per Meters")
+    .max(100, "Scale cannot exceed 100 Pixels per Meters"),
+  variety_filter_mode: z.enum(["garden", "public", "all"], {
+    message: "Variety filter mode is required",
   }),
   backgroundImage: z
-    .instanceof(File, { message: 'Map file is required' })
+    .instanceof(File, { message: "Map file is required" })
     .refine(
-      file => !file || file.size <= 10 * 1024 * 1024,
-      'File size must not exceed 10MB',
+      (file) => !file || file.size <= 10 * 1024 * 1024,
+      "File size must not exceed 10MB",
     )
     .refine(
-      file =>
-        !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
-      'Unsupported image format (JPEG, PNG, WebP only)',
+      (file) =>
+        !file || ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+      "Unsupported image format (JPEG, PNG, WebP only)",
     ),
+  backgroundImageRotation: z
+    .number()
+    .min(0, "Rotation must be between 0 and 360 degrees")
+    .max(360, "Rotation must be between 0 and 360 degrees"),
+  backgroundImageOffsetX: z
+    .number()
+    .min(-5000, "Horizontal offset must be between -5000 and 5000 pixels")
+    .max(5000, "Horizontal offset must be between -5000 and 5000 pixels"),
+  backgroundImageOffsetY: z
+    .number()
+    .min(-5000, "Vertical offset must be between -5000 and 5000 pixels")
+    .max(5000, "Vertical offset must be between -5000 and 5000 pixels"),
   description: z
     .string()
-    .max(2000, 'Description cannot exceed 2000 characters')
+    .max(2000, "Description cannot exceed 2000 characters")
     .optional()
     .nullable(),
   zip_code: z
     .string()
-    .max(20, 'Zip code cannot exceed 20 characters')
+    .max(20, "Zip code cannot exceed 20 characters")
     .optional()
     .nullable(),
   country: z
     .string()
-    .max(100, 'Country cannot exceed 100 characters')
+    .max(100, "Country cannot exceed 100 characters")
     .optional()
     .nullable(),
   city: z
     .string()
-    .max(100, 'City cannot exceed 100 characters')
+    .max(100, "City cannot exceed 100 characters")
     .optional()
     .nullable(),
   street_address: z
     .string()
-    .max(100, 'Street address cannot exceed 100 characters')
+    .max(100, "Street address cannot exceed 100 characters")
     .optional()
     .nullable(),
-})
+});
 
-export type GardenSchema = z.output<typeof schema>
+export type GardenSchema = z.output<typeof schema>;
 
 const state = reactive<Partial<GardenSchema>>({
-  name: '',
+  name: "",
   isPublic: false,
   PixelsPerMeters: 20,
-  variety_filter_mode: 'garden',
+  variety_filter_mode: "garden",
   backgroundImage: undefined,
-  description: '',
-  zip_code: '',
-  country: '',
-  city: '',
-  street_address: '',
-})
+  backgroundImageRotation: 0,
+  backgroundImageOffsetX: 0,
+  backgroundImageOffsetY: 0,
+  description: "",
+  zip_code: "",
+  country: "",
+  city: "",
+  street_address: "",
+});
 
-const loading = ref(false)
+const loading = ref(false);
+const transformModalOpen = ref(false);
+const returnToAddModalAfterTransform = ref(false);
 
-const form = ref()
+const form = ref();
+
+const openTransformSettings = () => {
+  returnToAddModalAfterTransform.value = true;
+  open.value = false;
+  transformModalOpen.value = true;
+};
+
+watch(
+  () => transformModalOpen.value,
+  (isOpen) => {
+    if (!isOpen && returnToAddModalAfterTransform.value) {
+      open.value = true;
+      returnToAddModalAfterTransform.value = false;
+    }
+  },
+);
 
 async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
-  loading.value = true
+  loading.value = true;
 
   try {
-    const validatedData = event.data
+    const validatedData = event.data;
 
     const gardenData = await addGarden({
       name: validatedData.name,
       isPublic: validatedData.isPublic || false,
       backgroundImage: validatedData.backgroundImage,
+      backgroundImageRotation: validatedData.backgroundImageRotation,
+      backgroundImageOffsetX: validatedData.backgroundImageOffsetX,
+      backgroundImageOffsetY: validatedData.backgroundImageOffsetY,
       PixelsPerMeters: validatedData.PixelsPerMeters,
       variety_filter_mode: validatedData.variety_filter_mode,
       description: validatedData.description ?? null,
@@ -101,41 +138,42 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       country: validatedData.country ?? null,
       city: validatedData.city ?? null,
       street_address: validatedData.street_address ?? null,
-    })
+    });
 
-    emit('gardenAdded', gardenData)
-    open.value = false
+    emit("gardenAdded", gardenData);
+    open.value = false;
 
     Object.assign(state, {
-      name: '',
+      name: "",
       isPublic: false,
       PixelsPerMeters: 20,
-      variety_filter_mode: 'garden',
+      variety_filter_mode: "garden",
       backgroundImage: undefined,
-      description: '',
-      zip_code: '',
-      country: '',
-      city: '',
-      street_address: '',
-    })
+      backgroundImageRotation: 0,
+      backgroundImageOffsetX: 0,
+      backgroundImageOffsetY: 0,
+      description: "",
+      zip_code: "",
+      country: "",
+      city: "",
+      street_address: "",
+    });
 
     toast.add({
-      title: 'Garden Added',
-      description: 'The garden has been successfully added',
-      color: 'success',
-    })
-  }
-  catch (error) {
-    console.error('Error adding garden:', error)
+      title: "Garden Added",
+      description: "The garden has been successfully added",
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Error adding garden:", error);
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while adding the garden',
-      color: 'error',
-    })
-  }
-  finally {
-    loading.value = false
+      title: "Error",
+      description: "An error occurred while adding the garden",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -146,10 +184,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     title="Add New Garden"
     description="Fill in the details below to add a new garden."
   >
-    <UButton
-      label="Add Garden"
-      variant="subtle"
-    />
+    <UButton label="Add Garden" variant="subtle" />
 
     <template #body>
       <UForm
@@ -159,12 +194,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
         class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="Garden Name"
-          name="name"
-          required
-          class="col-span-2"
-        >
+        <UFormField label="Garden Name" name="name" required class="col-span-2">
           <UInput
             v-model="state.name"
             class="w-full"
@@ -172,11 +202,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Description"
-          name="description"
-          class="col-span-2"
-        >
+        <UFormField label="Description" name="description" class="col-span-2">
           <TiptapEditor
             v-model="state.description"
             :max-length="2000"
@@ -184,11 +210,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Country"
-          name="country"
-          class="col-span-1"
-        >
+        <UFormField label="Country" name="country" class="col-span-1">
           <UInput
             v-model="state.country"
             class="w-full"
@@ -197,11 +219,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="City"
-          name="city"
-          class="col-span-1"
-        >
+        <UFormField label="City" name="city" class="col-span-1">
           <UInput
             v-model="state.city"
             class="w-full"
@@ -210,11 +228,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Zip Code"
-          name="zip_code"
-          class="col-span-1"
-        >
+        <UFormField label="Zip Code" name="zip_code" class="col-span-1">
           <UInput
             v-model="state.zip_code"
             class="w-full"
@@ -237,11 +251,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Public Garden"
-          name="isPublic"
-          class="col-span-2"
-        >
+        <UFormField label="Public Garden" name="isPublic" class="col-span-2">
           <USwitch
             v-model="state.isPublic"
             label="Make this garden visible to other"
@@ -267,21 +277,27 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
         </UFormField>
 
         <UFormField
-          label="Scale (Pixels per Meters)"
-          name="PixelsPerMeters"
-          description="How many pixels each meter represents"
+          label="Map Transform"
           class="col-span-2"
-          required
+          description="Configure scale, rotation, and position"
         >
-          <UInput
-            v-model.number="state.PixelsPerMeters"
-            type="number"
-            placeholder="20"
-            min="1"
-            max="100"
-            step="1"
-            class="w-full"
-          />
+          <div class="flex flex-col gap-2">
+            <UButton
+              type="button"
+              variant="outline"
+              icon="i-heroicons-adjustments-horizontal-20-solid"
+              class="w-fit"
+              @click="openTransformSettings"
+            >
+              Open Map Transform Settings
+            </UButton>
+            <p class="text-xs text-muted">
+              Scale: {{ state.PixelsPerMeters }} px/m, Rotation:
+              {{ state.backgroundImageRotation }} deg, X:
+              {{ state.backgroundImageOffsetX }} px, Y:
+              {{ state.backgroundImageOffsetY }} px
+            </p>
+          </div>
         </UFormField>
 
         <UFormField
@@ -301,11 +317,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
 
     <template #footer="{ close }">
       <div class="flex justify-end gap-0.5 w-full">
-        <UButton
-          variant="ghost"
-          :disabled="loading"
-          @click="close"
-        >
+        <UButton variant="ghost" :disabled="loading" @click="close">
           Cancel
         </UButton>
         <UButton
@@ -321,4 +333,16 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       </div>
     </template>
   </UModal>
+
+  <BackgroundImageTransformModal
+    v-model:open="transformModalOpen"
+    :pixels-per-meters="state.PixelsPerMeters ?? 20"
+    :rotation="state.backgroundImageRotation ?? 0"
+    :offset-x="state.backgroundImageOffsetX ?? 0"
+    :offset-y="state.backgroundImageOffsetY ?? 0"
+    @update:pixels-per-meters="state.PixelsPerMeters = $event"
+    @update:rotation="state.backgroundImageRotation = $event"
+    @update:offset-x="state.backgroundImageOffsetX = $event"
+    @update:offset-y="state.backgroundImageOffsetY = $event"
+  />
 </template>

@@ -1,97 +1,126 @@
 <script lang="ts" setup>
-import type { FormSubmitEvent } from '@nuxt/ui'
-import type { GardenData } from '~/types/garden'
-import { useAuth } from '~/composables/useAuth'
-import { z } from 'zod'
-import { useGarden } from '~/composables/data/useGarden'
+import type { FormSubmitEvent } from "@nuxt/ui";
+import type { GardenData } from "~/types/garden";
+import { useAuth } from "~/composables/useAuth";
+import { z } from "zod";
+import { useGarden } from "~/composables/data/useGarden";
+import BackgroundImageTransformModal from "./BackgroundImageTransformModal.vue";
 
 interface Props {
-  garden: GardenData
+  garden: GardenData;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'gardenUpdated', data: GardenData): void
-  (e: 'gardenDeleted', gardenId: string): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "gardenUpdated", data: GardenData): void;
+  (e: "gardenDeleted", gardenId: string): void;
+  (e: "backgroundRotationPreview", rotation: number): void;
+  (e: "backgroundOffsetPreview", payload: { x: number; y: number }): void;
+  (e: "pixelsPerMetersPreview", value: number): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-const open = ref(false)
-const toast = useToast()
-const { updateGarden, deleteGarden } = useGarden()
-const { user } = useAuth()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+const open = ref(false);
+const toast = useToast();
+const { updateGarden, deleteGarden } = useGarden();
+const { user } = useAuth();
 
-const showDeleteConfirmation = ref(false)
+const showDeleteConfirmation = ref(false);
 
 const isGardenOwner = computed(() => {
-  if (!user.value) return false
-  const teams = props.garden.teams || []
+  if (!user.value) return false;
+  const teams = props.garden.teams || [];
   for (const team of teams) {
-    if (
-      team.teams_members?.length > 0
-    ) {
-      return true
+    if (team.teams_members?.length > 0) {
+      return true;
     }
   }
-  return false
-})
+  return false;
+});
 
-const canDeleteGarden = isGardenOwner
+const canDeleteGarden = isGardenOwner;
+
+const normalizeRotation = (rotation: number) => {
+  if (!Number.isFinite(rotation)) return 0;
+  return Math.max(0, Math.min(360, rotation));
+};
+
+const normalizeOffset = (offset: number) => {
+  if (!Number.isFinite(offset)) return 0;
+  return Math.max(-5000, Math.min(5000, offset));
+};
+
+const normalizePixelsPerMeters = (value: number) => {
+  if (!Number.isFinite(value)) return 20;
+  return Math.max(1, Math.min(100, value));
+};
 
 const schema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name cannot exceed 100 characters'),
+    .min(1, "Name is required")
+    .max(100, "Name cannot exceed 100 characters"),
   isPublic: z.boolean().optional(),
   PixelsPerMeters: z
     .number()
-    .min(1, 'Scale must be at least 1 Pixels per Meters')
-    .max(100, 'Scale cannot exceed 100 Pixels per Meters'),
-  variety_filter_mode: z.enum(['garden', 'public', 'all'], {
-    message: 'Variety filter mode is required',
+    .min(1, "Scale must be at least 1 Pixels per Meters")
+    .max(100, "Scale cannot exceed 100 Pixels per Meters"),
+  variety_filter_mode: z.enum(["garden", "public", "all"], {
+    message: "Variety filter mode is required",
   }),
   backgroundImage: z
-    .instanceof(File, { message: 'Map file is required' })
+    .instanceof(File, { message: "Map file is required" })
     .optional()
     .refine(
-      file => !file || file.size <= 10 * 1024 * 1024,
-      'File size must not exceed 10MB',
+      (file) => !file || file.size <= 10 * 1024 * 1024,
+      "File size must not exceed 10MB",
     )
     .refine(
-      file =>
-        !file || ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
-      'Unsupported image format (JPEG, PNG, WebP only)',
+      (file) =>
+        !file || ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+      "Unsupported image format (JPEG, PNG, WebP only)",
     ),
+  backgroundImageRotation: z
+    .number()
+    .min(0, "Rotation must be between 0 and 360 degrees")
+    .max(360, "Rotation must be between 0 and 360 degrees"),
+  backgroundImageOffsetX: z
+    .number()
+    .min(-5000, "Horizontal offset must be between -5000 and 5000 pixels")
+    .max(5000, "Horizontal offset must be between -5000 and 5000 pixels"),
+  backgroundImageOffsetY: z
+    .number()
+    .min(-5000, "Vertical offset must be between -5000 and 5000 pixels")
+    .max(5000, "Vertical offset must be between -5000 and 5000 pixels"),
   description: z
     .string()
-    .max(2000, 'Description cannot exceed 2000 characters')
+    .max(2000, "Description cannot exceed 2000 characters")
     .optional()
     .nullable(),
   zip_code: z
     .string()
-    .max(20, 'Zip code cannot exceed 20 characters')
+    .max(20, "Zip code cannot exceed 20 characters")
     .optional()
     .nullable(),
   country: z
     .string()
-    .max(100, 'Country cannot exceed 100 characters')
+    .max(100, "Country cannot exceed 100 characters")
     .optional()
     .nullable(),
   city: z
     .string()
-    .max(100, 'City cannot exceed 100 characters')
+    .max(100, "City cannot exceed 100 characters")
     .optional()
     .nullable(),
   street_address: z
     .string()
-    .max(100, 'Street address cannot exceed 100 characters')
+    .max(100, "Street address cannot exceed 100 characters")
     .optional()
     .nullable(),
-})
+});
 
-export type EditGardenSchema = z.output<typeof schema>
+export type EditGardenSchema = z.output<typeof schema>;
 
 const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
@@ -99,17 +128,31 @@ const state = reactive<Partial<EditGardenSchema>>({
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
   variety_filter_mode: props.garden.variety_filter_mode,
   backgroundImage: undefined,
-  description: props.garden.description ?? '',
-  zip_code: props.garden.zip_code ?? '',
-  country: props.garden.country ?? '',
-  city: props.garden.city ?? '',
-  street_address: props.garden.street_address ?? '',
-})
+  backgroundImageRotation: props.garden.background_image_rotation ?? 0,
+  backgroundImageOffsetX: props.garden.background_image_offset_x ?? 0,
+  backgroundImageOffsetY: props.garden.background_image_offset_y ?? 0,
+  description: props.garden.description ?? "",
+  zip_code: props.garden.zip_code ?? "",
+  country: props.garden.country ?? "",
+  city: props.garden.city ?? "",
+  street_address: props.garden.street_address ?? "",
+});
 
-const loading = ref(false)
-const deleting = ref(false)
+const loading = ref(false);
+const deleting = ref(false);
+const transformModalOpen = ref(false);
+const openingTransformModal = ref(false);
+const returnToEditModalAfterTransform = ref(false);
 
-const form = ref()
+const form = ref();
+
+const openTransformSettings = () => {
+  openingTransformModal.value = true;
+  returnToEditModalAfterTransform.value = true;
+  open.value = false;
+  transformModalOpen.value = true;
+  openingTransformModal.value = false;
+};
 
 watch(
   () => props.garden,
@@ -120,21 +163,84 @@ watch(
       PixelsPerMeters: newGarden.pixels_per_meters || 20,
       variety_filter_mode: newGarden.variety_filter_mode,
       backgroundImage: undefined,
-      description: newGarden.description ?? '',
-      zip_code: newGarden.zip_code ?? '',
-      country: newGarden.country ?? '',
-      city: newGarden.city ?? '',
-      street_address: newGarden.street_address ?? '',
-    })
+      backgroundImageRotation: newGarden.background_image_rotation ?? 0,
+      backgroundImageOffsetX: newGarden.background_image_offset_x ?? 0,
+      backgroundImageOffsetY: newGarden.background_image_offset_y ?? 0,
+      description: newGarden.description ?? "",
+      zip_code: newGarden.zip_code ?? "",
+      country: newGarden.country ?? "",
+      city: newGarden.city ?? "",
+      street_address: newGarden.street_address ?? "",
+    });
   },
   { deep: true },
-)
+);
+
+watch(
+  () => state.backgroundImageRotation,
+  (rotation) => {
+    if (!open.value && !transformModalOpen.value) return;
+    emit("backgroundRotationPreview", normalizeRotation(Number(rotation)));
+  },
+);
+
+watch(
+  () => [state.backgroundImageOffsetX, state.backgroundImageOffsetY],
+  ([offsetX, offsetY]) => {
+    if (!open.value && !transformModalOpen.value) return;
+    emit("backgroundOffsetPreview", {
+      x: normalizeOffset(Number(offsetX)),
+      y: normalizeOffset(Number(offsetY)),
+    });
+  },
+);
+
+watch(
+  () => state.PixelsPerMeters,
+  (pixelsPerMeters) => {
+    if (!open.value && !transformModalOpen.value) return;
+    emit(
+      "pixelsPerMetersPreview",
+      normalizePixelsPerMeters(Number(pixelsPerMeters)),
+    );
+  },
+);
+
+watch(
+  () => open.value,
+  (isOpen) => {
+    if (!isOpen && !openingTransformModal.value) {
+      emit(
+        "backgroundRotationPreview",
+        normalizeRotation(props.garden.background_image_rotation ?? 0),
+      );
+      emit("backgroundOffsetPreview", {
+        x: normalizeOffset(props.garden.background_image_offset_x ?? 0),
+        y: normalizeOffset(props.garden.background_image_offset_y ?? 0),
+      });
+      emit(
+        "pixelsPerMetersPreview",
+        normalizePixelsPerMeters(props.garden.pixels_per_meters ?? 20),
+      );
+    }
+  },
+);
+
+watch(
+  () => transformModalOpen.value,
+  (isOpen) => {
+    if (!isOpen && returnToEditModalAfterTransform.value) {
+      open.value = true;
+      returnToEditModalAfterTransform.value = false;
+    }
+  },
+);
 
 async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
-  loading.value = true
+  loading.value = true;
 
   try {
-    const validatedData = event.data
+    const validatedData = event.data;
 
     const gardenData = await updateGarden(
       props.garden.id,
@@ -142,6 +248,15 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
         name: validatedData.name,
         isPublic: validatedData.isPublic || false,
         backgroundImage: validatedData.backgroundImage,
+        backgroundImageRotation: normalizeRotation(
+          validatedData.backgroundImageRotation,
+        ),
+        backgroundImageOffsetX: normalizeOffset(
+          validatedData.backgroundImageOffsetX,
+        ),
+        backgroundImageOffsetY: normalizeOffset(
+          validatedData.backgroundImageOffsetY,
+        ),
         PixelsPerMeters: validatedData.PixelsPerMeters,
         variety_filter_mode: validatedData.variety_filter_mode,
         description: validatedData.description ?? null,
@@ -151,74 +266,74 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
         street_address: validatedData.street_address ?? null,
       },
       props.garden.background_image_url,
-    )
+      props.garden.pixels_per_meters,
+    );
 
-    emit('gardenUpdated', gardenData)
-    open.value = false
+    emit("gardenUpdated", gardenData);
+    open.value = false;
 
-    state.backgroundImage = undefined
-    state.description = gardenData.description ?? ''
-    state.zip_code = gardenData.zip_code ?? ''
-    state.country = gardenData.country ?? ''
-    state.city = gardenData.city ?? ''
-    state.street_address = gardenData.street_address ?? ''
-
-    toast.add({
-      title: 'Garden Updated',
-      description: 'The garden has been successfully updated',
-      color: 'success',
-    })
-  }
-  catch (error) {
-    console.error('Error updating garden:', error)
+    state.backgroundImage = undefined;
+    state.backgroundImageRotation = gardenData.background_image_rotation ?? 0;
+    state.backgroundImageOffsetX = gardenData.background_image_offset_x ?? 0;
+    state.backgroundImageOffsetY = gardenData.background_image_offset_y ?? 0;
+    state.description = gardenData.description ?? "";
+    state.zip_code = gardenData.zip_code ?? "";
+    state.country = gardenData.country ?? "";
+    state.city = gardenData.city ?? "";
+    state.street_address = gardenData.street_address ?? "";
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while updating the garden',
-      color: 'error',
-    })
-  }
-  finally {
-    loading.value = false
+      title: "Garden Updated",
+      description: "The garden has been successfully updated",
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Error updating garden:", error);
+
+    toast.add({
+      title: "Error",
+      description: "An error occurred while updating the garden",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
   }
 }
 
 async function onDelete() {
-  if (!canDeleteGarden.value) return
-  deleting.value = true
+  if (!canDeleteGarden.value) return;
+  deleting.value = true;
 
   try {
-    const imagePath = props.garden.background_image_url.split('/').pop() || ''
+    const imagePath = props.garden.background_image_url.split("/").pop() || "";
 
-    await deleteGarden(props.garden.id, imagePath)
+    await deleteGarden(props.garden.id, imagePath);
 
-    emit('gardenDeleted', props.garden.id)
-    open.value = false
-    showDeleteConfirmation.value = false
-
-    toast.add({
-      title: 'Garden Deleted',
-      description: 'The garden has been successfully deleted',
-      color: 'success',
-    })
-  }
-  catch (error) {
-    console.error('Error deleting garden:', error)
+    emit("gardenDeleted", props.garden.id);
+    open.value = false;
+    showDeleteConfirmation.value = false;
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while deleting the garden',
-      color: 'error',
-    })
-  }
-  finally {
-    deleting.value = false
+      title: "Garden Deleted",
+      description: "The garden has been successfully deleted",
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Error deleting garden:", error);
+
+    toast.add({
+      title: "Error",
+      description: "An error occurred while deleting the garden",
+      color: "error",
+    });
+  } finally {
+    deleting.value = false;
   }
 }
 
 function confirmDelete() {
-  if (!canDeleteGarden.value) return
-  showDeleteConfirmation.value = true
+  if (!canDeleteGarden.value) return;
+  showDeleteConfirmation.value = true;
 }
 </script>
 
@@ -244,12 +359,7 @@ function confirmDelete() {
         class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="Garden Name"
-          name="name"
-          required
-          class="col-span-2"
-        >
+        <UFormField label="Garden Name" name="name" required class="col-span-2">
           <UInput
             v-model="state.name"
             placeholder="Enter garden name"
@@ -257,11 +367,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="Description"
-          name="description"
-          class="col-span-2"
-        >
+        <UFormField label="Description" name="description" class="col-span-2">
           <TiptapEditor
             v-model="state.description"
             :max-length="2000"
@@ -269,11 +375,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="Country"
-          name="country"
-          class="col-span-1"
-        >
+        <UFormField label="Country" name="country" class="col-span-1">
           <UInput
             v-model="state.country"
             class="w-full"
@@ -282,11 +384,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="City"
-          name="city"
-          class="col-span-1"
-        >
+        <UFormField label="City" name="city" class="col-span-1">
           <UInput
             v-model="state.city"
             class="w-full"
@@ -295,11 +393,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="Zip Code"
-          name="zip_code"
-          class="col-span-1"
-        >
+        <UFormField label="Zip Code" name="zip_code" class="col-span-1">
           <UInput
             v-model="state.zip_code"
             class="w-full"
@@ -322,11 +416,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="Public Garden"
-          name="isPublic"
-          class="col-span-2"
-        >
+        <UFormField label="Public Garden" name="isPublic" class="col-span-2">
           <USwitch
             v-model="state.isPublic"
             label="Make this garden visible to other"
@@ -352,30 +442,38 @@ function confirmDelete() {
         </UFormField>
 
         <UFormField
-          label="Scale (Pixels per Meters)"
-          name="PixelsPerMeters"
-          description="How many pixels each meter represents"
-          required
+          label="Map Transform"
           class="col-span-2"
+          description="Adjust scale, rotation and position with live preview"
         >
-          <UInput
-            v-model.number="state.PixelsPerMeters"
-            type="number"
-            placeholder="20"
-            min="1"
-            max="100"
-            step="1"
-            class="w-full"
-          />
+          <div class="flex flex-col gap-2">
+            <UButton
+              type="button"
+              variant="outline"
+              icon="i-heroicons-adjustments-horizontal-20-solid"
+              class="w-fit"
+              @click="openTransformSettings"
+            >
+              Open Map Transform Settings
+            </UButton>
+            <p class="text-xs text-muted">
+              Scale: {{ state.PixelsPerMeters }} px/m, Rotation:
+              {{ state.backgroundImageRotation }} deg, X:
+              {{ state.backgroundImageOffsetX }} px, Y:
+              {{ state.backgroundImageOffsetY }} px
+            </p>
+          </div>
         </UFormField>
 
         <div class="space-y-2 col-span-2">
-          <label class="block text-sm font-medium">Current Background Image</label>
+          <label class="block text-sm font-medium"
+            >Current Background Image</label
+          >
           <img
             :src="garden.background_image_url"
             :alt="garden.name"
             class="w-full h-32 object-cover rounded border"
-          >
+          />
         </div>
 
         <UFormField
@@ -452,4 +550,17 @@ function confirmDelete() {
       </div>
     </template>
   </UModal>
+
+  <BackgroundImageTransformModal
+    v-model:open="transformModalOpen"
+    :pixels-per-meters="state.PixelsPerMeters ?? 20"
+    :rotation="state.backgroundImageRotation ?? 0"
+    :offset-x="state.backgroundImageOffsetX ?? 0"
+    :offset-y="state.backgroundImageOffsetY ?? 0"
+    @update:pixels-per-meters="state.PixelsPerMeters = $event"
+    @update:rotation="state.backgroundImageRotation = $event"
+    @update:offset-x="state.backgroundImageOffsetX = $event"
+    @update:offset-y="state.backgroundImageOffsetY = $event"
+    :live-preview="true"
+  />
 </template>
