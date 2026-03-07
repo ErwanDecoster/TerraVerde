@@ -1,89 +1,89 @@
 <script lang="ts" setup>
-import type { FormSubmitEvent } from '@nuxt/ui'
-import type { VarietyData } from '~/types/variety'
-import { VARIETY_CATEGORIES_FOR_SELECT } from '~/utils/plantCategories'
-import { z } from 'zod'
-import { useVariety } from '~/composables/data/useVariety'
+import type { FormSubmitEvent } from "@nuxt/ui";
+import { z } from "zod";
+import { useVariety } from "~/composables/data/useVariety";
+import type { VarietyData } from "~/types/variety";
+import { VARIETY_CATEGORIES_FOR_SELECT } from "~/utils/plantCategories";
 
 interface Props {
-  gardenId?: string
+  gardenId?: string;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'varietyAdded', data: VarietyData): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "varietyAdded", data: VarietyData): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-const open = ref(false)
-const toast = useToast()
-const { addVariety } = useVariety()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+const open = ref(false);
+const toast = useToast();
+const { addVariety } = useVariety();
 
 const schema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name cannot exceed 100 characters'),
+    .min(1, "Name is required")
+    .max(100, "Name cannot exceed 100 characters"),
   scientific_name: z
     .string()
-    .max(150, 'Scientific name cannot exceed 150 characters')
+    .max(150, "Scientific name cannot exceed 150 characters")
     .optional(),
   harvest_period: z
     .string()
-    .max(100, 'Harvest period cannot exceed 100 characters')
+    .max(100, "Harvest period cannot exceed 100 characters")
     .optional(),
   main_color: z
     .string()
-    .regex(/^#[0-9A-F]{6}$/i, 'Invalid color')
+    .regex(/^#[0-9A-F]{6}$/i, "Invalid color")
     .optional(),
   reference_url: z
     .string()
-    .url('Invalid URL format')
+    .url("Invalid URL format")
     .optional()
-    .or(z.literal('')),
+    .or(z.literal("")),
   category: z.enum(
     [
-      'tree',
-      'fruit_tree',
-      'shrub',
-      'flower',
-      'climber',
-      'vegetable',
-      'grass',
-      'aquatic',
-      'other',
+      "tree",
+      "fruit_tree",
+      "shrub",
+      "flower",
+      "climber",
+      "vegetable",
+      "grass",
+      "aquatic",
+      "other",
     ],
     {
-      message: 'Category is required',
+      message: "Category is required",
     },
   ),
   is_public: z.boolean().optional(),
-})
+});
 
-export type VarietySchema = z.output<typeof schema>
+export type VarietySchema = z.output<typeof schema>;
 
 const state = reactive<Partial<VarietySchema>>({
-  name: '',
-  scientific_name: '',
-  harvest_period: '',
-  main_color: '#009689',
-  reference_url: '',
-  category: 'other',
+  name: "",
+  scientific_name: "",
+  harvest_period: "",
+  main_color: "#009689",
+  reference_url: "",
+  category: "other",
   is_public: false,
-})
+});
 
-const chip = computed(() => ({ backgroundColor: state.main_color }))
+const chip = computed(() => ({ backgroundColor: state.main_color }));
 
-const loading = ref(false)
+const loading = ref(false);
 
-const form = ref()
+const form = ref();
 
 async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
-  loading.value = true
+  loading.value = true;
 
   try {
-    const validatedData = event.data
+    const validatedData = event.data;
 
     const varietyData = await addVariety({
       name: validatedData.name,
@@ -94,38 +94,36 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
       category: validatedData.category,
       garden_id: props.gardenId,
       is_public: validatedData.is_public,
-    })
+    });
 
-    emit('varietyAdded', varietyData)
+    emit("varietyAdded", varietyData);
 
     toast.add({
-      title: 'Variety Added',
-      description: 'The variety has been successfully added',
-      color: 'success',
-    })
+      title: "Variety Added",
+      description: "The variety has been successfully added",
+      color: "success",
+    });
 
-    open.value = false
+    open.value = false;
 
     Object.assign(state, {
-      name: '',
-      scientific_name: '',
-      harvest_period: '',
-      main_color: '#22c55e',
-      reference_url: '',
-      category: 'flower',
-    })
-  }
-  catch (error) {
-    console.error('Error adding variety:', error)
+      name: "",
+      scientific_name: "",
+      harvest_period: "",
+      main_color: "#22c55e",
+      reference_url: "",
+      category: "flower",
+    });
+  } catch (error) {
+    console.error("Error adding variety:", error);
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while adding the variety',
-      color: 'error',
-    })
-  }
-  finally {
-    loading.value = false
+      title: "Error",
+      description: "An error occurred while adding the variety",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -150,22 +148,14 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
         class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="Variety Name"
-          name="name"
-          required
-        >
+        <UFormField label="Variety Name" name="name" required>
           <UInput
             v-model="state.name"
             class="w-full"
             placeholder="Enter variety name"
           />
         </UFormField>
-        <UFormField
-          label="Category"
-          name="category"
-          required
-        >
+        <UFormField label="Category" name="category" required>
           <USelect
             v-model="state.category"
             :items="VARIETY_CATEGORIES_FOR_SELECT.slice()"
@@ -174,10 +164,7 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Scientific Name"
-          name="scientific_name"
-        >
+        <UFormField label="Scientific Name" name="scientific_name">
           <UInput
             v-model="state.scientific_name"
             class="w-full"
@@ -185,10 +172,7 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Harvest Period"
-          name="harvest_period"
-        >
+        <UFormField label="Harvest Period" name="harvest_period">
           <UInput
             v-model="state.harvest_period"
             class="w-full"
@@ -216,31 +200,17 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
           :ui="{ container: 'grid grid-cols-2 gap-4' }"
         >
           <UPopover>
-            <UButton
-              label="Choose color"
-              class="w-full"
-              variant="outline"
-            >
+            <UButton label="Choose color" class="w-full" variant="outline">
               <template #leading>
-                <span
-                  :style="chip"
-                  class="size-3 rounded-full"
-                />
+                <span :style="chip" class="size-3 rounded-full" />
               </template>
             </UButton>
 
             <template #content>
-              <UColorPicker
-                v-model="state.main_color"
-                class="p-2"
-              />
+              <UColorPicker v-model="state.main_color" class="p-2" />
             </template>
           </UPopover>
-          <UInput
-            v-model="state.main_color"
-            type="string"
-            class="w-full"
-          />
+          <UInput v-model="state.main_color" type="string" class="w-full" />
         </UFormField>
 
         <UFormField
@@ -254,12 +224,8 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-end gap-0.5 w-full">
-        <UButton
-          variant="ghost"
-          :disabled="loading"
-          @click="close"
-        >
+      <div class="flex w-full justify-end gap-0.5">
+        <UButton variant="ghost" :disabled="loading" @click="close">
           Cancel
         </UButton>
         <UButton

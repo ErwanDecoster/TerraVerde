@@ -1,21 +1,23 @@
 <template>
-  <div class="absolute bottom-2 left-2 z-10 rounded-xl p-2 flex items-center gap-2 bg-default/75 backdrop-blur border border-default">
-    <UKbd
-      size="sm"
-    >
+  <div
+    class="bg-default/75 border-default absolute bottom-2 left-2 z-10 flex items-center gap-2 rounded-xl border p-2 backdrop-blur"
+  >
+    <UKbd size="sm">
       {{ getCategoryInfo(plant.variety.category)?.key }}
     </UKbd>
-    <span class="text-xs font-medium">{{ plant.name }} | {{ plant.variety.name }}</span>
+    <span class="text-xs font-medium"
+      >{{ plant.name }} | {{ plant.variety.name }}</span
+    >
   </div>
 </template>
 
 <script setup lang="ts">
-import type { PlantData } from '~/types/plant'
-import { getCategoryInfo } from '~/utils/plantCategories'
+import type { PlantData } from "~/types/plant";
+import { getCategoryInfo } from "~/utils/plantCategories";
 
 interface Props {
-  plant: PlantData
+  plant: PlantData;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 </script>

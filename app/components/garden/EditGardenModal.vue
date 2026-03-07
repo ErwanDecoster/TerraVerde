@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from "@nuxt/ui";
-import type { GardenData } from "~/types/garden";
-import { useAuth } from "~/composables/useAuth";
 import { z } from "zod";
 import { useGarden } from "~/composables/data/useGarden";
+import { useAuth } from "~/composables/useAuth";
+import type { GardenData } from "~/types/garden";
 import BackgroundImageTransformModal from "./BackgroundImageTransformModal.vue";
 
 interface Props {
@@ -456,7 +456,7 @@ function confirmDelete() {
             >
               Open Map Transform Settings
             </UButton>
-            <p class="text-xs text-muted">
+            <p class="text-muted text-xs">
               Scale: {{ state.PixelsPerMeters }} px/m, Rotation:
               {{ state.backgroundImageRotation }} deg, X:
               {{ state.backgroundImageOffsetX }} px, Y:
@@ -465,14 +465,14 @@ function confirmDelete() {
           </div>
         </UFormField>
 
-        <div class="space-y-2 col-span-2">
+        <div class="col-span-2 space-y-2">
           <label class="block text-sm font-medium"
             >Current Background Image</label
           >
           <img
             :src="garden.background_image_url"
             :alt="garden.name"
-            class="w-full h-32 object-cover rounded border"
+            class="h-32 w-full rounded border object-cover"
           />
         </div>
 
@@ -492,7 +492,7 @@ function confirmDelete() {
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-between w-full">
+      <div class="flex w-full justify-between">
         <div v-if="canDeleteGarden && !showDeleteConfirmation">
           <UButton
             color="error"

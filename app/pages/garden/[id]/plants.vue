@@ -1,9 +1,6 @@
 <template>
   <div>
-    <div
-      v-if="pending"
-      class="flex justify-center items-center h-screen"
-    >
+    <div v-if="pending" class="flex h-screen items-center justify-center">
       <UIcon
         name="i-heroicons-arrow-path-20-solid"
         class="animate-spin text-4xl"
@@ -11,10 +8,7 @@
       <span class="ml-2">Loading plants...</span>
     </div>
 
-    <div
-      v-else-if="error"
-      class="flex justify-center items-center h-screen"
-    >
+    <div v-else-if="error" class="flex h-screen items-center justify-center">
       <UAlert
         icon="i-heroicons-exclamation-triangle-20-solid"
         color="error"
@@ -24,11 +18,8 @@
       />
     </div>
 
-    <div
-      v-else
-      class="p-4"
-    >
-      <div class="flex items-center justify-between mb-6">
+    <div v-else class="p-4">
+      <div class="mb-6 flex items-center justify-between">
         <div>
           <div class="flex items-center gap-2">
             <UButton
@@ -39,7 +30,7 @@
               Back to Garden
             </UButton>
           </div>
-          <h1 class="text-3xl font-bold mt-2">
+          <h1 class="mt-2 text-3xl font-bold">
             Plants - {{ garden?.name }}
             <UBadge
               v-if="garden?.is_public && !isOwner"
@@ -50,7 +41,7 @@
               Public Garden
             </UBadge>
           </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-1">
+          <p class="mt-1 text-gray-600 dark:text-gray-400">
             {{
               isOwner
                 ? "Manage all plants in the garden"
@@ -66,26 +57,21 @@
           @plant-added="onPlantAdded"
           @variety-updated="onVarietyUpdated"
         >
-          <UButton
-            color="primary"
-            icon="i-heroicons-plus-20-solid"
-          >
+          <UButton color="primary" icon="i-heroicons-plus-20-solid">
             Add Plant
           </UButton>
         </AddPlantModal>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
               name="i-heroicons-sparkles-20-solid"
-              class="w-8 h-8 text-green-500"
+              class="h-8 w-8 text-green-500"
             />
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                Total
-              </p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Total</p>
               <p class="text-2xl font-semibold">
                 {{ plants.length }}
               </p>
@@ -95,14 +81,9 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon
-              name="lucide-smile"
-              class="w-8 h-8 text-emerald-500"
-            />
+            <UIcon name="lucide-smile" class="h-8 w-8 text-emerald-500" />
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                Healthy
-              </p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Healthy</p>
               <p class="text-2xl font-semibold">
                 {{ healthyCount }}
               </p>
@@ -112,14 +93,9 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon
-              name="lucide-annoyed"
-              class="w-8 h-8 text-yellow-500"
-            />
+            <UIcon name="lucide-annoyed" class="h-8 w-8 text-yellow-500" />
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                Sick
-              </p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Sick</p>
               <p class="text-2xl font-semibold">
                 {{ sickCount }}
               </p>
@@ -131,12 +107,10 @@
           <div class="flex items-center gap-3">
             <UIcon
               name="i-heroicons-squares-2x2-20-solid"
-              class="w-8 h-8 text-blue-500"
+              class="h-8 w-8 text-blue-500"
             />
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                Varieties
-              </p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Varieties</p>
               <p class="text-2xl font-semibold">
                 {{ varietiesCount }}
               </p>
@@ -148,9 +122,7 @@
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold">
-              Plants List
-            </h2>
+            <h2 class="text-xl font-semibold">Plants List</h2>
             <div class="flex items-center gap-2">
               <UInput
                 v-model="searchQuery"
@@ -171,7 +143,7 @@
           <template #name-cell="{ row }">
             <div class="flex items-center gap-2">
               <div
-                class="w-4 h-4 rounded-full border"
+                class="h-4 w-4 rounded-full border"
                 :style="{
                   backgroundColor: row.original.variety.main_color || '#CCCCCC',
                 }"
@@ -243,167 +215,165 @@
 </template>
 
 <script setup lang="ts">
-import type { PlantData } from '~/types/plant'
-import type { VarietyData } from '~/types/variety'
-import type { GardenData } from '~/types/garden'
-import { PLANT_STATUSES } from '~/types/plant'
-import { useGarden } from '~/composables/data/useGarden'
-import { usePlant } from '~/composables/data/usePlant'
-import { useVarietySync } from '~/composables/data/useVarietySync'
-import AddPlantModal from '~/components/plant/AddPlantModal.vue'
-import EditPlantModal from '~/components/plant/EditPlantModal.vue'
-import { useIsOwner } from '~/composables/useIsOwner'
+import AddPlantModal from "~/components/plant/AddPlantModal.vue";
+import EditPlantModal from "~/components/plant/EditPlantModal.vue";
+import { useGarden } from "~/composables/data/useGarden";
+import { usePlant } from "~/composables/data/usePlant";
+import { useVarietySync } from "~/composables/data/useVarietySync";
+import { useIsOwner } from "~/composables/useIsOwner";
+import type { GardenData } from "~/types/garden";
+import type { PlantData } from "~/types/plant";
+import { PLANT_STATUSES } from "~/types/plant";
+import type { VarietyData } from "~/types/variety";
 
-const route = useRoute()
-const gardenId = route.params.id as string
+const route = useRoute();
+const gardenId = route.params.id as string;
 
-const { fetchGardenById } = useGarden()
-const { fetchPlants } = usePlant()
-const { syncVarietyInPlants } = useVarietySync()
-const { isOwner } = useIsOwner(gardenId)
+const { fetchGardenById } = useGarden();
+const { fetchPlants } = usePlant();
+const { syncVarietyInPlants } = useVarietySync();
+const { isOwner } = useIsOwner(gardenId);
 
-const garden = ref<GardenData | null>(null)
-const plants = ref<PlantData[]>([])
-const pending = ref(true)
-const error = ref<string | null>(null)
-const searchQuery = ref('')
+const garden = ref<GardenData | null>(null);
+const plants = ref<PlantData[]>([]);
+const pending = ref(true);
+const error = ref<string | null>(null);
+const searchQuery = ref("");
 
 const columns = computed(() => {
   const baseColumns = [
     {
-      accessorKey: 'name',
-      header: 'Name',
+      accessorKey: "name",
+      header: "Name",
     },
     {
-      accessorKey: 'variety',
-      header: 'Variety',
+      accessorKey: "variety",
+      header: "Variety",
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
+      accessorKey: "status",
+      header: "Status",
     },
     {
-      accessorKey: 'planted_date',
-      header: 'Planted Date',
+      accessorKey: "planted_date",
+      header: "Planted Date",
     },
     {
-      id: 'dimensions',
-      header: 'Dimensions',
+      id: "dimensions",
+      header: "Dimensions",
     },
     {
-      id: 'position',
-      header: 'Position',
+      id: "position",
+      header: "Position",
     },
-  ]
+  ];
 
   if (isOwner.value) {
     baseColumns.push({
-      id: 'actions',
-      header: 'Actions',
-    })
+      id: "actions",
+      header: "Actions",
+    });
   }
 
-  return baseColumns
-})
+  return baseColumns;
+});
 
 const filteredPlants = computed(() => {
-  if (!searchQuery.value) return plants.value
+  if (!searchQuery.value) return plants.value;
 
-  const query = searchQuery.value.toLowerCase()
+  const query = searchQuery.value.toLowerCase();
   return plants.value.filter(
-    plant =>
-      plant.name.toLowerCase().includes(query)
-      || plant.variety.name.toLowerCase().includes(query)
-      || plant.variety.scientific_name?.toLowerCase().includes(query)
-      || plant.description.toLowerCase().includes(query),
-  )
-})
+    (plant) =>
+      plant.name.toLowerCase().includes(query) ||
+      plant.variety.name.toLowerCase().includes(query) ||
+      plant.variety.scientific_name?.toLowerCase().includes(query) ||
+      plant.description.toLowerCase().includes(query),
+  );
+});
 
 const healthyCount = computed(
-  () => plants.value.filter(plant => plant.status === 'healthy').length,
-)
+  () => plants.value.filter((plant) => plant.status === "healthy").length,
+);
 
 const sickCount = computed(
-  () => plants.value.filter(plant => plant.status === 'sick').length,
-)
+  () => plants.value.filter((plant) => plant.status === "sick").length,
+);
 
 const varietiesCount = computed(() => {
   const uniqueVarietyIds = new Set(
     plants.value
-      .filter(plant => plant.variety_id)
-      .map(plant => plant.variety_id),
-  )
-  return uniqueVarietyIds.size
-})
+      .filter((plant) => plant.variety_id)
+      .map((plant) => plant.variety_id),
+  );
+  return uniqueVarietyIds.size;
+});
 
 const getStatusColor = (status: string) => {
-  const statusConfig = PLANT_STATUSES.find(s => s.value === status)
-  return statusConfig?.color || 'neutral'
-}
+  const statusConfig = PLANT_STATUSES.find((s) => s.value === status);
+  return statusConfig?.color || "neutral";
+};
 
 const getStatusLabel = (status: string) => {
-  const statusConfig = PLANT_STATUSES.find(s => s.value === status)
-  return statusConfig?.label || status
-}
+  const statusConfig = PLANT_STATUSES.find((s) => s.value === status);
+  return statusConfig?.label || status;
+};
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('fr-FR')
-}
+  return new Date(dateString).toLocaleDateString("fr-FR");
+};
 
 const onPlantAdded = (plant: PlantData) => {
-  plants.value.unshift(plant)
-}
+  plants.value.unshift(plant);
+};
 
 const onPlantUpdated = (updatedPlant: PlantData) => {
-  const index = plants.value.findIndex(p => p.id === updatedPlant.id)
+  const index = plants.value.findIndex((p) => p.id === updatedPlant.id);
   if (index !== -1) {
-    plants.value[index] = updatedPlant
+    plants.value[index] = updatedPlant;
   }
-}
+};
 
 const onPlantDeleted = (plantId: string) => {
-  plants.value = plants.value.filter(p => p.id !== plantId)
-}
+  plants.value = plants.value.filter((p) => p.id !== plantId);
+};
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  syncVarietyInPlants(plants, updatedVariety)
-}
+  syncVarietyInPlants(plants, updatedVariety);
+};
 
 const loadData = async () => {
   try {
-    pending.value = true
-    error.value = null
+    pending.value = true;
+    error.value = null;
 
-    const gardenData = await fetchGardenById(gardenId)
+    const gardenData = await fetchGardenById(gardenId);
     if (!gardenData) {
-      error.value = 'Garden not found'
-      return
+      error.value = "Garden not found";
+      return;
     }
 
     // Check access: public, owner, or team member
-    let allowed = false
+    let allowed = false;
     if (gardenData.is_public) {
-      allowed = true
+      allowed = true;
     }
     if (!allowed) {
-      error.value = 'Access denied. This garden is private.'
-      return
+      error.value = "Access denied. This garden is private.";
+      return;
     }
 
-    garden.value = gardenData
+    garden.value = gardenData;
     // Ownership check auto-runs via watchEffect in useIsOwner
-    plants.value = await fetchPlants(gardenId)
+    plants.value = await fetchPlants(gardenId);
+  } catch (err) {
+    console.error("Error loading data:", err);
+    error.value = "Error loading data";
+  } finally {
+    pending.value = false;
   }
-  catch (err) {
-    console.error('Error loading data:', err)
-    error.value = 'Error loading data'
-  }
-  finally {
-    pending.value = false
-  }
-}
+};
 
 onMounted(() => {
-  loadData()
-})
+  loadData();
+});
 </script>

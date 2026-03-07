@@ -1,78 +1,77 @@
 <script setup lang="ts">
-import * as z from 'zod'
-import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
+import type { FormSubmitEvent, AuthFormField } from "@nuxt/ui";
+import * as z from "zod";
 
 definePageMeta({
-  middleware: ['guest'],
-})
-const toast = useToast()
+  middleware: ["guest"],
+});
+const toast = useToast();
 
 const fields: AuthFormField[] = [
   {
-    name: 'email',
-    type: 'email',
-    label: 'Email',
-    placeholder: 'Enter your email',
-    autocomplete: 'email',
+    name: "email",
+    type: "email",
+    label: "Email",
+    placeholder: "Enter your email",
+    autocomplete: "email",
     required: true,
   },
   {
-    name: 'password',
-    type: 'password',
-    label: 'Password',
-    placeholder: 'Enter your password',
-    autocomplete: 'current-password',
-    hint: 'Lowercase, uppercase letters, digits and symbols and at least 12 characters',
+    name: "password",
+    type: "password",
+    label: "Password",
+    placeholder: "Enter your password",
+    autocomplete: "current-password",
+    hint: "Lowercase, uppercase letters, digits and symbols and at least 12 characters",
     errorPattern:
       /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{12,}$/,
     required: true,
   },
-]
+];
 
 const providers = [
   {
-    label: 'Google',
-    icon: 'i-simple-icons-google',
+    label: "Google",
+    icon: "i-simple-icons-google",
     onClick: () => {
-      toast.add({ title: 'Google', description: 'Login with Google' })
+      toast.add({ title: "Google", description: "Login with Google" });
     },
   },
   {
-    label: 'GitHub',
-    icon: 'i-simple-icons-github',
+    label: "GitHub",
+    icon: "i-simple-icons-github",
     onClick: () => {
-      toast.add({ title: 'GitHub', description: 'Login with GitHub' })
+      toast.add({ title: "GitHub", description: "Login with GitHub" });
     },
   },
-]
+];
 
 const schema = z.object({
-  email: z.email('Invalid email'),
+  email: z.email("Invalid email"),
   password: z
-    .string('Password is required')
-    .min(12, 'Password must be at least 12 characters')
+    .string("Password is required")
+    .min(12, "Password must be at least 12 characters")
     .regex(
       /^(?=.*?[A-Z])/,
-      'Password must contain at least one uppercase letter',
+      "Password must contain at least one uppercase letter",
     ),
-})
+});
 
-type Schema = z.output<typeof schema>
+type Schema = z.output<typeof schema>;
 
 async function onSubmit(payload: FormSubmitEvent<Schema>) {
-  const { login } = useAuth()
+  const { login } = useAuth();
 
-  const { error } = await login(payload.data.email, payload.data.password)
+  const { error } = await login(payload.data.email, payload.data.password);
 
   if (error) {
     toast.add({
-      title: 'Error',
+      title: "Error",
       description: error.message,
-      color: 'error',
-    })
-  }
-  else {
-    await navigateTo('/')
+      color: "error",
+    });
+  } else {
+    await navigateTo("/");
   }
 }
 </script>
@@ -90,17 +89,16 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       >
         <template #description>
           Don't have an account?
-          <ULink
-            to="/register"
-            class="text-primary font-medium"
-          >Sign up</ULink>.
+          <ULink to="/register" class="text-primary font-medium">Sign up</ULink
+          >.
         </template>
         <template #password-hint>
           <ULink
             to="/password-reset"
             class="text-primary font-medium"
             tabindex="-1"
-          >Forgot password?</ULink>
+            >Forgot password?</ULink
+          >
         </template>
       </UAuthForm>
     </UPageCard>

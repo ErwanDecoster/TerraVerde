@@ -1,46 +1,52 @@
-import type { PlantData, PlantFormData, PlantUpdateFormData } from '~/types/plant'
+import type {
+  PlantData,
+  PlantFormData,
+  PlantUpdateFormData,
+} from "~/types/plant";
 
 export const usePlant = () => {
-  const { $supabase } = useNuxtApp()
+  const { $supabase } = useNuxtApp();
 
   /**
    * Create a new plant in the database
    */
   const createPlant = async (plantData: {
-    id: string
-    name: string
-    description: string
-    variety_id: number
-    status: string
-    planted_date: string
-    main_color?: string
-    height: number
-    width: number
-    x_position?: number
-    y_position?: number
-    garden_id?: string
+    id: string;
+    name: string;
+    description: string;
+    variety_id: number;
+    status: string;
+    planted_date: string;
+    main_color?: string;
+    height: number;
+    width: number;
+    x_position?: number;
+    y_position?: number;
+    garden_id?: string;
   }) => {
     const { data, error } = await $supabase
-      .from('plants')
+      .from("plants")
       .insert(plantData)
-      .select(`*,
+      .select(
+        `*,
         variety(
           *
-        )`)
-      .single()
+        )`,
+      )
+      .single();
 
     if (error) {
-      throw new Error(`Failed to create plant: ${error.message}`)
+      throw new Error(`Failed to create plant: ${error.message}`);
     }
 
-    return data
-  }
+    return data;
+  };
 
   /**
    * Add a new plant
    */
   const addPlant = async (formData: PlantFormData): Promise<PlantData> => {
-    const uuid = crypto.randomUUID()
+    const uuid = crypto.randomUUID();
 
     const plantDbData = {
       id: uuid,
@@ -54,56 +60,60 @@ export const usePlant = () => {
       x_position: formData.x_position,
       y_position: formData.y_position,
       garden_id: formData.garden_id,
-    }
+    };
 
-    const createdPlant = await createPlant(plantDbData)
-    return createdPlant
-  }
+    const createdPlant = await createPlant(plantDbData);
+    return createdPlant;
+  };
 
   /**
    * Fetch all plants
    */
   const fetchPlants = async (gardenId: string): Promise<PlantData[]> => {
     const { data, error } = await $supabase
-      .from('plants')
-      .select(`
+      .from("plants")
+      .select(
+        `
         *,
         variety(
           *
         )
-      `)
-      .eq('garden_id', gardenId)
-      .order('created_at', { ascending: false })
+      `,
+      )
+      .eq("garden_id", gardenId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to fetch plants: ${error.message}`)
+      throw new Error(`Failed to fetch plants: ${error.message}`);
     }
 
-    return data || []
-  }
+    return data || [];
+  };
 
   /**
    * Fetch a single plant by ID
    */
   const fetchPlantById = async (plantId: string): Promise<PlantData | null> => {
     const { data, error } = await $supabase
-      .from('plants')
-      .select(`*,
+      .from("plants")
+      .select(
+        `*,
         variety(
           *
-        )`)
-      .eq('id', plantId)
-      .single()
+        )`,
+      )
+      .eq("id", plantId)
+      .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        return null
+      if (error.code === "PGRST116") {
+        return null;
       }
-      throw new Error(`Failed to fetch plant: ${error.message}`)
+      throw new Error(`Failed to fetch plant: ${error.message}`);
     }
 
-    return data
-  }
+    return data;
+  };
 
   /**
    * Update an existing plant
@@ -123,44 +133,45 @@ export const usePlant = () => {
       x_position: formData.x_position,
       y_position: formData.y_position,
       garden_id: formData.garden_id,
-    }
+    };
 
     const { data, error } = await $supabase
-      .from('plants')
+      .from("plants")
       .update(plantDbData)
-      .eq('id', plantId)
-      .select(`*,
+      .eq("id", plantId)
+      .select(
+        `*,
         variety(
           *
-        )`)
-      .single()
+        )`,
+      )
+      .single();
 
     if (error) {
-      throw new Error(`Failed to update plant: ${error.message}`)
+      throw new Error(`Failed to update plant: ${error.message}`);
     }
 
-    return data
-  }
+    return data;
+  };
 
   /**
    * Delete a plant
    */
   const deletePlant = async (plantId: string) => {
-    const { error } = await $supabase
-      .from('plants')
-      .delete()
-      .eq('id', plantId)
+    const { error } = await $supabase.from("plants").delete().eq("id", plantId);
 
     if (error) {
-      throw new Error(`Failed to delete plant: ${error.message}`)
+      throw new Error(`Failed to delete plant: ${error.message}`);
     }
-  }
+  };
 
   /**
    * Add multiple plants in bulk
    */
-  const addMultiplePlants = async (plantsData: PlantFormData[]): Promise<PlantData[]> => {
-    const plantsDbData = plantsData.map(plantData => ({
+  const addMultiplePlants = async (
+    plantsData: PlantFormData[],
+  ): Promise<PlantData[]> => {
+    const plantsDbData = plantsData.map((plantData) => ({
       id: crypto.randomUUID(),
       name: plantData.name,
       description: plantData.description,
@@ -173,22 +184,20 @@ export const usePlant = () => {
       x_position: plantData.x_position,
       y_position: plantData.y_position,
       garden_id: plantData.garden_id,
-    }))
+    }));
 
-    const { data, error } = await $supabase
-      .from('plants')
-      .insert(plantsDbData)
+    const { data, error } = await $supabase.from("plants").insert(plantsDbData)
       .select(`*,
         variety(
           *
-        )`)
+        )`);
 
     if (error) {
-      throw new Error(`Failed to create plants: ${error.message}`)
+      throw new Error(`Failed to create plants: ${error.message}`);
     }
 
-    return data || []
-  }
+    return data || [];
+  };
 
   return {
     addPlant,
@@ -197,5 +206,5 @@ export const usePlant = () => {
     fetchPlants,
     fetchPlantById,
     deletePlant,
-  }
-}
+  };
+};

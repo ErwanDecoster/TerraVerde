@@ -1,5 +1,5 @@
 <template>
-  <div v-if="pending" class="flex justify-center items-center h-screen">
+  <div v-if="pending" class="flex h-screen items-center justify-center">
     <UIcon
       name="i-heroicons-arrow-path-20-solid"
       class="animate-spin text-4xl"
@@ -7,7 +7,7 @@
     <span class="ml-2">Loading garden...</span>
   </div>
 
-  <div v-else-if="error" class="flex justify-center items-center h-screen">
+  <div v-else-if="error" class="flex h-screen items-center justify-center">
     <UAlert
       icon="i-heroicons-exclamation-triangle-20-solid"
       color="error"
@@ -17,7 +17,7 @@
     />
   </div>
 
-  <div v-else-if="!garden" class="flex justify-center items-center h-screen">
+  <div v-else-if="!garden" class="flex h-screen items-center justify-center">
     <UAlert
       icon="i-heroicons-information-circle-20-solid"
       color="warning"
@@ -28,7 +28,7 @@
   </div>
 
   <div v-else class="h-screen overflow-hidden">
-    <div class="flex-1 overflow-hidden relative">
+    <div class="relative flex-1 overflow-hidden">
       <GardenHeader
         :garden="garden"
         :plants="plants"
@@ -102,25 +102,25 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import type { GardenData } from "~/types/garden";
-import type { PlantData } from "~/types/plant";
-import type { VarietyData } from "~/types/variety";
-import { useGarden } from "~/composables/data/useGarden";
-import { useTeam } from "~/composables/data/useTeam";
-import { usePlant } from "~/composables/data/usePlant";
-import { useGardenZoom } from "~/composables/garden/useGardenZoom";
-import { useGardenCanvas } from "~/composables/garden/useGardenCanvas";
-import { usePlantMarkers } from "~/composables/garden/usePlantMarkers";
-import { usePlantInteractions } from "~/composables/garden/usePlantInteractions";
-import { useVarietySync } from "~/composables/data/useVarietySync";
+import GardenCanvas from "~/components/garden/GardenCanvas.vue";
 import GardenHeader from "~/components/garden/GardenHeader.vue";
 import GardenZoomControls from "~/components/garden/GardenZoomControls.vue";
-import GardenCanvas from "~/components/garden/GardenCanvas.vue";
 import PlantCategoryFilters from "~/components/garden/PlantCategoryFilters.vue";
 import PlantHoverData from "~/components/garden/PlantHoverData.vue";
 import AddPlantModal from "~/components/plant/AddPlantModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
 import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
+import { useGarden } from "~/composables/data/useGarden";
+import { usePlant } from "~/composables/data/usePlant";
+import { useTeam } from "~/composables/data/useTeam";
+import { useVarietySync } from "~/composables/data/useVarietySync";
+import { useGardenCanvas } from "~/composables/garden/useGardenCanvas";
+import { useGardenZoom } from "~/composables/garden/useGardenZoom";
+import { usePlantInteractions } from "~/composables/garden/usePlantInteractions";
+import { usePlantMarkers } from "~/composables/garden/usePlantMarkers";
+import type { GardenData } from "~/types/garden";
+import type { PlantData } from "~/types/plant";
+import type { VarietyData } from "~/types/variety";
 
 const route = useRoute();
 const gardenId = route.params.id as string;

@@ -16,40 +16,35 @@
           <h4>
             {{ plant.name }}
           </h4>
-          <p
-            v-if="plant.description"
-            class="text-sm text-muted"
-          >
+          <p v-if="plant.description" class="text-muted text-sm">
             {{ plant.description }}
           </p>
         </div>
 
-        <div class="bg-elevated p-4 rounded-lg">
-          <h5 class="font-medium">
-            Variety
-          </h5>
+        <div class="bg-elevated rounded-lg p-4">
+          <h5 class="font-medium">Variety</h5>
           <div class="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span class="font-medium">Name:</span>
-              <span class="ml-2 text-muted">{{ plant.variety.name }}</span>
+              <span class="text-muted ml-2">{{ plant.variety.name }}</span>
             </div>
             <div v-if="plant.variety.scientific_name">
               <span class="font-medium">Scientific Name:</span>
-              <span class="ml-2 text-muted italic">{{
+              <span class="text-muted ml-2 italic">{{
                 plant.variety.scientific_name
               }}</span>
             </div>
             <div v-if="plant.variety.category">
               <span class="font-medium">Category:</span>
-              <span class="ml-2 text-muted">{{
+              <span class="text-muted ml-2">{{
                 getCategoryLabel(plant.variety.category)
               }}</span>
             </div>
             <div v-if="plant.variety.main_color">
               <span class="font-medium">Color:</span>
-              <div class="inline-flex items-center ml-2">
+              <div class="ml-2 inline-flex items-center">
                 <div
-                  class="w-4 h-4 rounded-full border border-gray-300 mr-2"
+                  class="mr-2 h-4 w-4 rounded-full border border-gray-300"
                   :style="{ backgroundColor: plant.variety.main_color }"
                 />
                 <span class="text-muted">{{ plant.variety.main_color }}</span>
@@ -57,15 +52,12 @@
             </div>
             <div v-if="plant.variety.harvest_period">
               <span class="font-medium">Harvest Period:</span>
-              <span class="ml-2 text-muted">{{
+              <span class="text-muted ml-2">{{
                 plant.variety.harvest_period
               }}</span>
             </div>
           </div>
-          <div
-            v-if="plant.variety.reference_url"
-            class="mt-3"
-          >
+          <div v-if="plant.variety.reference_url" class="mt-3">
             <UButton
               :to="plant.variety.reference_url"
               external
@@ -93,30 +85,25 @@
           </div>
           <div>
             <span class="font-medium">Planted Date:</span>
-            <span class="ml-2 text-muted">{{
+            <span class="text-muted ml-2">{{
               formatDate(plant.planted_date)
             }}</span>
           </div>
           <div v-if="plant.height">
             <span class="font-medium">Height:</span>
-            <span class="ml-2 text-muted">{{ plant.height }}m</span>
+            <span class="text-muted ml-2">{{ plant.height }}m</span>
           </div>
           <div v-if="plant.width">
             <span class="font-medium">Width:</span>
-            <span class="ml-2 text-muted">{{ plant.width }}m</span>
+            <span class="text-muted ml-2">{{ plant.width }}m</span>
           </div>
         </div>
       </div>
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-end gap-0.5 w-full">
-        <UButton
-          variant="ghost"
-          @click="close"
-        >
-          Close
-        </UButton>
+      <div class="flex w-full justify-end gap-0.5">
+        <UButton variant="ghost" @click="close"> Close </UButton>
         <UButton
           v-if="canEdit"
           color="primary"
@@ -131,65 +118,65 @@
 </template>
 
 <script lang="ts" setup>
-import type { PlantData } from '~/types/plant'
-import { PLANT_STATUSES } from '~/types/plant'
-import { getCategoryLabel } from '~/utils/plantCategories'
+import type { PlantData } from "~/types/plant";
+import { PLANT_STATUSES } from "~/types/plant";
+import { getCategoryLabel } from "~/utils/plantCategories";
 
 interface Props {
-  plant: PlantData
-  open: boolean
-  canEdit?: boolean
+  plant: PlantData;
+  open: boolean;
+  canEdit?: boolean;
 }
 
 interface Emits {
-  (e: 'update:open', value: boolean): void
-  (e: 'edit-requested', plant: PlantData): void
+  (e: "update:open", value: boolean): void;
+  (e: "edit-requested", plant: PlantData): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const isOpen = computed({
   get: () => props.open,
-  set: value => emit('update:open', value),
-})
+  set: (value) => emit("update:open", value),
+});
 
 const getStatusLabel = (status: string) => {
-  const statusInfo = PLANT_STATUSES.find(s => s.value === status)
-  return statusInfo?.label || status
-}
+  const statusInfo = PLANT_STATUSES.find((s) => s.value === status);
+  return statusInfo?.label || status;
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'planted':
-      return 'success'
-    case 'growing':
-      return 'primary'
-    case 'flowering':
-      return 'warning'
-    case 'fruiting':
-      return 'warning'
-    case 'harvested':
-      return 'success'
-    case 'dormant':
-      return 'neutral'
-    case 'dead':
-      return 'error'
+    case "planted":
+      return "success";
+    case "growing":
+      return "primary";
+    case "flowering":
+      return "warning";
+    case "fruiting":
+      return "warning";
+    case "harvested":
+      return "success";
+    case "dormant":
+      return "neutral";
+    case "dead":
+      return "error";
     default:
-      return 'neutral'
+      return "neutral";
   }
-}
+};
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const openEditModal = () => {
-  emit('edit-requested', props.plant)
-  isOpen.value = false
-}
+  emit("edit-requested", props.plant);
+  isOpen.value = false;
+};
 </script>

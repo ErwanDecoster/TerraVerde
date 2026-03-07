@@ -1,148 +1,146 @@
 <script lang="ts" setup>
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { z } from 'zod'
-import { useVariety } from '~/composables/data/useVariety'
-import { useTeam } from '~/composables/data/useTeam'
-import type { VarietyData } from '~/types/variety'
-import type { TeamData, TeamMemberData } from '~/types/team'
-import { VARIETY_CATEGORIES_FOR_SELECT } from '~/utils/plantCategories'
+import type { FormSubmitEvent } from "@nuxt/ui";
+import { z } from "zod";
+import { useTeam } from "~/composables/data/useTeam";
+import { useVariety } from "~/composables/data/useVariety";
+import type { TeamData, TeamMemberData } from "~/types/team";
+import type { VarietyData } from "~/types/variety";
+import { VARIETY_CATEGORIES_FOR_SELECT } from "~/utils/plantCategories";
 
 interface Props {
-  variety: VarietyData
+  variety: VarietyData;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'varietyUpdated', data: VarietyData): void
-  (e: 'varietyDeleted', varietyId: string): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "varietyUpdated", data: VarietyData): void;
+  (e: "varietyDeleted", varietyId: string): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-const open = ref(false)
-const toast = useToast()
-const { updateVariety, deleteVariety } = useVariety()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+const open = ref(false);
+const toast = useToast();
+const { updateVariety, deleteVariety } = useVariety();
 
-const showDeleteConfirmation = ref(false)
+const showDeleteConfirmation = ref(false);
 
 // Determine if current user can edit this variety: must be member (role owner or editor) of the garden owning the variety
-const { user } = useAuth()
-const { fetchTeamsByGarden } = useTeam()
-const isGardenEditorMember = ref(false)
-const permissionLoading = ref(false)
+const { user } = useAuth();
+const { fetchTeamsByGarden } = useTeam();
+const isGardenEditorMember = ref(false);
+const permissionLoading = ref(false);
 
 async function computeCanEdit() {
   // Need garden id and authenticated user
   if (!props.variety.garden_id || !user.value) {
-    isGardenEditorMember.value = false
-    return
+    isGardenEditorMember.value = false;
+    return;
   }
-  permissionLoading.value = true
+  permissionLoading.value = true;
   try {
     const teams = (await fetchTeamsByGarden(
       props.variety.garden_id,
-    )) as TeamData[]
+    )) as TeamData[];
     const canEdit = teams.some((team: TeamData) =>
       team.teams_members?.some(
         (member: TeamMemberData) =>
-          member.user_id === user.value!.id
-          && ['owner', 'editor'].includes((member.role || '') as string),
+          member.user_id === user.value!.id &&
+          ["owner", "editor"].includes((member.role || "") as string),
       ),
-    )
-    isGardenEditorMember.value = canEdit
-  }
-  catch (e) {
-    console.error('Failed to compute variety edit permission', e)
-    isGardenEditorMember.value = false
-  }
-  finally {
-    permissionLoading.value = false
+    );
+    isGardenEditorMember.value = canEdit;
+  } catch (e) {
+    console.error("Failed to compute variety edit permission", e);
+    isGardenEditorMember.value = false;
+  } finally {
+    permissionLoading.value = false;
   }
 }
 
-onMounted(computeCanEdit)
+onMounted(computeCanEdit);
 
 const schema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name cannot exceed 100 characters'),
+    .min(1, "Name is required")
+    .max(100, "Name cannot exceed 100 characters"),
   scientific_name: z
     .string()
-    .max(150, 'Scientific name cannot exceed 150 characters')
+    .max(150, "Scientific name cannot exceed 150 characters")
     .optional(),
   harvest_period: z
     .string()
-    .max(100, 'Harvest period cannot exceed 100 characters')
+    .max(100, "Harvest period cannot exceed 100 characters")
     .optional(),
   main_color: z
     .string()
-    .regex(/^#[0-9A-F]{6}$/i, 'Invalid color')
+    .regex(/^#[0-9A-F]{6}$/i, "Invalid color")
     .optional(),
   reference_url: z
     .string()
-    .url('Invalid URL format')
+    .url("Invalid URL format")
     .optional()
-    .or(z.literal('')),
+    .or(z.literal("")),
   category: z.enum(
     [
-      'tree',
-      'fruit_tree',
-      'shrub',
-      'flower',
-      'climber',
-      'vegetable',
-      'grass',
-      'aquatic',
-      'other',
+      "tree",
+      "fruit_tree",
+      "shrub",
+      "flower",
+      "climber",
+      "vegetable",
+      "grass",
+      "aquatic",
+      "other",
     ],
     {
-      message: 'Category is required',
+      message: "Category is required",
     },
   ),
   is_public: z.boolean().optional(),
-})
+});
 
-export type EditVarietySchema = z.output<typeof schema>
+export type EditVarietySchema = z.output<typeof schema>;
 
 const state = reactive<Partial<EditVarietySchema>>({
   name: props.variety.name,
-  scientific_name: props.variety.scientific_name || '',
-  harvest_period: props.variety.harvest_period || '',
-  main_color: props.variety.main_color || '#009689',
-  reference_url: props.variety.reference_url || '',
+  scientific_name: props.variety.scientific_name || "",
+  harvest_period: props.variety.harvest_period || "",
+  main_color: props.variety.main_color || "#009689",
+  reference_url: props.variety.reference_url || "",
   category: props.variety.category,
   is_public: props.variety.is_public,
-})
+});
 
-const chip = computed(() => ({ backgroundColor: state.main_color }))
+const chip = computed(() => ({ backgroundColor: state.main_color }));
 
-const loading = ref(false)
-const deleting = ref(false)
+const loading = ref(false);
+const deleting = ref(false);
 
-const form = ref()
+const form = ref();
 
 watch(
   () => props.variety,
   (newVariety) => {
     Object.assign(state, {
       name: newVariety.name,
-      scientific_name: newVariety.scientific_name || '',
-      harvest_period: newVariety.harvest_period || '',
-      main_color: newVariety.main_color || '#22c55e',
-      reference_url: newVariety.reference_url || '',
+      scientific_name: newVariety.scientific_name || "",
+      harvest_period: newVariety.harvest_period || "",
+      main_color: newVariety.main_color || "#22c55e",
+      reference_url: newVariety.reference_url || "",
       category: newVariety.category,
       is_public: newVariety.is_public,
-    })
+    });
   },
   { deep: true },
-)
+);
 
 async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
-  loading.value = true
+  loading.value = true;
 
   try {
-    const validatedData = event.data
+    const validatedData = event.data;
 
     const varietyData = await updateVariety(props.variety.id, {
       name: validatedData.name,
@@ -152,63 +150,59 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
       reference_url: validatedData.reference_url || undefined,
       category: validatedData.category,
       is_public: validatedData.is_public,
-    })
+    });
 
-    emit('varietyUpdated', varietyData)
-    open.value = false
-
-    toast.add({
-      title: 'Variety Updated',
-      description: 'The variety has been successfully updated',
-      color: 'success',
-    })
-  }
-  catch (error) {
-    console.error('Error updating variety:', error)
+    emit("varietyUpdated", varietyData);
+    open.value = false;
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while updating the variety',
-      color: 'error',
-    })
-  }
-  finally {
-    loading.value = false
+      title: "Variety Updated",
+      description: "The variety has been successfully updated",
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Error updating variety:", error);
+
+    toast.add({
+      title: "Error",
+      description: "An error occurred while updating the variety",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
   }
 }
 
 async function onDelete() {
-  deleting.value = true
+  deleting.value = true;
 
   try {
-    await deleteVariety(props.variety.id)
+    await deleteVariety(props.variety.id);
 
-    emit('varietyDeleted', props.variety.id)
-    open.value = false
-    showDeleteConfirmation.value = false
-
-    toast.add({
-      title: 'Variety Deleted',
-      description: 'The variety has been successfully deleted',
-      color: 'success',
-    })
-  }
-  catch (error) {
-    console.error('Error deleting variety:', error)
+    emit("varietyDeleted", props.variety.id);
+    open.value = false;
+    showDeleteConfirmation.value = false;
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while deleting the variety',
-      color: 'error',
-    })
-  }
-  finally {
-    deleting.value = false
+      title: "Variety Deleted",
+      description: "The variety has been successfully deleted",
+      color: "success",
+    });
+  } catch (error) {
+    console.error("Error deleting variety:", error);
+
+    toast.add({
+      title: "Error",
+      description: "An error occurred while deleting the variety",
+      color: "error",
+    });
+  } finally {
+    deleting.value = false;
   }
 }
 
 function confirmDelete() {
-  showDeleteConfirmation.value = true
+  showDeleteConfirmation.value = true;
 }
 </script>
 
@@ -243,22 +237,14 @@ function confirmDelete() {
         class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="Variety Name"
-          name="name"
-          required
-        >
+        <UFormField label="Variety Name" name="name" required>
           <UInput
             v-model="state.name"
             class="w-full"
             placeholder="Enter variety name"
           />
         </UFormField>
-        <UFormField
-          label="Category"
-          name="category"
-          required
-        >
+        <UFormField label="Category" name="category" required>
           <USelect
             v-model="state.category"
             :items="VARIETY_CATEGORIES_FOR_SELECT.slice()"
@@ -267,10 +253,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="Scientific Name"
-          name="scientific_name"
-        >
+        <UFormField label="Scientific Name" name="scientific_name">
           <UInput
             v-model="state.scientific_name"
             class="w-full"
@@ -278,10 +261,7 @@ function confirmDelete() {
           />
         </UFormField>
 
-        <UFormField
-          label="Harvest Period"
-          name="harvest_period"
-        >
+        <UFormField label="Harvest Period" name="harvest_period">
           <UInput
             v-model="state.harvest_period"
             class="w-full"
@@ -309,31 +289,17 @@ function confirmDelete() {
           :ui="{ container: 'grid grid-cols-2 gap-4' }"
         >
           <UPopover>
-            <UButton
-              label="Choose color"
-              class="w-full"
-              variant="outline"
-            >
+            <UButton label="Choose color" class="w-full" variant="outline">
               <template #leading>
-                <span
-                  :style="chip"
-                  class="size-3 rounded-full"
-                />
+                <span :style="chip" class="size-3 rounded-full" />
               </template>
             </UButton>
 
             <template #content>
-              <UColorPicker
-                v-model="state.main_color"
-                class="p-2"
-              />
+              <UColorPicker v-model="state.main_color" class="p-2" />
             </template>
           </UPopover>
-          <UInput
-            v-model="state.main_color"
-            type="string"
-            class="w-full"
-          />
+          <UInput v-model="state.main_color" type="string" class="w-full" />
         </UFormField>
 
         <UFormField
@@ -347,7 +313,7 @@ function confirmDelete() {
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-between w-full">
+      <div class="flex w-full justify-between">
         <div v-if="!showDeleteConfirmation">
           <UButton
             color="error"
@@ -360,10 +326,7 @@ function confirmDelete() {
           </UButton>
         </div>
 
-        <div
-          v-else
-          class="flex gap-2"
-        >
+        <div v-else class="flex gap-2">
           <UButton
             variant="ghost"
             size="sm"

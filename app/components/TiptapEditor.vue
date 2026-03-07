@@ -1,9 +1,6 @@
 <template>
   <div class="space-y-2">
-    <div
-      v-if="editor"
-      class="flex flex-wrap gap-1 text-xs"
-    >
+    <div v-if="editor" class="flex flex-wrap gap-1 text-xs">
       <UButton
         size="xs"
         variant="soft"
@@ -88,38 +85,30 @@
       >
         ↻
       </UButton>
-      <UButton
-        size="xs"
-        variant="soft"
-        color="neutral"
-        @click="clearContent"
-      >
+      <UButton size="xs" variant="soft" color="neutral" @click="clearContent">
         Clear
       </UButton>
     </div>
 
     <div
       :class="[
-        'rounded-md border-accented ring focus-within:ring-2 ring-accented p-2 focus-within:ring-primary',
-        disabled && 'opacity-60 pointer-events-none',
+        'border-accented ring-accented focus-within:ring-primary rounded-md p-2 ring focus-within:ring-2',
+        disabled && 'pointer-events-none opacity-60',
       ]"
     >
       <TiptapEditorContent
         :editor="editor"
-        class="prose max-w-none min-h-24 grid *:outline-none"
+        class="prose grid min-h-24 max-w-none *:outline-none"
       />
       <div
         v-if="placeholder && isEmpty"
-        class="text-gray-400 absolute pointer-events-none -mt-6 ml-1 text-sm"
+        class="pointer-events-none absolute -mt-6 ml-1 text-sm text-gray-400"
       >
         {{ placeholder }}
       </div>
     </div>
 
-    <div
-      v-if="maxLength"
-      class="text-right text-xs text-gray-500"
-    >
+    <div v-if="maxLength" class="text-right text-xs text-gray-500">
       {{ currentLength }} / {{ maxLength }}
     </div>
   </div>
@@ -127,88 +116,88 @@
 
 <script setup lang="ts">
 interface Props {
-  modelValue?: string | null
-  maxLength?: number
-  placeholder?: string
-  disabled?: boolean
+  modelValue?: string | null;
+  maxLength?: number;
+  placeholder?: string;
+  disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
+  modelValue: "",
   maxLength: undefined,
-  placeholder: '',
+  placeholder: "",
   disabled: false,
-})
+});
 
-const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
+const emit = defineEmits<{ (e: "update:modelValue", value: string): void }>();
 
 const editor = useEditor({
-  content: props.modelValue || '',
+  content: props.modelValue || "",
   extensions: [TiptapStarterKit],
   onUpdate({ editor }) {
-    const html = editor.getHTML()
+    const html = editor.getHTML();
     if (props.maxLength) {
       // Count plain text length for display; zod form will enforce as well
       if (getPlainText(html).length > props.maxLength) {
         // If exceeded, revert last change
-        editor.commands.undo()
-        return
+        editor.commands.undo();
+        return;
       }
     }
-    emit('update:modelValue', sanitizeEmpty(html))
+    emit("update:modelValue", sanitizeEmpty(html));
   },
-})
+});
 
 // Helpers
 function getPlainText(html: string) {
-  if (typeof window === 'undefined') return html
-  const el = document.createElement('div')
-  el.innerHTML = html
-  return el.textContent || ''
+  if (typeof window === "undefined") return html;
+  const el = document.createElement("div");
+  el.innerHTML = html;
+  return el.textContent || "";
 }
 
 function sanitizeEmpty(html: string) {
   // Normalize empty states to '' (tipTap empty doc is <p></p>)
-  if (html === '<p></p>' || html === '<p></p>\n') return ''
-  return html
+  if (html === "<p></p>" || html === "<p></p>\n") return "";
+  return html;
 }
 
 const currentLength = computed(
   () =>
-    getPlainText(editor?.value?.getHTML?.() || props.modelValue || '').length,
-)
-const isEmpty = computed(() => currentLength.value === 0)
+    getPlainText(editor?.value?.getHTML?.() || props.modelValue || "").length,
+);
+const isEmpty = computed(() => currentLength.value === 0);
 
 // Watch external model changes
 watch(
   () => props.modelValue,
   (val) => {
-    const html = val || ''
+    const html = val || "";
     if (editor.value && html !== editor.value.getHTML()) {
-      editor.value.commands.setContent(html, false)
+      editor.value.commands.setContent(html, false);
     }
   },
-)
+);
 
 function cmd(action: string) {
   // Generic command executor for simple mark toggles
   // @ts-expect-error dynamic call
-  editor.value?.chain().focus()[action]().run()
+  editor.value?.chain().focus()[action]().run();
 }
 
 function can(action: string) {
   // @ts-expect-error dynamic call
-  return !!editor.value?.can().chain().focus()[action]().run()
+  return !!editor.value?.can().chain().focus()[action]().run();
 }
 
 function clearContent() {
-  editor.value?.commands.clearContent(true)
-  emit('update:modelValue', '')
+  editor.value?.commands.clearContent(true);
+  emit("update:modelValue", "");
 }
 
 onBeforeUnmount(() => {
-  editor.value?.destroy()
-})
+  editor.value?.destroy();
+});
 </script>
 
 <!-- <style scoped>

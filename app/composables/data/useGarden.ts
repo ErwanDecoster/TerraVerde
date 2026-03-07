@@ -1,89 +1,94 @@
-import type { GardenData, GardenFormData, GardenUpdateFormData } from '~/types/garden'
-import { useTeam } from '~/composables/data/useTeam'
+import { useTeam } from "~/composables/data/useTeam";
+import type {
+  GardenData,
+  GardenFormData,
+  GardenUpdateFormData,
+} from "~/types/garden";
 
 export const useGarden = () => {
-  const { $supabase } = useNuxtApp()
-  const config = useRuntimeConfig()
+  const { $supabase } = useNuxtApp();
+  const config = useRuntimeConfig();
 
   /**
    * Upload an image to Supabase storage
    */
   const uploadGardenImage = async (file: File, fileName: string) => {
     const { data, error } = await $supabase.storage
-      .from('maps')
-      .upload(fileName, file)
+      .from("maps")
+      .upload(fileName, file);
     if (error) {
-      throw new Error(`Failed to upload image: ${error.message}`)
+      throw new Error(`Failed to upload image: ${error.message}`);
     }
-    return data
-  }
+    return data;
+  };
 
   /**
    * Remove an image from Supabase storage
    */
   const removeGardenImage = async (path: string) => {
-    const { error } = await $supabase.storage
-      .from('maps')
-      .remove([path])
+    const { error } = await $supabase.storage.from("maps").remove([path]);
 
     if (error) {
-      console.warn('Failed to remove image:', error)
+      console.warn("Failed to remove image:", error);
     }
-  }
+  };
 
   /**
    * Get the public URL for an image
    */
   const getImagePublicUrl = (imagePath: string) => {
-    const projectId = config.public.supabaseProjectId
-    const bucket = 'maps'
-    return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${imagePath}`
-  }
+    const projectId = config.public.supabaseProjectId;
+    const bucket = "maps";
+    return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${imagePath}`;
+  };
 
   /**
    * Create a new garden in the database
    */
   const createGarden = async (gardenData: {
-    id: string
-    name: string
-    background_image_url: string
-    background_image_rotation: number
-    background_image_offset_x: number
-    background_image_offset_y: number
-    pixels_per_meters: number
-    is_public: boolean
-    variety_filter_mode: string
-    description?: string | null
-    zip_code?: string | null
-    country?: string | null
-    city?: string | null
-    street_address?: string | null
+    id: string;
+    name: string;
+    background_image_url: string;
+    background_image_rotation: number;
+    background_image_offset_x: number;
+    background_image_offset_y: number;
+    pixels_per_meters: number;
+    is_public: boolean;
+    variety_filter_mode: string;
+    description?: string | null;
+    zip_code?: string | null;
+    country?: string | null;
+    city?: string | null;
+    street_address?: string | null;
   }) => {
     const { data, error } = await $supabase
-      .from('gardens')
+      .from("gardens")
       .insert(gardenData)
       .select()
-      .single()
+      .single();
 
     if (error) {
-      throw new Error(`Failed to create garden: ${error.message}`)
+      throw new Error(`Failed to create garden: ${error.message}`);
     }
 
-    return data
-  }
+    return data;
+  };
 
   /**
    * Add a new garden with image upload and database insertion
    */
   const addGarden = async (formData: GardenFormData): Promise<GardenData> => {
-    const uuid = crypto.randomUUID()
-    let uploadedImagePath: string | null = null
-    const { createTeam, addTeamMember } = useTeam()
-    const { user } = useAuth()
+    const uuid = crypto.randomUUID();
+    let uploadedImagePath: string | null = null;
+    const { createTeam, addTeamMember } = useTeam();
+    const { user } = useAuth();
 
     try {
-      const uploadResult = await uploadGardenImage(formData.backgroundImage, uuid)
-      uploadedImagePath = uploadResult.path
+      const uploadResult = await uploadGardenImage(
+        formData.backgroundImage,
+        uuid,
+      );
+      uploadedImagePath = uploadResult.path;
 
       const gardenDbData = {
         id: uuid,
@@ -100,42 +105,45 @@ export const useGarden = () => {
         country: formData.country ?? null,
         city: formData.city ?? null,
         street_address: formData.street_address ?? null,
-      }
+      };
 
-      const createdGarden = await createGarden(gardenDbData)
+      const createdGarden = await createGarden(gardenDbData);
 
       // Create a team for this garden and add the current user as a member
-      if (!user.value) throw new Error('User not authenticated')
-      const team = await createTeam(createdGarden.id, `${createdGarden.name} Team`)
-      console.log('team', team)
+      if (!user.value) throw new Error("User not authenticated");
+      const team = await createTeam(
+        createdGarden.id,
+        `${createdGarden.name} Team`,
+      );
+      console.log("team", team);
 
-      await addTeamMember(team.id, user.value.id, 'owner')
+      await addTeamMember(team.id, user.value.id, "owner");
 
       return {
         ...createdGarden,
         background_image_url: getImagePublicUrl(uploadResult.path),
-      }
-    }
-    catch (error) {
+      };
+    } catch (error) {
       if (uploadedImagePath) {
-        await removeGardenImage(uploadedImagePath)
+        await removeGardenImage(uploadedImagePath);
       }
-      throw error
+      throw error;
     }
-  }
+  };
 
   /**
    * Fetch user's own gardens
    */
   const fetchMyGardens = async (): Promise<GardenData[]> => {
-    const { user } = useAuth()
+    const { user } = useAuth();
     if (!user.value) {
-      throw new Error('User not authenticated')
+      throw new Error("User not authenticated");
     }
     // Fetch gardens where the user is a member of a team
     const { data, error } = await $supabase
-      .from('teams_members')
-      .select(`
+      .from("teams_members")
+      .select(
+        `
         team_id, 
         teams(
           id, 
@@ -151,40 +159,42 @@ export const useGarden = () => {
             )
           )
         )
-      `)
-      .eq('user_id', user.value.id)
+      `,
+      )
+      .eq("user_id", user.value.id);
 
     if (error) {
-      throw new Error(`Failed to fetch gardens: ${error.message}`)
+      throw new Error(`Failed to fetch gardens: ${error.message}`);
     }
 
     // Flatten and filter out nulls
     type TeamsMembersRow = {
       teams?: {
-        gardens?: GardenData
-      }
-    }
-    const gardens: GardenData[] = (data as TeamsMembersRow[] || [])
-      .map(row => row.teams?.gardens)
+        gardens?: GardenData;
+      };
+    };
+    const gardens: GardenData[] = ((data as TeamsMembersRow[]) || [])
+      .map((row) => row.teams?.gardens)
       .filter((g): g is GardenData => !!g)
-      .map(g => ({
+      .map((g) => ({
         ...g,
         background_image_url: getImagePublicUrl(g.background_image_url),
-      }))
+      }));
 
     // Optionally, sort by created_at descending
-    gardens.sort((a, b) => (b.created_at > a.created_at ? 1 : -1))
+    gardens.sort((a, b) => (b.created_at > a.created_at ? 1 : -1));
 
-    return gardens
-  }
+    return gardens;
+  };
 
   /**
    * Fetch all public gardens from all users
    */
   const fetchPublicGardens = async (): Promise<GardenData[]> => {
     const { data, error } = await $supabase
-      .from('gardens')
-      .select(`
+      .from("gardens")
+      .select(
+        `
       *,
       teams!inner (
         teams_members!inner (
@@ -193,28 +203,32 @@ export const useGarden = () => {
           )
         )
       )
-    `)
-      .eq('is_public', true)
-      .eq('teams.teams_members.role', 'owner')
-      .order('created_at', { ascending: false })
+    `,
+      )
+      .eq("is_public", true)
+      .eq("teams.teams_members.role", "owner")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to fetch public gardens: ${error.message}`)
+      throw new Error(`Failed to fetch public gardens: ${error.message}`);
     }
 
-    return data.map(garden => ({
+    return data.map((garden) => ({
       ...garden,
       background_image_url: getImagePublicUrl(garden.background_image_url),
-    }))
-  }
+    }));
+  };
 
   /**
    * Fetch a single garden by ID
    */
-  const fetchGardenById = async (gardenId: string): Promise<GardenData | null> => {
+  const fetchGardenById = async (
+    gardenId: string,
+  ): Promise<GardenData | null> => {
     const { data, error } = await $supabase
-      .from('gardens')
-      .select(`
+      .from("gardens")
+      .select(
+        `
         *,
         teams!inner (
           teams_members!inner (
@@ -223,23 +237,24 @@ export const useGarden = () => {
             )
           )
         )
-      `)
-      .eq('id', gardenId)
-      .eq('teams.teams_members.role', 'owner')
-      .single()
+      `,
+      )
+      .eq("id", gardenId)
+      .eq("teams.teams_members.role", "owner")
+      .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        return null
+      if (error.code === "PGRST116") {
+        return null;
       }
-      throw new Error(`Failed to fetch garden: ${error.message}`)
+      throw new Error(`Failed to fetch garden: ${error.message}`);
     }
 
     return {
       ...data,
       background_image_url: getImagePublicUrl(data.background_image_url),
-    }
-  }
+    };
+  };
 
   /**
    * Update an existing garden
@@ -248,43 +263,45 @@ export const useGarden = () => {
     gardenId: string,
     ratio: number,
   ) => {
-    if (!Number.isFinite(ratio) || ratio === 1) return
+    if (!Number.isFinite(ratio) || ratio === 1) return;
 
     const { data, error } = await $supabase
-      .from('plants')
-      .select('id, x_position, y_position')
-      .eq('garden_id', gardenId)
+      .from("plants")
+      .select("id, x_position, y_position")
+      .eq("garden_id", gardenId);
 
     if (error) {
-      throw new Error(`Failed to fetch plant positions: ${error.message}`)
+      throw new Error(`Failed to fetch plant positions: ${error.message}`);
     }
 
     type PlantPositionRow = {
-      id: string
-      x_position: number | null
-      y_position: number | null
-    }
+      id: string;
+      x_position: number | null;
+      y_position: number | null;
+    };
 
-    const rows = (data || []) as PlantPositionRow[]
+    const rows = (data || []) as PlantPositionRow[];
 
     await Promise.all(
       rows.map(async (plant) => {
-        if (plant.x_position === null || plant.y_position === null) return
+        if (plant.x_position === null || plant.y_position === null) return;
 
         const { error: updateError } = await $supabase
-          .from('plants')
+          .from("plants")
           .update({
             x_position: plant.x_position * ratio,
             y_position: plant.y_position * ratio,
           })
-          .eq('id', plant.id)
+          .eq("id", plant.id);
 
         if (updateError) {
-          throw new Error(`Failed to scale plant ${plant.id}: ${updateError.message}`)
+          throw new Error(
+            `Failed to scale plant ${plant.id}: ${updateError.message}`,
+          );
         }
       }),
-    )
-  }
+    );
+  };
 
   const updateGarden = async (
     gardenId: string,
@@ -292,23 +309,28 @@ export const useGarden = () => {
     currentImagePath?: string,
     previousPixelsPerMeters?: number,
   ): Promise<GardenData> => {
-    let uploadedImagePath: string | null = null
-    let shouldCleanupOldImage = false
+    let uploadedImagePath: string | null = null;
+    let shouldCleanupOldImage = false;
 
     try {
-      const hasNewImage = !!formData.backgroundImage
-      let imagePath = currentImagePath || ''
+      const hasNewImage = !!formData.backgroundImage;
+      let imagePath = currentImagePath || "";
 
       if (hasNewImage && formData.backgroundImage) {
-        const uploadResult = await uploadGardenImage(formData.backgroundImage, `${gardenId}_updated_${Date.now()}`)
-        uploadedImagePath = uploadResult.path
-        imagePath = uploadResult.path
-        shouldCleanupOldImage = true
+        const uploadResult = await uploadGardenImage(
+          formData.backgroundImage,
+          `${gardenId}_updated_${Date.now()}`,
+        );
+        uploadedImagePath = uploadResult.path;
+        imagePath = uploadResult.path;
+        shouldCleanupOldImage = true;
       }
 
-      const oldPixelsPerMeters = previousPixelsPerMeters ?? formData.PixelsPerMeters
-      const newPixelsPerMeters = formData.PixelsPerMeters
-      const scaleRatio = oldPixelsPerMeters > 0 ? newPixelsPerMeters / oldPixelsPerMeters : 1
+      const oldPixelsPerMeters =
+        previousPixelsPerMeters ?? formData.PixelsPerMeters;
+      const newPixelsPerMeters = formData.PixelsPerMeters;
+      const scaleRatio =
+        oldPixelsPerMeters > 0 ? newPixelsPerMeters / oldPixelsPerMeters : 1;
 
       const gardenDbData = {
         name: formData.name,
@@ -324,60 +346,63 @@ export const useGarden = () => {
         city: formData.city ?? null,
         street_address: formData.street_address ?? null,
         ...(hasNewImage && { background_image_url: imagePath }),
-      }
+      };
 
       const { data, error } = await $supabase
-        .from('gardens')
+        .from("gardens")
         .update(gardenDbData)
-        .eq('id', gardenId)
+        .eq("id", gardenId)
         .select()
-        .single()
+        .single();
 
       if (error) {
         if (uploadedImagePath) {
-          await removeGardenImage(uploadedImagePath)
+          await removeGardenImage(uploadedImagePath);
         }
-        throw new Error(`Failed to update garden: ${error.message}`)
+        throw new Error(`Failed to update garden: ${error.message}`);
       }
 
       if (scaleRatio !== 1) {
-        await scalePlantPositionsForGarden(gardenId, scaleRatio)
+        await scalePlantPositionsForGarden(gardenId, scaleRatio);
       }
 
-      if (shouldCleanupOldImage && currentImagePath && currentImagePath !== imagePath) {
-        await removeGardenImage(currentImagePath)
+      if (
+        shouldCleanupOldImage &&
+        currentImagePath &&
+        currentImagePath !== imagePath
+      ) {
+        await removeGardenImage(currentImagePath);
       }
 
       return {
         ...data,
         background_image_url: getImagePublicUrl(data.background_image_url),
-      }
-    }
-    catch (error) {
+      };
+    } catch (error) {
       if (uploadedImagePath) {
-        await removeGardenImage(uploadedImagePath)
+        await removeGardenImage(uploadedImagePath);
       }
-      throw error
+      throw error;
     }
-  }
+  };
 
   /**
    * Delete a garden and its associated image
    */
   const deleteGarden = async (gardenId: string, imagePath?: string) => {
     const { error } = await $supabase
-      .from('gardens')
+      .from("gardens")
       .delete()
-      .eq('id', gardenId)
+      .eq("id", gardenId);
 
     if (error) {
-      throw new Error(`Failed to delete garden: ${error.message}`)
+      throw new Error(`Failed to delete garden: ${error.message}`);
     }
 
     if (imagePath) {
-      await removeGardenImage(imagePath)
+      await removeGardenImage(imagePath);
     }
-  }
+  };
 
   return {
     addGarden,
@@ -389,5 +414,5 @@ export const useGarden = () => {
     uploadGardenImage,
     removeGardenImage,
     getImagePublicUrl,
-  }
-}
+  };
+};

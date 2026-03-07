@@ -1,0 +1,16 @@
+# TerraVerde - TODO List
+
+## 🚀 Fonctionnalités prioritaires
+- [ ] **Gestion des historiques de plante** : Permettre d'ajouter des événements comme :
+  - Taille d'une plante
+  - Arrosage 
+  - Ajout de photos
+  - Autres événements personnalisés
+- Ajout d'images à un jardin
+
+## ✨ Fonctionnalités bonus
+- [ ] **Création de groupes de plantes** : Les groupes permettront d'ajouter des photos à plusieurs plantes simultanément (ex: taille d'une haie où la photo est liée à plusieurs plantes)
+- [ ] **Amélioration UX** : Ajouter des explications indiquant qu'on peut :
+  - Cliquer sur une plante pour accéder à ses informations
+  - Cliquer sur le fond de la carte pour ajouter une nouvelle plante
+- [ ]  ajouter la possibilité d'avoir une plante/variter en privé

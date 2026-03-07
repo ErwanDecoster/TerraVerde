@@ -1,7 +1,7 @@
 <template>
   <div class="absolute top-2 left-2 z-10 grid gap-2">
     <div
-      class="rounded-xl p-2 grid gap-1 bg-default/75 backdrop-blur border border-default"
+      class="bg-default/75 border-default grid gap-1 rounded-xl border p-2 backdrop-blur"
     >
       <UButton variant="subtle" @click="navigateTo(`/gardens`)">
         Back to Gardens
@@ -9,34 +9,34 @@
     </div>
 
     <div
-      class="rounded-xl p-2 grid gap-2 bg-default/75 backdrop-blur border border-default"
+      class="bg-default/75 border-default grid gap-2 rounded-xl border p-2 backdrop-blur"
     >
       <h1 class="text-xl font-semibold">
         {{ garden?.name }}
       </h1>
       <div
         v-if="garden?.is_public"
-        class="flex items-center gap-2 text-sm text-muted"
+        class="text-muted flex items-center gap-2 text-sm"
       >
         <UIcon
           name="i-heroicons-globe-alt-20-solid"
-          class="w-4 h-4 text-blue-500"
+          class="h-4 w-4 text-blue-500"
         />
         <span>Public Garden</span>
       </div>
       <USeparator />
       <div class="grid grid-cols-2 gap-2">
-        <div class="flex items-center gap-2 justify-center">
+        <div class="flex items-center justify-center gap-2">
           <UIcon
             name="i-heroicons-sparkles-20-solid"
-            class="w-4 h-4 text-green-500"
+            class="h-4 w-4 text-green-500"
           />
           <span class="text-sm">{{ plantsCount }} plants</span>
         </div>
-        <div class="flex items-center gap-2 justify-center">
+        <div class="flex items-center justify-center gap-2">
           <UIcon
             name="i-heroicons-squares-2x2-20-solid"
-            class="w-4 h-4 text-blue-500"
+            class="h-4 w-4 text-blue-500"
           />
           <span class="text-sm">{{ varietiesCount }} varieties</span>
         </div>

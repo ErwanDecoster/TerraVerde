@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from "@nuxt/ui";
-import type { GardenData } from "~/types/garden";
 import { z } from "zod";
 import { useGarden } from "~/composables/data/useGarden";
+import type { GardenData } from "~/types/garden";
 import BackgroundImageTransformModal from "./BackgroundImageTransformModal.vue";
 
 interface Emits {
@@ -291,7 +291,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
             >
               Open Map Transform Settings
             </UButton>
-            <p class="text-xs text-muted">
+            <p class="text-muted text-xs">
               Scale: {{ state.PixelsPerMeters }} px/m, Rotation:
               {{ state.backgroundImageRotation }} deg, X:
               {{ state.backgroundImageOffsetX }} px, Y:
@@ -316,7 +316,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-end gap-0.5 w-full">
+      <div class="flex w-full justify-end gap-0.5">
         <UButton variant="ghost" :disabled="loading" @click="close">
           Cancel
         </UButton>

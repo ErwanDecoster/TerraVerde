@@ -112,19 +112,19 @@ onBeforeUnmount(() => {
       />
 
       <div
-        class="relative w-full max-w-md rounded-xl border border-default bg-default shadow-2xl"
+        class="border-default bg-default relative w-full max-w-md rounded-xl border shadow-2xl"
         :style="{
           transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)`,
         }"
       >
         <div
-          class="flex items-center justify-between px-4 py-3 border-b border-default cursor-move select-none"
+          class="border-default flex cursor-move items-center justify-between border-b px-4 py-3 select-none"
           @mousedown="startDrag"
           @touchstart="startDrag"
         >
           <div>
             <h3 class="text-sm font-semibold">Map Transform Settings</h3>
-            <p class="text-xs text-muted">
+            <p class="text-muted text-xs">
               Adjust map position, rotation and scale.
             </p>
           </div>
@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div class="p-4 grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 p-4">
           <UFormField
             label="Scale (Pixels per Meters)"
             description="Plant marker size updates with this value"
@@ -216,7 +216,7 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div class="px-4 py-3 border-t border-default flex justify-end">
+        <div class="border-default flex justify-end border-t px-4 py-3">
           <UButton variant="ghost" @click="openModel = false"> Close </UButton>
         </div>
       </div>

@@ -1,94 +1,88 @@
 <script lang="ts" setup>
-import type { ProfileData } from '~/types/profile'
-import { useProfile } from '~/composables/data/useProfile'
-import type { SettingsData } from '~/types/settings'
-import { useSettings } from '~/composables/data/useSettings'
+import { useProfile } from "~/composables/data/useProfile";
+import { useSettings } from "~/composables/data/useSettings";
+import type { ProfileData } from "~/types/profile";
+import type { SettingsData } from "~/types/settings";
 
-const { user, logout, loading } = useAuth()
-const { fetchMyProfile } = useProfile()
-const { fetchMySettings, updateSettings } = useSettings()
-const currentProfile = ref<ProfileData | null>(null)
-const currentSettings = ref<SettingsData | null>(null)
-const colorMode = useColorMode()
-let lastSavedTheme: string | null = null
+const { user, logout, loading } = useAuth();
+const { fetchMyProfile } = useProfile();
+const { fetchMySettings, updateSettings } = useSettings();
+const currentProfile = ref<ProfileData | null>(null);
+const currentSettings = ref<SettingsData | null>(null);
+const colorMode = useColorMode();
+let lastSavedTheme: string | null = null;
 
 const navigationItems = computed(() => [
   {
-    label: 'My Gardens',
-    to: '/gardens',
-    icon: 'i-heroicons-home',
+    label: "My Gardens",
+    to: "/gardens",
+    icon: "i-heroicons-home",
   },
   {
-    label: 'Public Gardens',
-    to: '/public-gardens',
-    icon: 'i-heroicons-globe-alt',
+    label: "Public Gardens",
+    to: "/public-gardens",
+    icon: "i-heroicons-globe-alt",
   },
-])
+]);
 
 // Load user profile when user is available
 watch(
   user,
   async (newUser) => {
     if (!newUser) {
-      currentProfile.value = null
-      currentSettings.value = null
-      lastSavedTheme = null
-      return
+      currentProfile.value = null;
+      currentSettings.value = null;
+      lastSavedTheme = null;
+      return;
     }
     try {
-      currentProfile.value = await fetchMyProfile()
-    }
-    catch (err) {
-      console.log('No profile found for user', err)
-      currentProfile.value = null
+      currentProfile.value = await fetchMyProfile();
+    } catch (err) {
+      console.log("No profile found for user", err);
+      currentProfile.value = null;
     }
     try {
-      const s = await fetchMySettings()
-      currentSettings.value = s
+      const s = await fetchMySettings();
+      currentSettings.value = s;
       if (
-        s?.default_color_theme
-        && ['system', 'light', 'dark'].includes(s.default_color_theme)
+        s?.default_color_theme &&
+        ["system", "light", "dark"].includes(s.default_color_theme)
       ) {
-        colorMode.preference
-          = s.default_color_theme as typeof colorMode.preference
-        lastSavedTheme = s.default_color_theme
+        colorMode.preference =
+          s.default_color_theme as typeof colorMode.preference;
+        lastSavedTheme = s.default_color_theme;
       }
-    }
-    catch (e) {
-      console.warn('Failed to load settings', e)
+    } catch (e) {
+      console.warn("Failed to load settings", e);
     }
   },
   { immediate: true },
-)
+);
 
 watch(
   () => colorMode.preference,
   async (pref) => {
-    if (!user.value || !currentSettings.value) return
-    if (pref === lastSavedTheme) return
-    lastSavedTheme = pref
+    if (!user.value || !currentSettings.value) return;
+    if (pref === lastSavedTheme) return;
+    lastSavedTheme = pref;
     try {
       currentSettings.value = await updateSettings({
         default_color_theme: pref,
-      })
-    }
-    catch (e) {
-      console.warn('Failed to persist theme preference', e)
+      });
+    } catch (e) {
+      console.warn("Failed to persist theme preference", e);
     }
   },
-)
+);
 
-const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
+const avatarUrl = computed(() => currentProfile.value?.avatar_url || "");
 </script>
 
 <template>
   <UApp>
     <UHeader mode="slideover">
       <template #title>
-        <NuxtLink
-          to="/"
-          class="hover:opacity-80"
-        >
+        <NuxtLink to="/" class="hover:opacity-80">
           <BrandLogo />
         </NuxtLink>
       </template>
@@ -102,15 +96,10 @@ const avatarUrl = computed(() => currentProfile.value?.avatar_url || '')
       <template #right>
         <div class="flex items-center gap-3">
           <template v-if="loading && !user">
-            <UButton to="/register">
-              Get Started
-            </UButton>
+            <UButton to="/register"> Get Started </UButton>
           </template>
           <template v-else>
-            <div
-              v-if="user"
-              class="flex items-center gap-3"
-            >
+            <div v-if="user" class="flex items-center gap-3">
               <UDropdownMenu
                 :items="[
                   [

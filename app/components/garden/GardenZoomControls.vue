@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute top-2 right-2 flex rounded-xl z-10 p-2 items-center gap-2 bg-default/75 backdrop-blur border border-default"
+    class="bg-default/75 border-default absolute top-2 right-2 z-10 flex items-center gap-2 rounded-xl border p-2 backdrop-blur"
   >
     <UButton
       icon="i-heroicons-minus-20-solid"
@@ -8,7 +8,7 @@
       variant="outline"
       @click="zoomOut"
     />
-    <span class="text-sm min-w-12 text-center">
+    <span class="min-w-12 text-center text-sm">
       {{ Math.round(stageConfig.scaleX * 100) }}%
     </span>
     <UButton
@@ -30,16 +30,16 @@
 <script setup lang="ts">
 interface Props {
   stageConfig: {
-    scaleX: number
-    scaleY: number
-    width: number
-    height: number
-    draggable: boolean
-  }
-  zoomIn: () => void
-  zoomOut: () => void
-  resetZoom: () => void
+    scaleX: number;
+    scaleY: number;
+    width: number;
+    height: number;
+    draggable: boolean;
+  };
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetZoom: () => void;
 }
 
-defineProps<Props>()
+defineProps<Props>();
 </script>

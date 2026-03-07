@@ -1,11 +1,12 @@
-import tailwindcss from '@tailwindcss/vite'
+import tailwindcss from "@tailwindcss/vite";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui', 'nuxt-tiptap-editor'],
+  modules: ["@nuxt/eslint", "@nuxt/ui", "nuxt-tiptap-editor"],
   devtools: { enabled: true },
   app: {
     head: {
-      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
       script: [
         {
           innerHTML: `
@@ -34,21 +35,19 @@ export default defineNuxtConfig({
       ],
     },
   },
-  css: ['~/assets/css/main.css'],
+  css: ["~/assets/css/main.css"],
   runtimeConfig: {
     public: {
-      supabaseUrl: process.env.NUXT_SUPABASE_URL || '',
-      supabaseProjectId: process.env.NUXT_SUPABASE_PROJECT_ID || '',
-      supabaseAnonKey: process.env.NUXT_SUPABASE_ANON_KEY || '',
+      supabaseUrl: process.env.NUXT_SUPABASE_URL || "",
+      supabaseProjectId: process.env.NUXT_SUPABASE_PROJECT_ID || "",
+      supabaseAnonKey: process.env.NUXT_SUPABASE_ANON_KEY || "",
     },
   },
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: "2025-07-15",
   vite: {
-    plugins: [
-      tailwindcss(),
-    ],
+    plugins: [tailwindcss()],
   },
   tiptap: {
-    prefix: 'Tiptap', // prefix for Tiptap imports, composables not included
+    prefix: "Tiptap", // prefix for Tiptap imports, composables not included
   },
-})
+});

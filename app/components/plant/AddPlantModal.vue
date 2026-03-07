@@ -1,146 +1,144 @@
 <script lang="ts" setup>
-import type { FormSubmitEvent } from '@nuxt/ui'
-import type { PlantData, PlantStatus } from '~/types/plant'
-import type { VarietyData } from '~/types/variety'
-import type { VarietyFilterMode } from '~/types/garden'
-import { PLANT_STATUSES } from '~/types/plant'
-import { z } from 'zod'
-import { usePlant } from '~/composables/data/usePlant'
-import { useVariety } from '~/composables/data/useVariety'
-import AddVarietyModal from '~/components/variety/AddVarietyModal.vue'
-import EditVarietyModal from '../variety/EditVarietyModal.vue'
+import type { FormSubmitEvent } from "@nuxt/ui";
+import { z } from "zod";
+import AddVarietyModal from "~/components/variety/AddVarietyModal.vue";
+import { usePlant } from "~/composables/data/usePlant";
+import { useVariety } from "~/composables/data/useVariety";
+import type { VarietyFilterMode } from "~/types/garden";
+import type { PlantData, PlantStatus } from "~/types/plant";
+import { PLANT_STATUSES } from "~/types/plant";
+import type { VarietyData } from "~/types/variety";
+import EditVarietyModal from "../variety/EditVarietyModal.vue";
 
 interface Props {
-  gardenId?: string
-  varietyFilterMode?: VarietyFilterMode
-  clickCoordinates?: { x: number, y: number } | null
+  gardenId?: string;
+  varietyFilterMode?: VarietyFilterMode;
+  clickCoordinates?: { x: number; y: number } | null;
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'plantAdded', data: PlantData): void
-  (e: 'varietyUpdated', data: VarietyData): void
+  (e: "update:modelValue", value: boolean): void;
+  (e: "plantAdded", data: PlantData): void;
+  (e: "varietyUpdated", data: VarietyData): void;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const emit = defineEmits<Emits>()
-const open = ref(false)
-const toast = useToast()
-const { addPlant, addMultiplePlants } = usePlant()
-const { fetchVarieties } = useVariety()
+const emit = defineEmits<Emits>();
+const open = ref(false);
+const toast = useToast();
+const { addPlant, addMultiplePlants } = usePlant();
+const { fetchVarieties } = useVariety();
 
-const varieties = ref<VarietyData[]>([])
-const varietiesLoading = ref(false)
+const varieties = ref<VarietyData[]>([]);
+const varietiesLoading = ref(false);
 
 const schema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name cannot exceed 100 characters'),
+    .min(1, "Name is required")
+    .max(100, "Name cannot exceed 100 characters"),
   description: z
     .string()
-    .max(500, 'Description cannot exceed 500 characters')
+    .max(500, "Description cannot exceed 500 characters")
     .optional(),
   variety_id: z.string(),
-  status: z.enum(['healthy', 'sick', 'dead', 'planted'], {
-    message: 'Status is required',
+  status: z.enum(["healthy", "sick", "dead", "planted"], {
+    message: "Status is required",
   }),
-  planted_date: z.string().min(1, 'Planted date is required'),
+  planted_date: z.string().min(1, "Planted date is required"),
   height: z
     .number()
-    .min(0.1, 'Height must be more than 0.1')
-    .max(150, 'Height cannot exceed 150 meters'),
+    .min(0.1, "Height must be more than 0.1")
+    .max(150, "Height cannot exceed 150 meters"),
   width: z
     .number()
-    .min(0.1, 'Width must be more than 0.1')
-    .max(40, 'Width cannot exceed 40 meters'),
-})
+    .min(0.1, "Width must be more than 0.1")
+    .max(40, "Width cannot exceed 40 meters"),
+});
 
-export type PlantSchema = z.output<typeof schema>
+export type PlantSchema = z.output<typeof schema>;
 
 const state = reactive<Partial<PlantSchema>>({
-  name: '',
-  description: '',
-  variety_id: '',
-  status: 'planted' as PlantStatus,
-  planted_date: new Date().toISOString().split('T')[0],
+  name: "",
+  description: "",
+  variety_id: "",
+  status: "planted" as PlantStatus,
+  planted_date: new Date().toISOString().split("T")[0],
   height: 0.5,
   width: 0.5,
-})
+});
 
-const loading = ref(false)
+const loading = ref(false);
 
-const multipleAddingCount = ref(1)
+const multipleAddingCount = ref(1);
 
-const form = ref()
+const form = ref();
 
 const varietyOptions = computed(() => {
-  return varieties.value.map(variety => ({
+  return varieties.value.map((variety) => ({
     label: `${variety.name} ${
-      variety.scientific_name ? `(${variety.scientific_name})` : ''
+      variety.scientific_name ? `(${variety.scientific_name})` : ""
     }`,
     value: variety.id.toString(),
-  }))
-})
+  }));
+});
 
 const loadVarieties = async () => {
-  if (varieties.value.length > 0) return
-  varietiesLoading.value = true
+  if (varieties.value.length > 0) return;
+  varietiesLoading.value = true;
   try {
     varieties.value = await fetchVarieties(
       props.gardenId,
       props.varietyFilterMode,
-    )
-  }
-  catch (error) {
-    console.error('Error loading varieties:', error)
+    );
+  } catch (error) {
+    console.error("Error loading varieties:", error);
     toast.add({
-      title: 'Error',
-      description: 'Failed to load varieties',
-      color: 'error',
-    })
+      title: "Error",
+      description: "Failed to load varieties",
+      color: "error",
+    });
+  } finally {
+    varietiesLoading.value = false;
   }
-  finally {
-    varietiesLoading.value = false
-  }
-}
+};
 
 onMounted(() => {
-  loadVarieties()
-})
+  loadVarieties();
+});
 
 const onVarietyAdded = (newVariety: VarietyData) => {
-  varieties.value.unshift(newVariety)
+  varieties.value.unshift(newVariety);
 
-  state.variety_id = newVariety.id.toString()
-}
+  state.variety_id = newVariety.id.toString();
+};
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  const index = varieties.value.findIndex(v => v.id === updatedVariety.id)
+  const index = varieties.value.findIndex((v) => v.id === updatedVariety.id);
   if (index !== -1) {
-    varieties.value[index] = updatedVariety
+    varieties.value[index] = updatedVariety;
   }
-  emit('varietyUpdated', updatedVariety)
-}
+  emit("varietyUpdated", updatedVariety);
+};
 
 const selectedVariety = computed(() => {
-  if (!state.variety_id) return null
+  if (!state.variety_id) return null;
   return (
-    varieties.value.find(v => v.id.toString() === state.variety_id) || null
-  )
-})
+    varieties.value.find((v) => v.id.toString() === state.variety_id) || null
+  );
+});
 
 async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
-  loading.value = true
+  loading.value = true;
 
   try {
-    const validatedData = event.data
+    const validatedData = event.data;
 
     if (multipleAddingCount.value === 1) {
       const plantData = await addPlant({
         name: validatedData.name,
-        description: validatedData.description || '',
+        description: validatedData.description || "",
         variety_id: parseInt(validatedData.variety_id),
         status: validatedData.status,
         planted_date: validatedData.planted_date,
@@ -148,25 +146,24 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         width: validatedData.width,
         x_position: props.clickCoordinates?.x || 0,
         y_position: props.clickCoordinates?.y || 0,
-        garden_id: props.gardenId || '',
-      })
+        garden_id: props.gardenId || "",
+      });
 
-      emit('plantAdded', plantData)
-    }
-    else {
-      const baseX = props.clickCoordinates?.x || 0
-      const baseY = props.clickCoordinates?.y || 0
+      emit("plantAdded", plantData);
+    } else {
+      const baseX = props.clickCoordinates?.x || 0;
+      const baseY = props.clickCoordinates?.y || 0;
 
-      const plantWidthMeters = validatedData.width
-      const spacingMultiplier = 1.5
-      const spacingMeters
-        = plantWidthMeters * spacingMultiplier + plantWidthMeters
+      const plantWidthMeters = validatedData.width;
+      const spacingMultiplier = 1.5;
+      const spacingMeters =
+        plantWidthMeters * spacingMultiplier + plantWidthMeters;
 
       const plantsToCreate = Array.from(
         { length: multipleAddingCount.value },
         (_, index) => ({
           name: `${validatedData.name}`,
-          description: validatedData.description || '',
+          description: validatedData.description || "",
           variety_id: parseInt(validatedData.variety_id),
           status: validatedData.status,
           planted_date: validatedData.planted_date,
@@ -175,50 +172,48 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
 
           x_position: baseX + (index % 3) * spacingMeters,
           y_position: baseY + Math.floor(index / 3) * spacingMeters,
-          garden_id: props.gardenId || '',
+          garden_id: props.gardenId || "",
         }),
-      )
+      );
 
-      const createdPlants = await addMultiplePlants(plantsToCreate)
+      const createdPlants = await addMultiplePlants(plantsToCreate);
 
-      createdPlants.forEach((plant: PlantData) => emit('plantAdded', plant))
+      createdPlants.forEach((plant: PlantData) => emit("plantAdded", plant));
     }
 
-    const plantCount = multipleAddingCount.value
+    const plantCount = multipleAddingCount.value;
     toast.add({
-      title: plantCount === 1 ? 'Plant Added' : 'Plants Added',
+      title: plantCount === 1 ? "Plant Added" : "Plants Added",
       description:
         plantCount === 1
-          ? 'The plant has been successfully added'
+          ? "The plant has been successfully added"
           : `${plantCount} plants have been successfully added`,
-      color: 'success',
-    })
+      color: "success",
+    });
 
-    open.value = false
+    open.value = false;
 
     Object.assign(state, {
-      name: '',
-      description: '',
-      variety_id: '',
-      status: 'planted' as PlantStatus,
-      planted_date: new Date().toISOString().split('T')[0],
+      name: "",
+      description: "",
+      variety_id: "",
+      status: "planted" as PlantStatus,
+      planted_date: new Date().toISOString().split("T")[0],
       height: 0,
       width: 0,
-    })
+    });
 
-    multipleAddingCount.value = 1
-  }
-  catch (error) {
-    console.error('Error adding plant:', error)
+    multipleAddingCount.value = 1;
+  } catch (error) {
+    console.error("Error adding plant:", error);
 
     toast.add({
-      title: 'Error',
-      description: 'An error occurred while adding the plant',
-      color: 'error',
-    })
-  }
-  finally {
-    loading.value = false
+      title: "Error",
+      description: "An error occurred while adding the plant",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -243,12 +238,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         class="grid grid-cols-2 gap-4"
         @submit="onSubmit"
       >
-        <UFormField
-          label="Plant Name"
-          class="col-span-2"
-          name="name"
-          required
-        >
+        <UFormField label="Plant Name" class="col-span-2" name="name" required>
           <UInput
             v-model="state.name"
             class="w-full"
@@ -298,11 +288,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           </div>
         </UFormField>
 
-        <UFormField
-          label="Description"
-          name="description"
-          class="col-span-2"
-        >
+        <UFormField label="Description" name="description" class="col-span-2">
           <UTextarea
             v-model="state.description"
             placeholder="Describe your plant..."
@@ -311,22 +297,10 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Planted Date"
-          name="planted_date"
-          required
-        >
-          <UInput
-            v-model="state.planted_date"
-            type="date"
-            class="w-full"
-          />
+        <UFormField label="Planted Date" name="planted_date" required>
+          <UInput v-model="state.planted_date" type="date" class="w-full" />
         </UFormField>
-        <UFormField
-          label="Status"
-          name="status"
-          required
-        >
+        <UFormField label="Status" name="status" required>
           <USelect
             v-model="state.status"
             :items="PLANT_STATUSES.slice()"
@@ -335,10 +309,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           />
         </UFormField>
 
-        <UFormField
-          label="Height (meters)"
-          name="height"
-        >
+        <UFormField label="Height (meters)" name="height">
           <UInput
             v-model.number="state.height"
             type="number"
@@ -349,10 +320,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
             step="1"
           />
         </UFormField>
-        <UFormField
-          label="Width (meters)"
-          name="width"
-        >
+        <UFormField label="Width (meters)" name="width">
           <UInput
             v-model.number="state.width"
             type="number"
@@ -367,12 +335,8 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     </template>
 
     <template #footer="{ close }">
-      <div class="flex justify-end gap-0.5 w-full">
-        <UButton
-          variant="ghost"
-          :disabled="loading"
-          @click="close"
-        >
+      <div class="flex w-full justify-end gap-0.5">
+        <UButton variant="ghost" :disabled="loading" @click="close">
           Cancel
         </UButton>
         <UButton
@@ -386,10 +350,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
           Add {{ multipleAddingCount > 1 ? "Plants" : "Plant" }}
         </UButton>
         <UPopover>
-          <UButton
-            aria-label="Open"
-            icon="i-lucide-chevron-down"
-          />
+          <UButton aria-label="Open" icon="i-lucide-chevron-down" />
 
           <template #content>
             <div class="grid p-2">

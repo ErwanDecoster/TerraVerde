@@ -1,16 +1,10 @@
 <template>
   <div
-    class="absolute bottom-2 right-2 rounded-xl z-10 p-3 bg-default/75 backdrop-blur border border-default"
+    class="bg-default/75 border-default absolute right-2 bottom-2 z-10 rounded-xl border p-3 backdrop-blur"
   >
-    <div class="flex items-center justify-between mb-2">
-      <div class="text-xs font-medium">
-        Plant Categories
-      </div>
-      <UButton
-        size="xs"
-        variant="ghost"
-        @click="toggleAllCategories"
-      >
+    <div class="mb-2 flex items-center justify-between">
+      <div class="text-xs font-medium">Plant Categories</div>
+      <UButton size="xs" variant="ghost" @click="toggleAllCategories">
         {{
           visibleCategories.length === plantCategories.length ? "None" : "All"
         }}
@@ -24,7 +18,7 @@
       >
         <label
           :for="`category-${category.value}`"
-          class="flex items-center gap-1 cursor-pointer"
+          class="flex cursor-pointer items-center gap-1"
         >
           <UCheckbox
             :id="`category-${category.value}`"
@@ -43,47 +37,45 @@
 </template>
 
 <script setup lang="ts">
-import { plantCategories } from '~/utils/plantCategories'
+import { plantCategories } from "~/utils/plantCategories";
 
 interface Props {
-  visibleCategories: string[]
+  visibleCategories: string[];
 }
 
 interface Emits {
-  (e: 'update:visibleCategories', categories: string[]): void
+  (e: "update:visibleCategories", categories: string[]): void;
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const visibleCategories = computed({
   get: () => props.visibleCategories,
-  set: (value: string[]) => emit('update:visibleCategories', value),
-})
+  set: (value: string[]) => emit("update:visibleCategories", value),
+});
 
 const toggleCategory = (categoryValue: string) => {
-  const currentCategories = [...visibleCategories.value]
-  const index = currentCategories.indexOf(categoryValue)
+  const currentCategories = [...visibleCategories.value];
+  const index = currentCategories.indexOf(categoryValue);
 
   if (index > -1) {
-    currentCategories.splice(index, 1)
-  }
-  else {
-    currentCategories.push(categoryValue)
+    currentCategories.splice(index, 1);
+  } else {
+    currentCategories.push(categoryValue);
   }
 
-  emit('update:visibleCategories', currentCategories)
-}
+  emit("update:visibleCategories", currentCategories);
+};
 
 const toggleAllCategories = () => {
   if (visibleCategories.value.length === plantCategories.length) {
-    emit('update:visibleCategories', [])
-  }
-  else {
+    emit("update:visibleCategories", []);
+  } else {
     emit(
-      'update:visibleCategories',
-      plantCategories.map(cat => cat.value),
-    )
+      "update:visibleCategories",
+      plantCategories.map((cat) => cat.value),
+    );
   }
-}
+};
 </script>
