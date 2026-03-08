@@ -61,7 +61,7 @@
         </AddVarietyModal>
       </div>
 
-      <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-6">
         <UCard>
           <div class="flex items-center gap-3">
             <UIcon
@@ -84,6 +84,30 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">Trees</p>
               <p class="text-2xl font-semibold">
                 {{ treeCount }}
+              </p>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard>
+          <div class="flex items-center gap-3">
+            <UIcon name="lucide-shrub" class="h-8 w-8 text-green-600" />
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Shrubs</p>
+              <p class="text-2xl font-semibold">
+                {{ shrubCount }}
+              </p>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard>
+          <div class="flex items-center gap-3">
+            <UIcon name="lucide-leaf" class="h-8 w-8 text-yellow-600" />
+            <div>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Climbers</p>
+              <p class="text-2xl font-semibold">
+                {{ climberCount }}
               </p>
             </div>
           </div>
@@ -303,6 +327,14 @@ const treeCount = computed(
     varieties.value.filter(
       (v) => v.category === "tree" || v.category === "fruit_tree",
     ).length,
+);
+
+const shrubCount = computed(
+  () => varieties.value.filter((v) => v.category === "shrub").length,
+);
+
+const climberCount = computed(
+  () => varieties.value.filter((v) => v.category === "climber").length,
 );
 
 const flowerCount = computed(
