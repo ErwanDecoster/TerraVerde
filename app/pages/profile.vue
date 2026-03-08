@@ -157,7 +157,7 @@ async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
             :src="profile.avatar_url"
             :alt="profile.first_name || 'Avatar'"
             class="h-full w-full object-cover"
-          >
+          />
         </div>
         <div
           v-else

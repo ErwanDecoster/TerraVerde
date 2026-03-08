@@ -475,7 +475,7 @@ function confirmDelete() {
             :src="garden.background_image_url"
             :alt="garden.name"
             class="h-32 w-full rounded border object-cover"
-          >
+          />
         </div>
 
         <UFormField
