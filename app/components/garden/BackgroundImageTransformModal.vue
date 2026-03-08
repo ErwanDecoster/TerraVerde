@@ -10,10 +10,14 @@ interface Props {
 
 interface Emits {
   (e: "update:open", value: boolean): void;
-  (e: "update:pixelsPerMeters", value: number): void;
-  (e: "update:rotation", value: number): void;
-  (e: "update:offsetX", value: number): void;
-  (e: "update:offsetY", value: number): void;
+  (
+    e:
+      | "update:pixelsPerMeters"
+      | "update:rotation"
+      | "update:offsetX"
+      | "update:offsetY",
+    value: number,
+  ): void;
 }
 
 const props = defineProps<Props>();

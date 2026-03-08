@@ -97,9 +97,11 @@ interface Props {
 
 interface Emits {
   (e: "garden-updated"): void;
-  (e: "background-rotation-preview", rotation: number): void;
+  (
+    e: "background-rotation-preview" | "pixels-per-meters-preview",
+    value: number,
+  ): void;
   (e: "background-offset-preview", payload: { x: number; y: number }): void;
-  (e: "pixels-per-meters-preview", value: number): void;
   (e: "update:editing-enabled", value: boolean): void;
 }
 

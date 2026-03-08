@@ -14,9 +14,11 @@ interface Emits {
   (e: "update:modelValue", value: boolean): void;
   (e: "gardenUpdated", data: GardenData): void;
   (e: "gardenDeleted", gardenId: string): void;
-  (e: "backgroundRotationPreview", rotation: number): void;
+  (
+    e: "backgroundRotationPreview" | "pixelsPerMetersPreview",
+    value: number,
+  ): void;
   (e: "backgroundOffsetPreview", payload: { x: number; y: number }): void;
-  (e: "pixelsPerMetersPreview", value: number): void;
 }
 
 const props = defineProps<Props>();
@@ -473,7 +475,7 @@ function confirmDelete() {
             :src="garden.background_image_url"
             :alt="garden.name"
             class="h-32 w-full rounded border object-cover"
-          />
+          >
         </div>
 
         <UFormField
@@ -557,10 +559,10 @@ function confirmDelete() {
     :rotation="state.backgroundImageRotation ?? 0"
     :offset-x="state.backgroundImageOffsetX ?? 0"
     :offset-y="state.backgroundImageOffsetY ?? 0"
+    :live-preview="true"
     @update:pixels-per-meters="state.PixelsPerMeters = $event"
     @update:rotation="state.backgroundImageRotation = $event"
     @update:offset-x="state.backgroundImageOffsetX = $event"
     @update:offset-y="state.backgroundImageOffsetY = $event"
-    :live-preview="true"
   />
 </template>

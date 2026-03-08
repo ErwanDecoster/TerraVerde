@@ -56,7 +56,7 @@ onMounted(async () => {
               :alt="garden.name + ' background image'"
               class="h-full w-full object-cover"
               loading="lazy"
-            />
+            >
             <div class="absolute top-2 right-2">
               <UBadge color="primary" variant="solid" size="xs">
                 Public

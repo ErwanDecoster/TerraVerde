@@ -1,5 +1,6 @@
 import { useSettings } from "~/composables/data/useSettings";
 import type { SettingsData } from "~/types/settings";
+import { useColorMode } from "#imports";
 
 export default defineNuxtPlugin(() => {
   if (import.meta.server) return;

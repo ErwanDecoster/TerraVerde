@@ -3,6 +3,7 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
 import { useSettings } from "~/composables/data/useSettings";
 import type { SettingsData } from "~/types/settings";
+import { useColorMode } from "#imports";
 
 const colorMode = useColorMode();
 
