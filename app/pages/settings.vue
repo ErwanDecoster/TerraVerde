@@ -1,9 +1,9 @@
 <script lang="ts" setup>
+import { useColorMode } from "#imports";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
 import { useSettings } from "~/composables/data/useSettings";
 import type { SettingsData } from "~/types/settings";
-import { useColorMode } from "#imports";
 
 const colorMode = useColorMode();
 
@@ -87,7 +87,7 @@ const colorThemeOptions = [
   { value: "dark", label: "Dark" },
 ];
 const languageOptions = [
-  { value: "fr-FR", label: "Français" },
+  { value: "fr-FR", label: "French" },
   { value: "en-EN", label: "English" },
 ];
 const unitsOptions = [

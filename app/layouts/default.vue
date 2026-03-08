@@ -1,9 +1,9 @@
 <script lang="ts" setup>
+import { useColorMode } from "#imports";
 import { useProfile } from "~/composables/data/useProfile";
 import { useSettings } from "~/composables/data/useSettings";
 import type { ProfileData } from "~/types/profile";
 import type { SettingsData } from "~/types/settings";
-import { useColorMode } from "#imports";
 
 const { user, logout, loading } = useAuth();
 const { fetchMyProfile } = useProfile();
