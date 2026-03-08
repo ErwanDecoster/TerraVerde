@@ -47,8 +47,8 @@ export interface PlantUpdateFormData {
 }
 
 export const PLANT_STATUSES = [
-  { value: "healthy", label: "En bonne santé", color: "success" },
-  { value: "sick", label: "Malade", color: "warning" },
-  { value: "dead", label: "Mort", color: "error" },
-  { value: "planted", label: "Planté", color: "info" },
+  { value: "healthy", label: "Healthy", color: "success" },
+  { value: "sick", label: "Sick", color: "warning" },
+  { value: "dead", label: "Dead", color: "error" },
+  { value: "planted", label: "Planted", color: "info" },
 ] as const;
