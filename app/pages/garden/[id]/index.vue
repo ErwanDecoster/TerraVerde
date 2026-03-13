@@ -264,7 +264,7 @@ const defaultCenterPreview = ref<{ x: number | null; y: number | null }>({
   y: null,
 });
 
-const onCenterZoom = () => {
+const getSavedCenterZoomOptions = () => {
   const rawDefaultZoom = garden.value?.default_zoom;
   const rawDefaultCenterX = garden.value?.default_center_x;
   const rawDefaultCenterY = garden.value?.default_center_y;
@@ -272,7 +272,7 @@ const onCenterZoom = () => {
   const parsedDefaultCenterX = Number(rawDefaultCenterX);
   const parsedDefaultCenterY = Number(rawDefaultCenterY);
 
-  resetZoom({
+  return {
     applyDefaultZoom: true,
     defaultZoom: Number.isFinite(parsedDefaultZoom) ? parsedDefaultZoom : null,
     centerX: Number.isFinite(parsedDefaultCenterX)
@@ -281,7 +281,15 @@ const onCenterZoom = () => {
     centerY: Number.isFinite(parsedDefaultCenterY)
       ? parsedDefaultCenterY
       : null,
-  });
+  };
+};
+
+const applySavedCenterZoom = () => {
+  resetZoom(getSavedCenterZoomOptions());
+};
+
+const onCenterZoom = () => {
+  applySavedCenterZoom();
 };
 
 const handleDefaultZoomPreview = (defaultZoomPercent: number | null) => {
@@ -315,7 +323,7 @@ const {
   loadBackgroundImage,
   setBackgroundRotation,
   setBackgroundOffset,
-} = useGardenCanvas(resetZoom);
+} = useGardenCanvas(applySavedCenterZoom);
 
 const pixelsPerMetersPreview = ref<number | null>(null);
 
@@ -579,7 +587,7 @@ const loadPlants = async () => {
 
     await nextTick();
     setTimeout(() => {
-      resetZoom();
+      applySavedCenterZoom();
     }, 200);
   } catch (err) {
     console.error("Error loading plants:", err);
