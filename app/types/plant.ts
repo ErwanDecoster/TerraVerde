@@ -49,6 +49,20 @@ export interface PlantPhotoEventFormData {
   event_date: string;
 }
 
+export interface PlantBulkUpdateFormData {
+  variety_id?: number;
+  planted_date?: string;
+  height?: number;
+  width?: number;
+}
+
+export interface PlantBulkHistoryFormData {
+  event_type: Exclude<PlantEventType, "photo">;
+  event_date: string;
+  title?: string;
+  notes?: string;
+}
+
 export interface PlantData {
   id: string;
   name: string;

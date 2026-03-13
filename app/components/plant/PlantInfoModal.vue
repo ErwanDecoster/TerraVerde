@@ -93,6 +93,15 @@
           </div>
         </div>
 
+        <UAlert
+          v-if="canManageHistory || canEdit"
+          color="info"
+          variant="subtle"
+          icon="i-heroicons-light-bulb-20-solid"
+          title="Tip: Bulk mode"
+          description="On the map, hold Shift and click multiple plants. Release Shift to open bulk actions for the selected plants."
+        />
+
         <div class="bg-elevated rounded-lg p-4">
           <div class="mb-3 flex items-center justify-between">
             <h5 class="font-medium">History</h5>

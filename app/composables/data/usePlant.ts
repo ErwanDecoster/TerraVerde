@@ -1,8 +1,11 @@
 import { useStorageBucket } from "~/composables/data/useStorageBucket";
 import type {
+  PlantBulkHistoryFormData,
+  PlantBulkUpdateFormData,
   PlantData,
   PlantEventData,
   PlantEventFormData,
+  PlantEventType,
   PlantPhotoEventFormData,
   PlantFormData,
   PlantUpdateFormData,
@@ -210,6 +213,33 @@ export const usePlant = () => {
     return getPublicUrl(PLANT_PICTURE_BUCKET, imagePath);
   };
 
+  const getDefaultEventTitle = (eventType: PlantEventType) => {
+    switch (eventType) {
+      case "watering":
+        return "Watering";
+      case "pruning":
+        return "Pruning";
+      case "fertilizing":
+        return "Fertilizing";
+      case "care":
+        return "Care";
+      case "photo":
+        return "Photo added";
+      default:
+        return "Other";
+    }
+  };
+
+  const normalizeEventTitle = (
+    title: string | undefined,
+    eventType: PlantEventType,
+  ) => {
+    const trimmed = title?.trim();
+    return trimmed && trimmed.length > 0
+      ? trimmed
+      : getDefaultEventTitle(eventType);
+  };
+
   const fetchPlantEvents = async (
     plantId: string,
   ): Promise<PlantEventData[]> => {
@@ -252,7 +282,7 @@ export const usePlant = () => {
         plant_id: formData.plant_id,
         garden_id: formData.garden_id,
         event_type: formData.event_type,
-        title: formData.title || null,
+        title: normalizeEventTitle(formData.title, formData.event_type),
         notes: formData.notes || null,
         event_date: formData.event_date,
         created_by: user.value.id,
@@ -365,6 +395,89 @@ export const usePlant = () => {
     }
   };
 
+  const updatePlantsBulk = async (
+    plantIds: string[],
+    patch: PlantBulkUpdateFormData,
+  ): Promise<PlantData[]> => {
+    if (plantIds.length === 0) return [];
+
+    const updatePayload = Object.fromEntries(
+      Object.entries({
+        variety_id: patch.variety_id,
+        planted_date: patch.planted_date,
+        height: patch.height,
+        width: patch.width,
+      }).filter(([, value]) => value !== undefined),
+    );
+
+    if (Object.keys(updatePayload).length === 0) return [];
+
+    const { data, error } = await $supabase
+      .from("plants")
+      .update(updatePayload)
+      .in("id", plantIds)
+      .select(
+        `
+        *,
+        variety(
+          *
+        )
+      `,
+      );
+
+    if (error) {
+      throw new Error(`Failed to update plants in bulk: ${error.message}`);
+    }
+
+    return data || [];
+  };
+
+  const addPlantEventsBulk = async (
+    plantIds: string[],
+    gardenId: string,
+    payload: PlantBulkHistoryFormData,
+  ): Promise<PlantEventData[]> => {
+    if (!user.value) {
+      throw new Error("User not authenticated");
+    }
+
+    if (plantIds.length === 0) return [];
+
+    const rows = plantIds.map((plantId) => ({
+      plant_id: plantId,
+      garden_id: gardenId,
+      event_type: payload.event_type,
+      title: normalizeEventTitle(payload.title, payload.event_type),
+      notes: payload.notes || null,
+      event_date: payload.event_date,
+      created_by: user.value!.id,
+    }));
+
+    const { data, error } = await $supabase
+      .from("plant_events")
+      .insert(rows)
+      .select(
+        `
+        *,
+        plant_event_photos(*)
+      `,
+      );
+
+    if (error) {
+      throw new Error(`Failed to add bulk history events: ${error.message}`);
+    }
+
+    return (data || []).map((event) => ({
+      ...event,
+      plant_event_photos: (event.plant_event_photos || []).map(
+        (photo: { image_path: string }) => ({
+          ...photo,
+          image_url: getPlantPicturePublicUrl(photo.image_path),
+        }),
+      ),
+    }));
+  };
+
   return {
     addPlant,
     addMultiplePlants,
@@ -375,6 +488,8 @@ export const usePlant = () => {
     fetchPlantEvents,
     addPlantEvent,
     addPlantPhotoEvent,
+    updatePlantsBulk,
+    addPlantEventsBulk,
     uploadPlantEventPhoto,
     getPlantPicturePublicUrl,
   };

@@ -58,15 +58,29 @@
         :background="background"
         :background-config="backgroundConfig"
         :plant-markers="plantMarkers"
+        :selected-plant-ids="selectedPlantIds"
         :is-editing-enabled="canEdit"
         :handle-wheel="handleWheel"
         :handle-plant-click="handlePlantClick"
         :handle-plant-drag-start="handlePlantDragStart"
         :handle-plant-drag-end="handlePlantDragEnd"
-        :handle-plant-hover="handlePlantHover"
+        :handle-plant-hover-enter="handlePlantHoverEnter"
+        :handle-plant-hover-leave="handlePlantHoverLeave"
         :get-category-letter="getCategoryLetter"
         :handle-background-click="handleBackgroundClick"
       />
+
+      <div
+        v-if="selectedPlantIds.length"
+        class="bg-default/75 border-default absolute top-16 right-2 z-10 flex items-center gap-2 rounded-xl border p-2 backdrop-blur"
+      >
+        <span class="text-xs font-medium">
+          {{ selectedPlantIds.length }} plant(s) selected
+        </span>
+        <UButton size="xs" variant="ghost" @click="clearSelection">
+          Clear
+        </UButton>
+      </div>
     </div>
 
     <AddPlantModal
@@ -98,23 +112,40 @@
       @plant-copied="onPlantCopied"
       @variety-updated="onVarietyUpdated"
     />
+
+    <BulkEditPlantsModal
+      v-if="showBulkEditModal"
+      v-model:open="showBulkEditModal"
+      :plants="selectedPlantsForBulk"
+      :garden-id="gardenId"
+      :variety-filter-mode="garden?.variety_filter_mode"
+      :can-bulk-edit="permissions.editPlants"
+      :can-bulk-add-history="canManagePlantHistory"
+      :mode="bulkMode"
+      @bulk-updated="onBulkUpdated"
+      @bulk-history-added="onBulkHistoryAdded"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import GardenCanvas from "~/components/garden/GardenCanvas.vue";
+import GardenCanvas, {
+  type KonvaNodeEventLike,
+} from "~/components/garden/GardenCanvas.vue";
 import GardenHeader from "~/components/garden/GardenHeader.vue";
 import GardenZoomControls from "~/components/garden/GardenZoomControls.vue";
 import PlantCategoryFilters from "~/components/garden/PlantCategoryFilters.vue";
 import PlantHoverData from "~/components/garden/PlantHoverData.vue";
 import AddPlantModal from "~/components/plant/AddPlantModal.vue";
+import BulkEditPlantsModal from "~/components/plant/BulkEditPlantsModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
 import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
 import { useGarden } from "~/composables/data/useGarden";
 import { usePlant } from "~/composables/data/usePlant";
 import { useTeam } from "~/composables/data/useTeam";
 import { useVarietySync } from "~/composables/data/useVarietySync";
+import { useBulkPlantSelection } from "~/composables/garden/useBulkPlantSelection";
 import { useGardenCanvas } from "~/composables/garden/useGardenCanvas";
 import { useGardenZoom } from "~/composables/garden/useGardenZoom";
 import { usePlantInteractions } from "~/composables/garden/usePlantInteractions";
@@ -125,6 +156,7 @@ import type { VarietyData } from "~/types/variety";
 
 const route = useRoute();
 const gardenId = route.params.id as string;
+const toast = useToast();
 
 const { user } = useAuth();
 const { fetchGardenById } = useGarden();
@@ -199,7 +231,9 @@ const error = ref<string | null>(null);
 const showAddPlantModal = ref(false);
 const showEditPlantModal = ref(false);
 const showPlantInfoModal = ref(false);
+const showBulkEditModal = ref(false);
 const selectedPlant = ref<PlantData | null>(null);
+const bulkMode = ref<"standard" | "edit">("standard");
 
 interface KonvaStage {
   scaleX: () => number;
@@ -254,6 +288,11 @@ const { plantMarkers, getCategoryLetter } = usePlantMarkers(
 const clickCoordinates = ref<{ x: number; y: number } | null>(null);
 
 const onPlantClick = (plant: PlantData) => {
+  if (isSelectionKeyPressed.value && canUseBulkInCurrentMode.value) {
+    toggleSelection(plant.id);
+    return;
+  }
+
   selectedPlant.value = plant;
 
   if (canEdit.value && isEditingEnabled.value) {
@@ -263,15 +302,70 @@ const onPlantClick = (plant: PlantData) => {
   }
 };
 
-const handleBackgroundClick = (event: Event) => {
+const selectedPlantsForBulk = computed(() => {
+  if (selectedPlantIds.value.length === 0) return [];
+
+  const selectedSet = new Set(selectedPlantIds.value);
+  return plants.value.filter((plant) => selectedSet.has(plant.id));
+});
+
+const canUseBulkInCurrentMode = computed(() => {
+  if (isEditingEnabled.value) {
+    return permissions.value.editPlants;
+  }
+
+  return permissions.value.editPlants || canManagePlantHistory.value;
+});
+
+const {
+  isSelectionKeyPressed,
+  selectedPlantIds,
+  toggleSelection,
+  clearSelection,
+  mount,
+  unmount,
+} = useBulkPlantSelection(() => {
+  if (!canUseBulkInCurrentMode.value) return;
+  if (selectedPlantIds.value.length < 2) return;
+
+  bulkMode.value = isEditingEnabled.value ? "edit" : "standard";
+  showBulkEditModal.value = true;
+});
+
+const onBulkUpdated = (updatedPlants: PlantData[]) => {
+  if (!updatedPlants.length) return;
+
+  const byId = new Map(updatedPlants.map((plant) => [plant.id, plant]));
+  plants.value = plants.value.map((plant) => byId.get(plant.id) || plant);
+};
+
+const onBulkHistoryAdded = (count: number) => {
+  toast.add({
+    title: "Bulk History Added",
+    description: `${count} history events created`,
+    color: "success",
+  });
+};
+
+watch(
+  () => showBulkEditModal.value,
+  (isOpen) => {
+    if (!isOpen) {
+      clearSelection();
+    }
+  },
+);
+
+const handleBackgroundClick = (event: KonvaNodeEventLike) => {
   if (!isEditingEnabled.value || !canEdit.value) return;
 
   if (!event.target) return;
 
   const stage = event.target.getStage();
   const clickedElement = event.target;
+  const isStageClick = Object.is(clickedElement as unknown, stage as unknown);
 
-  if (clickedElement === stage || clickedElement.attrs?.name === "background") {
+  if (isStageClick || clickedElement.attrs?.name === "background") {
     const pointer = stage.getPointerPosition();
 
     if (pointer) {
@@ -338,7 +432,8 @@ const {
   handlePlantClick,
   handlePlantDragStart,
   handlePlantDragEnd,
-  handlePlantHover,
+  handlePlantHoverEnter,
+  handlePlantHoverLeave,
 } = usePlantInteractions(
   garden,
   gardenId,
@@ -426,15 +521,18 @@ const loadPlants = async () => {
 
 onMounted(() => {
   loadGarden();
+  mount();
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("resize", handleResize);
+  if (globalThis.window !== undefined) {
+    globalThis.window.addEventListener("resize", handleResize);
   }
 });
 
 onUnmounted(() => {
-  if (typeof window !== "undefined") {
-    window.removeEventListener("resize", handleResize);
+  unmount();
+
+  if (globalThis.window !== undefined) {
+    globalThis.window.removeEventListener("resize", handleResize);
   }
 });
 </script>

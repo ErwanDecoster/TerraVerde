@@ -1,5 +1,8 @@
 import { ref } from "vue";
-import type { PlantMarker } from "~/components/garden/GardenCanvas.vue";
+import type {
+  KonvaNodeEventLike,
+  PlantMarker,
+} from "~/components/garden/GardenCanvas.vue";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
 
@@ -23,7 +26,10 @@ export const usePlantInteractions = (
     if (isEditingEnabled?.value === false) return;
   };
 
-  const handlePlantDragEnd = async (marker: PlantMarker, event: Event) => {
+  const handlePlantDragEnd = async (
+    marker: PlantMarker,
+    event: KonvaNodeEventLike,
+  ) => {
     if (isEditingEnabled?.value === false) return;
 
     if (!garden.value) return;
@@ -48,12 +54,12 @@ export const usePlantInteractions = (
     }
   };
 
-  const handlePlantHover = (marker: PlantMarker, isHovering: boolean) => {
-    if (isHovering) {
-      hoveredPlant.value = marker.plant;
-    } else {
-      hoveredPlant.value = null;
-    }
+  const handlePlantHoverEnter = (marker: PlantMarker) => {
+    hoveredPlant.value = marker.plant;
+  };
+
+  const handlePlantHoverLeave = () => {
+    hoveredPlant.value = null;
   };
 
   return {
@@ -61,6 +67,7 @@ export const usePlantInteractions = (
     handlePlantClick,
     handlePlantDragStart,
     handlePlantDragEnd,
-    handlePlantHover,
+    handlePlantHoverEnter,
+    handlePlantHoverLeave,
   };
 };

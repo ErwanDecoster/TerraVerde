@@ -18,9 +18,9 @@
         }"
         @click="() => handlePlantClick(marker)"
         @dragstart="() => handlePlantDragStart(marker)"
-        @dragend="(event: any) => handlePlantDragEnd(marker, event)"
-        @mouseenter="() => handlePlantHover(marker, true)"
-        @mouseleave="() => handlePlantHover(marker, false)"
+        @dragend="(event) => handlePlantDragEnd(marker, event)"
+        @mouseenter="() => handlePlantHoverEnter(marker)"
+        @mouseleave="handlePlantHoverLeave"
       >
         <v-circle
           :config="{
@@ -28,9 +28,15 @@
             y: 0,
             radius: marker.config.radius,
             fill: marker.config.fill,
-            stroke: marker.config.stroke,
-            strokeWidth: marker.config.strokeWidth,
-            opacity: marker.config.opacity,
+            stroke: selectedPlantIds.includes(marker.id)
+              ? '#2563eb'
+              : marker.config.stroke,
+            strokeWidth: selectedPlantIds.includes(marker.id)
+              ? Math.max(3, marker.config.strokeWidth)
+              : marker.config.strokeWidth,
+            opacity: selectedPlantIds.includes(marker.id)
+              ? 1
+              : marker.config.opacity,
           }"
         />
         <v-text
@@ -92,22 +98,60 @@ export interface PlantMarker {
   };
 }
 
+interface KonvaStageLike {
+  getPointerPosition: () => { x: number; y: number } | null;
+  x: () => number;
+  y: () => number;
+  scaleX: () => number;
+  scaleY: () => number;
+  width: () => number;
+  height: () => number;
+  scale: (scale: { x: number; y: number }) => void;
+  position: (pos: { x: number; y: number }) => void;
+  batchDraw: () => void;
+}
+
+export interface KonvaNodeEventLike {
+  target: {
+    getStage: () => KonvaStageLike;
+    x: () => number;
+    y: () => number;
+    scaleX: () => number;
+    scaleY: () => number;
+    getPointerPosition: () => { x: number; y: number } | null;
+    attrs?: {
+      name?: string;
+    };
+  };
+}
+
+interface KonvaWheelEventLike {
+  evt: WheelEvent;
+  target: {
+    getStage: () => KonvaStageLike;
+  };
+}
+
 interface Props {
   stageConfig: StageConfig;
   background: HTMLImageElement | null;
   backgroundConfig: BackgroundConfig;
   plantMarkers: PlantMarker[];
   isEditingEnabled: boolean;
-  handleWheel: (e: Event) => void;
+  handleWheel: (e: KonvaWheelEventLike) => void;
   handlePlantClick: (marker: PlantMarker) => void;
   handlePlantDragStart: (marker: PlantMarker) => void;
-  handlePlantDragEnd: (marker: PlantMarker, event: Event) => void;
-  handlePlantHover: (marker: PlantMarker, isHovering: boolean) => void;
+  handlePlantDragEnd: (marker: PlantMarker, event: KonvaNodeEventLike) => void;
+  handlePlantHoverEnter: (marker: PlantMarker) => void;
+  handlePlantHoverLeave: () => void;
   getCategoryLetter: (category: string) => string;
-  handleBackgroundClick?: (e: Event) => void;
+  handleBackgroundClick: (e: KonvaNodeEventLike) => void;
+  selectedPlantIds?: string[];
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+  selectedPlantIds: () => [],
+});
 
 const stage = ref(null);
 const layer = ref(null);
