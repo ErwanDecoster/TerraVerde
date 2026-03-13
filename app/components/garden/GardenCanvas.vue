@@ -18,7 +18,7 @@
         }"
         @click="() => handlePlantClick(marker)"
         @dragstart="() => handlePlantDragStart(marker)"
-        @dragend="(event) => handlePlantDragEnd(marker, event)"
+        @dragend="handlePlantDragEnd(marker, $event)"
         @mouseenter="() => handlePlantHoverEnter(marker)"
         @mouseleave="handlePlantHoverLeave"
       >
