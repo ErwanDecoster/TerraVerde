@@ -3,7 +3,11 @@ import { useColorMode } from "#imports";
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
 import { useSettings } from "~/composables/data/useSettings";
-import type { SettingsData } from "~/types/settings";
+import {
+  DEFAULT_SHOW_REAL_PLANT_SIZE,
+  DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
+  type SettingsData,
+} from "~/types/settings";
 
 const colorMode = useColorMode();
 
@@ -18,6 +22,11 @@ onMounted(async () => {
     if (settings.value) {
       Object.assign(state, {
         show_markers_letters: settings.value.show_markers_letters ?? false,
+        show_real_plant_size:
+          settings.value.show_real_plant_size ?? DEFAULT_SHOW_REAL_PLANT_SIZE,
+        show_small_plants_on_top:
+          settings.value.show_small_plants_on_top ??
+          DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
         default_color_theme: settings.value.default_color_theme ?? "",
         language: settings.value.language ?? "",
         preferred_units: settings.value.preferred_units ?? "",
@@ -31,6 +40,8 @@ onMounted(async () => {
 
 const schema = z.object({
   show_markers_letters: z.boolean().optional(),
+  show_real_plant_size: z.boolean().optional(),
+  show_small_plants_on_top: z.boolean().optional(),
   default_color_theme: z.string().max(50).optional(),
   language: z.string().max(10).optional(),
   preferred_units: z.string().max(10).optional(),
@@ -40,6 +51,8 @@ export type SettingsEditSchema = z.output<typeof schema>;
 
 const state = reactive<Partial<SettingsEditSchema>>({
   show_markers_letters: false,
+  show_real_plant_size: DEFAULT_SHOW_REAL_PLANT_SIZE,
+  show_small_plants_on_top: DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
   default_color_theme: "",
   language: "",
   preferred_units: "",
@@ -55,6 +68,8 @@ async function onSubmit(e: FormSubmitEvent<SettingsEditSchema>) {
     const d = e.data;
     const updated = await updateSettings({
       show_markers_letters: d.show_markers_letters ?? null,
+      show_real_plant_size: d.show_real_plant_size ?? null,
+      show_small_plants_on_top: d.show_small_plants_on_top ?? null,
       default_color_theme: d.default_color_theme ?? null,
       language: d.language ?? null,
       preferred_units: d.preferred_units ?? null,
@@ -120,6 +135,26 @@ const unitsOptions = [
           <USwitch
             v-model="state.show_markers_letters"
             label="Display letters on markers"
+          />
+        </UFormField>
+        <UFormField
+          name="show_real_plant_size"
+          label="Use Real Plant Size"
+          class="col-span-2"
+        >
+          <USwitch
+            v-model="state.show_real_plant_size"
+            label="Display each plant with its real saved size"
+          />
+        </UFormField>
+        <UFormField
+          name="show_small_plants_on_top"
+          label="Render Small Plants Above"
+          class="col-span-2"
+        >
+          <USwitch
+            v-model="state.show_small_plants_on_top"
+            label="Draw smaller plants above larger plants"
           />
         </UFormField>
         <UFormField

@@ -2,7 +2,11 @@ import { computed, type Ref } from "vue";
 import { useSettings } from "~/composables/data/useSettings";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
-import type { SettingsData } from "~/types/settings";
+import {
+  DEFAULT_SHOW_REAL_PLANT_SIZE,
+  DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
+  type SettingsData,
+} from "~/types/settings";
 import { metersToPixels } from "~/utils/coordinates";
 import { getCategoryKey } from "~/utils/plantCategories";
 
@@ -14,9 +18,13 @@ export const usePlantMarkers = (
 ) => {
   const { fetchMySettings } = useSettings();
   const userSettings = ref<SettingsData | null>(null);
-  fetchMySettings().then((s) => {
-    userSettings.value = s;
-  });
+  fetchMySettings()
+    .then((s) => {
+      userSettings.value = s;
+    })
+    .catch(() => {
+      userSettings.value = null;
+    });
   const getPlantStatusStroke = (status: string) => {
     switch (status) {
       case "healthy":
@@ -44,10 +52,14 @@ export const usePlantMarkers = (
       pixelsPerMetersPreview?.value ?? basePixelsPerMeters;
     const positionScaleRatio = PixelsPerMeters / basePixelsPerMeters;
     const userPref = userSettings.value?.show_markers_letters;
-    const showMarkersLetters =
-      userPref === undefined || userPref === null ? false : userPref;
+    const showMarkersLetters = userPref ?? false;
+    const showRealPlantSize =
+      userSettings.value?.show_real_plant_size ?? DEFAULT_SHOW_REAL_PLANT_SIZE;
+    const showSmallPlantsOnTop =
+      userSettings.value?.show_small_plants_on_top ??
+      DEFAULT_SHOW_SMALL_PLANTS_ON_TOP;
 
-    return plants.value
+    const markers = plants.value
       .filter((plant) =>
         visibleCategories.value.includes(plant.variety.category),
       )
@@ -55,7 +67,8 @@ export const usePlantMarkers = (
         const pixelX = (plant.x_position ?? 0) * positionScaleRatio;
         const pixelY = (plant.y_position ?? 0) * positionScaleRatio;
 
-        const minVisibleWidth = plant.width > 0.7 ? plant.width : 0.7;
+        const displayWidthMeters = showRealPlantSize ? plant.width : 0.5;
+        const minVisibleWidth = Math.max(displayWidthMeters, 0.7);
 
         const pixelWidth = metersToPixels(minVisibleWidth, PixelsPerMeters);
         const radius = Math.round(pixelWidth / 2);
@@ -76,6 +89,14 @@ export const usePlantMarkers = (
           },
         };
       });
+
+    markers.sort((a, b) => {
+      const sizeA = a.config.radius;
+      const sizeB = b.config.radius;
+      return showSmallPlantsOnTop ? sizeB - sizeA : sizeA - sizeB;
+    });
+
+    return markers;
   });
 
   return {

@@ -25,6 +25,8 @@ export const useSettings = () => {
     if (!user.value) throw new Error("User not authenticated");
     const updateData = {
       show_markers_letters: formData.show_markers_letters ?? null,
+      show_real_plant_size: formData.show_real_plant_size ?? null,
+      show_small_plants_on_top: formData.show_small_plants_on_top ?? null,
       default_color_theme: formData.default_color_theme ?? null,
       language: formData.language ?? null,
       preferred_units: formData.preferred_units ?? null,
