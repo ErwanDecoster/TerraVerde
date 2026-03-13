@@ -29,7 +29,7 @@
             radius: marker.config.radius,
             fill: marker.config.fill,
             stroke: selectedPlantIds.includes(marker.id)
-              ? '#2563eb'
+              ? '#fff'
               : marker.config.stroke,
             strokeWidth: selectedPlantIds.includes(marker.id)
               ? Math.max(3, marker.config.strokeWidth)
