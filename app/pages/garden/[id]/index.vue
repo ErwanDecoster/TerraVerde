@@ -38,6 +38,7 @@
         @background-rotation-preview="handleBackgroundRotationPreview"
         @background-offset-preview="handleBackgroundOffsetPreview"
         @pixels-per-meters-preview="handlePixelsPerMetersPreview"
+        @default-zoom-preview="handleDefaultZoomPreview"
         @update:editing-enabled="isEditingEnabled = $event"
       />
 
@@ -45,7 +46,7 @@
         :stage-config="stageConfig"
         :zoom-in="zoomIn"
         :zoom-out="zoomOut"
-        :reset-zoom="resetZoom"
+        :reset-zoom="onCenterZoom"
       />
 
       <PlantCategoryFilters v-model:visible-categories="visibleCategories" />
@@ -255,6 +256,23 @@ const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize } =
     computed(() => canvas.value?.stage || null),
     computed(() => backgroundConfig),
   );
+
+const onCenterZoom = () => {
+  const rawDefaultZoom = garden.value?.default_zoom;
+  const parsedDefaultZoom = Number(rawDefaultZoom);
+
+  resetZoom({
+    applyDefaultZoom: true,
+    defaultZoom: Number.isFinite(parsedDefaultZoom) ? parsedDefaultZoom : null,
+  });
+};
+
+const handleDefaultZoomPreview = (defaultZoomPercent: number | null) => {
+  resetZoom({
+    applyDefaultZoom: true,
+    defaultZoom: defaultZoomPercent,
+  });
+};
 
 const {
   background,

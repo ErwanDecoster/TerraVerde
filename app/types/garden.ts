@@ -37,6 +37,7 @@ export interface GardenData {
   background_image_offset_x: number;
   background_image_offset_y: number;
   pixels_per_meters: number;
+  default_zoom?: number | null;
   is_public: boolean;
   variety_filter_mode: VarietyFilterMode;
   created_at: string;
@@ -62,6 +63,7 @@ export interface GardenFormData {
   backgroundImageOffsetX: number;
   backgroundImageOffsetY: number;
   PixelsPerMeters: number;
+  defaultZoom?: number | null;
   variety_filter_mode: VarietyFilterMode;
   description?: string | null;
   zip_code?: string | null;
@@ -78,6 +80,7 @@ export interface GardenUpdateFormData {
   backgroundImageOffsetX: number;
   backgroundImageOffsetY: number;
   PixelsPerMeters: number;
+  defaultZoom?: number | null;
   variety_filter_mode: VarietyFilterMode;
   description?: string | null;
   zip_code?: string | null;

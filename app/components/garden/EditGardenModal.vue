@@ -15,8 +15,11 @@ interface Emits {
   (e: "gardenUpdated", data: GardenData): void;
   (e: "gardenDeleted", gardenId: string): void;
   (
-    e: "backgroundRotationPreview" | "pixelsPerMetersPreview",
-    value: number,
+    e:
+      | "backgroundRotationPreview"
+      | "pixelsPerMetersPreview"
+      | "defaultZoomPreview",
+    value: number | null,
   ): void;
   (e: "backgroundOffsetPreview", payload: { x: number; y: number }): void;
 }
@@ -27,6 +30,12 @@ const open = ref(false);
 const toast = useToast();
 const { updateGarden, deleteGarden } = useGarden();
 const { user } = useAuth();
+
+const parseDefaultZoom = (value: unknown) => {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 const showDeleteConfirmation = ref(false);
 
@@ -58,6 +67,12 @@ const normalizePixelsPerMeters = (value: number) => {
   return Math.max(1, Math.min(100, value));
 };
 
+const normalizeDefaultZoomPercent = (value: unknown): number | null => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(10, Math.min(1000, parsed));
+};
+
 const schema = z.object({
   name: z
     .string()
@@ -68,6 +83,16 @@ const schema = z.object({
     .number()
     .min(1, "Scale must be at least 1 Pixels per Meters")
     .max(100, "Scale cannot exceed 100 Pixels per Meters"),
+  defaultZoom: z
+    .preprocess(
+      (value) => parseDefaultZoom(value),
+      z
+        .number()
+        .min(10, "Default zoom must be at least 10")
+        .max(1000, "Default zoom cannot exceed 1000")
+        .nullable(),
+    )
+    .optional(),
   variety_filter_mode: z.enum(["garden", "public", "all"], {
     message: "Variety filter mode is required",
   }),
@@ -128,6 +153,7 @@ const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   isPublic: props.garden.is_public || false,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
+  defaultZoom: parseDefaultZoom(props.garden.default_zoom),
   variety_filter_mode: props.garden.variety_filter_mode,
   backgroundImage: undefined,
   backgroundImageRotation: props.garden.background_image_rotation ?? 0,
@@ -163,6 +189,7 @@ watch(
       name: newGarden.name,
       isPublic: newGarden.is_public || false,
       PixelsPerMeters: newGarden.pixels_per_meters || 20,
+      defaultZoom: parseDefaultZoom(newGarden.default_zoom),
       variety_filter_mode: newGarden.variety_filter_mode,
       backgroundImage: undefined,
       backgroundImageRotation: newGarden.background_image_rotation ?? 0,
@@ -209,6 +236,16 @@ watch(
 );
 
 watch(
+  () => state.defaultZoom,
+  (defaultZoom) => {
+    if (!open.value && !transformModalOpen.value) return;
+
+    const normalized = normalizeDefaultZoomPercent(defaultZoom);
+    emit("defaultZoomPreview", normalized);
+  },
+);
+
+watch(
   () => open.value,
   (isOpen) => {
     if (!isOpen && !openingTransformModal.value) {
@@ -224,6 +261,11 @@ watch(
         "pixelsPerMetersPreview",
         normalizePixelsPerMeters(props.garden.pixels_per_meters ?? 20),
       );
+
+      const normalizedGardenDefaultZoom = normalizeDefaultZoomPercent(
+        props.garden.default_zoom,
+      );
+      emit("defaultZoomPreview", normalizedGardenDefaultZoom);
     }
   },
 );
@@ -260,6 +302,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
           validatedData.backgroundImageOffsetY,
         ),
         PixelsPerMeters: validatedData.PixelsPerMeters,
+        defaultZoom: parseDefaultZoom(validatedData.defaultZoom),
         variety_filter_mode: validatedData.variety_filter_mode,
         description: validatedData.description ?? null,
         zip_code: validatedData.zip_code ?? null,
@@ -275,6 +318,7 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
     open.value = false;
 
     state.backgroundImage = undefined;
+    state.defaultZoom = parseDefaultZoom(gardenData.default_zoom);
     state.backgroundImageRotation = gardenData.background_image_rotation ?? 0;
     state.backgroundImageOffsetX = gardenData.background_image_offset_x ?? 0;
     state.backgroundImageOffsetY = gardenData.background_image_offset_y ?? 0;
@@ -412,7 +456,6 @@ function confirmDelete() {
           <UInput
             v-model="state.street_address"
             class="w-full"
-            autocomplete="street-address"
             placeholder="Street name"
             :maxlength="100"
           />
@@ -462,15 +505,18 @@ function confirmDelete() {
               Scale: {{ state.PixelsPerMeters }} px/m, Rotation:
               {{ state.backgroundImageRotation }} deg, X:
               {{ state.backgroundImageOffsetX }} px, Y:
-              {{ state.backgroundImageOffsetY }} px
+              {{ state.backgroundImageOffsetY }} px, Default Zoom:
+              {{
+                state.defaultZoom !== null && state.defaultZoom !== undefined
+                  ? `${state.defaultZoom}%`
+                  : "auto-fit"
+              }}
             </p>
           </div>
         </UFormField>
 
         <div class="col-span-2 space-y-2">
-          <label class="block text-sm font-medium"
-            >Current Background Image</label
-          >
+          <p class="text-sm font-medium">Current Background Image</p>
           <img
             :src="garden.background_image_url"
             :alt="garden.name"
@@ -556,11 +602,13 @@ function confirmDelete() {
   <BackgroundImageTransformModal
     v-model:open="transformModalOpen"
     :pixels-per-meters="state.PixelsPerMeters ?? 20"
+    :default-zoom="state.defaultZoom ?? null"
     :rotation="state.backgroundImageRotation ?? 0"
     :offset-x="state.backgroundImageOffsetX ?? 0"
     :offset-y="state.backgroundImageOffsetY ?? 0"
     :live-preview="true"
     @update:pixels-per-meters="state.PixelsPerMeters = $event"
+    @update:default-zoom="state.defaultZoom = $event"
     @update:rotation="state.backgroundImageRotation = $event"
     @update:offset-x="state.backgroundImageOffsetX = $event"
     @update:offset-y="state.backgroundImageOffsetY = $event"

@@ -15,6 +15,12 @@ const open = ref(false);
 const toast = useToast();
 const { addGarden } = useGarden();
 
+const parseDefaultZoom = (value: unknown) => {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const schema = z.object({
   name: z
     .string()
@@ -25,6 +31,16 @@ const schema = z.object({
     .number()
     .min(1, "Scale must be at least 1 Pixels per Meters")
     .max(100, "Scale cannot exceed 100 Pixels per Meters"),
+  defaultZoom: z
+    .preprocess(
+      (value) => parseDefaultZoom(value),
+      z
+        .number()
+        .min(10, "Default zoom must be at least 10")
+        .max(1000, "Default zoom cannot exceed 1000")
+        .nullable(),
+    )
+    .optional(),
   variety_filter_mode: z.enum(["garden", "public", "all"], {
     message: "Variety filter mode is required",
   }),
@@ -84,6 +100,7 @@ const state = reactive<Partial<GardenSchema>>({
   name: "",
   isPublic: false,
   PixelsPerMeters: 20,
+  defaultZoom: null,
   variety_filter_mode: "garden",
   backgroundImage: undefined,
   backgroundImageRotation: 0,
@@ -132,6 +149,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       backgroundImageOffsetX: validatedData.backgroundImageOffsetX,
       backgroundImageOffsetY: validatedData.backgroundImageOffsetY,
       PixelsPerMeters: validatedData.PixelsPerMeters,
+      defaultZoom: parseDefaultZoom(validatedData.defaultZoom),
       variety_filter_mode: validatedData.variety_filter_mode,
       description: validatedData.description ?? null,
       zip_code: validatedData.zip_code ?? null,
@@ -147,6 +165,7 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       name: "",
       isPublic: false,
       PixelsPerMeters: 20,
+      defaultZoom: null,
       variety_filter_mode: "garden",
       backgroundImage: undefined,
       backgroundImageRotation: 0,
@@ -246,7 +265,6 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
             v-model="state.street_address"
             class="w-full"
             placeholder="Street name"
-            autocomplete="street-address"
             :maxlength="100"
           />
         </UFormField>
@@ -295,7 +313,12 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
               Scale: {{ state.PixelsPerMeters }} px/m, Rotation:
               {{ state.backgroundImageRotation }} deg, X:
               {{ state.backgroundImageOffsetX }} px, Y:
-              {{ state.backgroundImageOffsetY }} px
+              {{ state.backgroundImageOffsetY }} px, Default Zoom:
+              {{
+                state.defaultZoom !== null && state.defaultZoom !== undefined
+                  ? `${state.defaultZoom}%`
+                  : "auto-fit"
+              }}
             </p>
           </div>
         </UFormField>
@@ -337,10 +360,12 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
   <BackgroundImageTransformModal
     v-model:open="transformModalOpen"
     :pixels-per-meters="state.PixelsPerMeters ?? 20"
+    :default-zoom="state.defaultZoom ?? null"
     :rotation="state.backgroundImageRotation ?? 0"
     :offset-x="state.backgroundImageOffsetX ?? 0"
     :offset-y="state.backgroundImageOffsetY ?? 0"
     @update:pixels-per-meters="state.PixelsPerMeters = $event"
+    @update:default-zoom="state.defaultZoom = $event"
     @update:rotation="state.backgroundImageRotation = $event"
     @update:offset-x="state.backgroundImageOffsetX = $event"
     @update:offset-y="state.backgroundImageOffsetY = $event"

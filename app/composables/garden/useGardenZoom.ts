@@ -153,7 +153,9 @@ export const useGardenZoom = (
   const zoomIn = () => zoomTo(1.2);
   const zoomOut = () => zoomTo(1 / 1.2);
 
-  const resetZoom = () => {
+  const resetZoom = (
+    options?: { applyDefaultZoom?: boolean; defaultZoom?: number | null },
+  ) => {
     if (!stageRef?.value) {
       return;
     }
@@ -177,7 +179,19 @@ export const useGardenZoom = (
     const scaleToFitWidth = stageWidth / bounds.width;
     const scaleToFitHeight = stageHeight / bounds.height;
 
-    const scale = Math.min(scaleToFitWidth, scaleToFitHeight, 1);
+    const fitScale = Math.min(scaleToFitWidth, scaleToFitHeight, 1);
+    const requestedDefaultZoom = options?.defaultZoom;
+    const shouldApplyDefaultZoom = Boolean(options?.applyDefaultZoom);
+    const clampedDefaultZoomPercent =
+      requestedDefaultZoom != null && Number.isFinite(requestedDefaultZoom)
+        ? Math.max(10, Math.min(requestedDefaultZoom, 1000))
+        : null;
+    const defaultZoomScale =
+      clampedDefaultZoomPercent === null ? null : clampedDefaultZoomPercent / 100;
+    const scale =
+      shouldApplyDefaultZoom && defaultZoomScale !== null
+        ? defaultZoomScale
+        : fitScale;
     const scaledImageWidth = bounds.width * scale;
     const scaledImageHeight = bounds.height * scale;
 

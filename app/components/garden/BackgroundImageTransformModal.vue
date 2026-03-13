@@ -2,6 +2,7 @@
 interface Props {
   open: boolean;
   pixelsPerMeters: number;
+  defaultZoom?: number | null;
   rotation: number;
   offsetX: number;
   offsetY: number;
@@ -10,6 +11,7 @@ interface Props {
 
 interface Emits {
   (e: "update:open", value: boolean): void;
+  (e: "update:defaultZoom", value: number | null): void;
   (
     e:
       | "update:pixelsPerMeters"
@@ -31,6 +33,19 @@ const openModel = computed({
 const pixelsPerMetersModel = computed({
   get: () => props.pixelsPerMeters,
   set: (value: number) => emit("update:pixelsPerMeters", Number(value)),
+});
+
+const defaultZoomModel = computed({
+  get: () => props.defaultZoom ?? null,
+  set: (value: number | string | null | undefined) => {
+    if (value === "" || value === null || value === undefined) {
+      emit("update:defaultZoom", null);
+      return;
+    }
+
+    const parsed = Number(value);
+    emit("update:defaultZoom", Number.isFinite(parsed) ? parsed : null);
+  },
 });
 
 const rotationModel = computed({
@@ -154,6 +169,22 @@ onBeforeUnmount(() => {
               max="100"
               step="1"
               placeholder="20"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Default Center Zoom (%)"
+            description="Optional. Used by the center/reset button"
+            class="col-span-2"
+          >
+            <UInput
+              v-model="defaultZoomModel"
+              type="number"
+              min="10"
+              max="1000"
+              step="0.1"
+              placeholder="Auto fit (empty)"
               class="w-full"
             />
           </UFormField>
