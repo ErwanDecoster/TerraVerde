@@ -1,8 +1,13 @@
 import { reactive, type Ref } from "vue";
 
 interface BackgroundConfig {
+  x: number;
+  y: number;
   width: number;
   height: number;
+  offsetX: number;
+  offsetY: number;
+  rotation: number;
   [key: string]: unknown;
 }
 
@@ -23,9 +28,59 @@ export const useGardenZoom = (
   stageRef: Ref<{ getStage: () => KonvaStage } | null>,
   backgroundConfig: Ref<BackgroundConfig>,
 ) => {
+  const getBackgroundBounds = (bgConfig: BackgroundConfig) => {
+    const width = bgConfig.width || 0;
+    const height = bgConfig.height || 0;
+    if (!width || !height) return null;
+
+    const centerX = bgConfig.x || width / 2;
+    const centerY = bgConfig.y || height / 2;
+    const offsetX = bgConfig.offsetX ?? width / 2;
+    const offsetY = bgConfig.offsetY ?? height / 2;
+    const rotationDeg = bgConfig.rotation || 0;
+
+    const topLeft = { x: centerX - offsetX, y: centerY - offsetY };
+    const corners = [
+      { x: topLeft.x, y: topLeft.y },
+      { x: topLeft.x + width, y: topLeft.y },
+      { x: topLeft.x + width, y: topLeft.y + height },
+      { x: topLeft.x, y: topLeft.y + height },
+    ];
+
+    const rotationRad = (rotationDeg * Math.PI) / 180;
+    const cos = Math.cos(rotationRad);
+    const sin = Math.sin(rotationRad);
+
+    const rotatedCorners = corners.map((corner) => {
+      const dx = corner.x - centerX;
+      const dy = corner.y - centerY;
+      return {
+        x: centerX + dx * cos - dy * sin,
+        y: centerY + dx * sin + dy * cos,
+      };
+    });
+
+    const minX = Math.min(...rotatedCorners.map((p) => p.x));
+    const maxX = Math.max(...rotatedCorners.map((p) => p.x));
+    const minY = Math.min(...rotatedCorners.map((p) => p.y));
+    const maxY = Math.max(...rotatedCorners.map((p) => p.y));
+
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+    };
+  };
+
   const stageConfig = reactive({
-    width: typeof window !== "undefined" ? window.innerWidth : 800,
-    height: typeof window !== "undefined" ? window.innerHeight - 80 : 600,
+    width: globalThis.window === undefined ? 800 : globalThis.window.innerWidth,
+    height:
+      globalThis.window === undefined
+        ? 600
+        : globalThis.window.innerHeight - 80,
     draggable: true,
     scaleX: 1,
     scaleY: 1,
@@ -111,23 +166,23 @@ export const useGardenZoom = (
     const stageWidth = stage.width() || stageConfig.width;
     const stageHeight = stage.height() || stageConfig.height;
 
-    const bgConfig = backgroundConfig?.value || {};
-    const imageWidth = bgConfig.width || stageWidth;
-    const imageHeight = bgConfig.height || stageHeight;
-
-    if (!bgConfig.width || !bgConfig.height) {
+    const bgConfig = backgroundConfig?.value;
+    if (!bgConfig) {
       return;
     }
 
-    const scaleToFitWidth = stageWidth / imageWidth;
-    const scaleToFitHeight = stageHeight / imageHeight;
+    const bounds = getBackgroundBounds(bgConfig);
+    if (!bounds?.width || !bounds?.height) return;
+
+    const scaleToFitWidth = stageWidth / bounds.width;
+    const scaleToFitHeight = stageHeight / bounds.height;
 
     const scale = Math.min(scaleToFitWidth, scaleToFitHeight, 1);
-    const scaledImageWidth = imageWidth * scale;
-    const scaledImageHeight = imageHeight * scale;
+    const scaledImageWidth = bounds.width * scale;
+    const scaledImageHeight = bounds.height * scale;
 
-    const x = Math.max(0, (stageWidth - scaledImageWidth) / 2);
-    const y = Math.max(0, (stageHeight - scaledImageHeight) / 2);
+    const x = (stageWidth - scaledImageWidth) / 2 - bounds.minX * scale;
+    const y = (stageHeight - scaledImageHeight) / 2 - bounds.minY * scale;
 
     stage.scale({ x: scale, y: scale });
     stage.position({ x, y });
@@ -139,9 +194,9 @@ export const useGardenZoom = (
   };
 
   const handleResize = () => {
-    if (typeof window !== "undefined") {
-      stageConfig.width = window.innerWidth;
-      stageConfig.height = window.innerHeight - 80;
+    if (globalThis.window !== undefined) {
+      stageConfig.width = globalThis.window.innerWidth;
+      stageConfig.height = globalThis.window.innerHeight - 80;
 
       setTimeout(() => {
         resetZoom();
