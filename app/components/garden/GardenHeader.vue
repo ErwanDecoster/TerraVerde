@@ -65,6 +65,7 @@
         @background-offset-preview="$emit('background-offset-preview', $event)"
         @pixels-per-meters-preview="$emit('pixels-per-meters-preview', $event)"
         @default-zoom-preview="$emit('default-zoom-preview', $event)"
+        @default-center-preview="$emit('default-center-preview', $event)"
       />
       <ManageTeamsModal
         v-if="garden && canManageTeams"
@@ -103,6 +104,10 @@ interface Emits {
     value: number,
   ): void;
   (e: "default-zoom-preview", value: number | null): void;
+  (
+    e: "default-center-preview",
+    payload: { x: number | null; y: number | null },
+  ): void;
   (e: "background-offset-preview", payload: { x: number; y: number }): void;
   (e: "update:editing-enabled", value: boolean): void;
 }

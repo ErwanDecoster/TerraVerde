@@ -15,13 +15,15 @@ interface Emits {
   (e: "gardenUpdated", data: GardenData): void;
   (e: "gardenDeleted", gardenId: string): void;
   (
-    e:
-      | "backgroundRotationPreview"
-      | "pixelsPerMetersPreview"
-      | "defaultZoomPreview",
-    value: number | null,
+    e: "backgroundRotationPreview" | "pixelsPerMetersPreview",
+    value: number,
   ): void;
+  (e: "defaultZoomPreview", value: number | null): void;
   (e: "backgroundOffsetPreview", payload: { x: number; y: number }): void;
+  (
+    e: "defaultCenterPreview",
+    payload: { x: number | null; y: number | null },
+  ): void;
 }
 
 const props = defineProps<Props>();
@@ -31,10 +33,10 @@ const toast = useToast();
 const { updateGarden, deleteGarden } = useGarden();
 const { user } = useAuth();
 
-const parseDefaultZoom = (value: unknown) => {
+const parseNullableNumber = (value: unknown) => {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
 };
 
 const showDeleteConfirmation = ref(false);
@@ -70,7 +72,12 @@ const normalizePixelsPerMeters = (value: number) => {
 const normalizeDefaultZoomPercent = (value: unknown): number | null => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return null;
-  return Math.max(10, Math.min(1000, parsed));
+  return Math.max(10, Math.min(1000, Math.trunc(parsed)));
+};
+
+const normalizeDefaultCenterCoordinate = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
 };
 
 const schema = z.object({
@@ -85,12 +92,25 @@ const schema = z.object({
     .max(100, "Scale cannot exceed 100 Pixels per Meters"),
   defaultZoom: z
     .preprocess(
-      (value) => parseDefaultZoom(value),
+      (value) => parseNullableNumber(value),
       z
         .number()
+        .int("Default zoom must be an integer")
         .min(10, "Default zoom must be at least 10")
         .max(1000, "Default zoom cannot exceed 1000")
         .nullable(),
+    )
+    .optional(),
+  defaultCenterX: z
+    .preprocess(
+      (value) => parseNullableNumber(value),
+      z.number().int("Default center X must be an integer").nullable(),
+    )
+    .optional(),
+  defaultCenterY: z
+    .preprocess(
+      (value) => parseNullableNumber(value),
+      z.number().int("Default center Y must be an integer").nullable(),
     )
     .optional(),
   variety_filter_mode: z.enum(["garden", "public", "all"], {
@@ -153,7 +173,9 @@ const state = reactive<Partial<EditGardenSchema>>({
   name: props.garden.name,
   isPublic: props.garden.is_public || false,
   PixelsPerMeters: props.garden.pixels_per_meters || 20,
-  defaultZoom: parseDefaultZoom(props.garden.default_zoom),
+  defaultZoom: parseNullableNumber(props.garden.default_zoom),
+  defaultCenterX: parseNullableNumber(props.garden.default_center_x),
+  defaultCenterY: parseNullableNumber(props.garden.default_center_y),
   variety_filter_mode: props.garden.variety_filter_mode,
   backgroundImage: undefined,
   backgroundImageRotation: props.garden.background_image_rotation ?? 0,
@@ -189,7 +211,9 @@ watch(
       name: newGarden.name,
       isPublic: newGarden.is_public || false,
       PixelsPerMeters: newGarden.pixels_per_meters || 20,
-      defaultZoom: parseDefaultZoom(newGarden.default_zoom),
+      defaultZoom: parseNullableNumber(newGarden.default_zoom),
+      defaultCenterX: parseNullableNumber(newGarden.default_center_x),
+      defaultCenterY: parseNullableNumber(newGarden.default_center_y),
       variety_filter_mode: newGarden.variety_filter_mode,
       backgroundImage: undefined,
       backgroundImageRotation: newGarden.background_image_rotation ?? 0,
@@ -246,6 +270,18 @@ watch(
 );
 
 watch(
+  () => [state.defaultCenterX, state.defaultCenterY],
+  ([centerX, centerY]) => {
+    if (!open.value && !transformModalOpen.value) return;
+
+    emit("defaultCenterPreview", {
+      x: normalizeDefaultCenterCoordinate(centerX),
+      y: normalizeDefaultCenterCoordinate(centerY),
+    });
+  },
+);
+
+watch(
   () => open.value,
   (isOpen) => {
     if (!isOpen && !openingTransformModal.value) {
@@ -266,6 +302,11 @@ watch(
         props.garden.default_zoom,
       );
       emit("defaultZoomPreview", normalizedGardenDefaultZoom);
+
+      emit("defaultCenterPreview", {
+        x: normalizeDefaultCenterCoordinate(props.garden.default_center_x),
+        y: normalizeDefaultCenterCoordinate(props.garden.default_center_y),
+      });
     }
   },
 );
@@ -302,7 +343,9 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
           validatedData.backgroundImageOffsetY,
         ),
         PixelsPerMeters: validatedData.PixelsPerMeters,
-        defaultZoom: parseDefaultZoom(validatedData.defaultZoom),
+        defaultZoom: parseNullableNumber(validatedData.defaultZoom),
+        defaultCenterX: parseNullableNumber(validatedData.defaultCenterX),
+        defaultCenterY: parseNullableNumber(validatedData.defaultCenterY),
         variety_filter_mode: validatedData.variety_filter_mode,
         description: validatedData.description ?? null,
         zip_code: validatedData.zip_code ?? null,
@@ -318,7 +361,9 @@ async function onSubmit(event: FormSubmitEvent<EditGardenSchema>) {
     open.value = false;
 
     state.backgroundImage = undefined;
-    state.defaultZoom = parseDefaultZoom(gardenData.default_zoom);
+    state.defaultZoom = parseNullableNumber(gardenData.default_zoom);
+    state.defaultCenterX = parseNullableNumber(gardenData.default_center_x);
+    state.defaultCenterY = parseNullableNumber(gardenData.default_center_y);
     state.backgroundImageRotation = gardenData.background_image_rotation ?? 0;
     state.backgroundImageOffsetX = gardenData.background_image_offset_x ?? 0;
     state.backgroundImageOffsetY = gardenData.background_image_offset_y ?? 0;
@@ -510,6 +555,14 @@ function confirmDelete() {
                 state.defaultZoom !== null && state.defaultZoom !== undefined
                   ? `${state.defaultZoom}%`
                   : "auto-fit"
+              }}, Center:
+              {{
+                state.defaultCenterX !== null &&
+                state.defaultCenterX !== undefined &&
+                state.defaultCenterY !== null &&
+                state.defaultCenterY !== undefined
+                  ? `(${state.defaultCenterX}, ${state.defaultCenterY})`
+                  : "auto"
               }}
             </p>
           </div>
@@ -603,12 +656,16 @@ function confirmDelete() {
     v-model:open="transformModalOpen"
     :pixels-per-meters="state.PixelsPerMeters ?? 20"
     :default-zoom="state.defaultZoom ?? null"
+    :default-center-x="state.defaultCenterX ?? null"
+    :default-center-y="state.defaultCenterY ?? null"
     :rotation="state.backgroundImageRotation ?? 0"
     :offset-x="state.backgroundImageOffsetX ?? 0"
     :offset-y="state.backgroundImageOffsetY ?? 0"
     :live-preview="true"
     @update:pixels-per-meters="state.PixelsPerMeters = $event"
     @update:default-zoom="state.defaultZoom = $event"
+    @update:default-center-x="state.defaultCenterX = $event"
+    @update:default-center-y="state.defaultCenterY = $event"
     @update:rotation="state.backgroundImageRotation = $event"
     @update:offset-x="state.backgroundImageOffsetX = $event"
     @update:offset-y="state.backgroundImageOffsetY = $event"

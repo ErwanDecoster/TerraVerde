@@ -153,9 +153,12 @@ export const useGardenZoom = (
   const zoomIn = () => zoomTo(1.2);
   const zoomOut = () => zoomTo(1 / 1.2);
 
-  const resetZoom = (
-    options?: { applyDefaultZoom?: boolean; defaultZoom?: number | null },
-  ) => {
+  const resetZoom = (options?: {
+    applyDefaultZoom?: boolean;
+    defaultZoom?: number | null;
+    centerX?: number | null;
+    centerY?: number | null;
+  }) => {
     if (!stageRef?.value) {
       return;
     }
@@ -187,16 +190,32 @@ export const useGardenZoom = (
         ? Math.max(10, Math.min(requestedDefaultZoom, 1000))
         : null;
     const defaultZoomScale =
-      clampedDefaultZoomPercent === null ? null : clampedDefaultZoomPercent / 100;
+      clampedDefaultZoomPercent === null
+        ? null
+        : clampedDefaultZoomPercent / 100;
     const scale =
       shouldApplyDefaultZoom && defaultZoomScale !== null
         ? defaultZoomScale
         : fitScale;
-    const scaledImageWidth = bounds.width * scale;
-    const scaledImageHeight = bounds.height * scale;
+    const requestedCenterX = options?.centerX;
+    const requestedCenterY = options?.centerY;
+    const hasCustomCenter =
+      Number.isFinite(requestedCenterX) && Number.isFinite(requestedCenterY);
+    const boundsCenterX = bounds.minX + bounds.width / 2;
+    const boundsCenterY = bounds.minY + bounds.height / 2;
+    const targetCenterX = hasCustomCenter
+      ? boundsCenterX + Number(requestedCenterX)
+      : null;
+    const targetCenterY = hasCustomCenter
+      ? boundsCenterY + Number(requestedCenterY)
+      : null;
 
-    const x = (stageWidth - scaledImageWidth) / 2 - bounds.minX * scale;
-    const y = (stageHeight - scaledImageHeight) / 2 - bounds.minY * scale;
+    const x = hasCustomCenter
+      ? stageWidth / 2 - Number(targetCenterX) * scale
+      : (stageWidth - bounds.width * scale) / 2 - bounds.minX * scale;
+    const y = hasCustomCenter
+      ? stageHeight / 2 - Number(targetCenterY) * scale
+      : (stageHeight - bounds.height * scale) / 2 - bounds.minY * scale;
 
     stage.scale({ x: scale, y: scale });
     stage.position({ x, y });

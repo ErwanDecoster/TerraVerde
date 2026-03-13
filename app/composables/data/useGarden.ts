@@ -43,6 +43,8 @@ export const useGarden = () => {
     background_image_offset_y: number;
     pixels_per_meters: number;
     default_zoom?: number | null;
+    default_center_x?: number | null;
+    default_center_y?: number | null;
     is_public: boolean;
     variety_filter_mode: string;
     description?: string | null;
@@ -89,6 +91,8 @@ export const useGarden = () => {
         background_image_offset_y: formData.backgroundImageOffsetY ?? 0,
         pixels_per_meters: formData.PixelsPerMeters,
         default_zoom: formData.defaultZoom ?? null,
+        default_center_x: formData.defaultCenterX ?? null,
+        default_center_y: formData.defaultCenterY ?? null,
         is_public: formData.isPublic,
         variety_filter_mode: formData.variety_filter_mode,
         description: formData.description ?? null,
@@ -330,6 +334,8 @@ export const useGarden = () => {
         background_image_offset_y: formData.backgroundImageOffsetY,
         pixels_per_meters: formData.PixelsPerMeters,
         default_zoom: formData.defaultZoom ?? null,
+        default_center_x: formData.defaultCenterX ?? null,
+        default_center_y: formData.defaultCenterY ?? null,
         is_public: formData.isPublic,
         variety_filter_mode: formData.variety_filter_mode,
         description: formData.description ?? null,

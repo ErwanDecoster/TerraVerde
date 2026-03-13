@@ -39,6 +39,7 @@
         @background-offset-preview="handleBackgroundOffsetPreview"
         @pixels-per-meters-preview="handlePixelsPerMetersPreview"
         @default-zoom-preview="handleDefaultZoomPreview"
+        @default-center-preview="handleDefaultCenterPreview"
         @update:editing-enabled="isEditingEnabled = $event"
       />
 
@@ -257,20 +258,54 @@ const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize } =
     computed(() => backgroundConfig),
   );
 
+const defaultZoomPreview = ref<number | null>(null);
+const defaultCenterPreview = ref<{ x: number | null; y: number | null }>({
+  x: null,
+  y: null,
+});
+
 const onCenterZoom = () => {
   const rawDefaultZoom = garden.value?.default_zoom;
+  const rawDefaultCenterX = garden.value?.default_center_x;
+  const rawDefaultCenterY = garden.value?.default_center_y;
   const parsedDefaultZoom = Number(rawDefaultZoom);
+  const parsedDefaultCenterX = Number(rawDefaultCenterX);
+  const parsedDefaultCenterY = Number(rawDefaultCenterY);
 
   resetZoom({
     applyDefaultZoom: true,
     defaultZoom: Number.isFinite(parsedDefaultZoom) ? parsedDefaultZoom : null,
+    centerX: Number.isFinite(parsedDefaultCenterX)
+      ? parsedDefaultCenterX
+      : null,
+    centerY: Number.isFinite(parsedDefaultCenterY)
+      ? parsedDefaultCenterY
+      : null,
   });
 };
 
 const handleDefaultZoomPreview = (defaultZoomPercent: number | null) => {
+  defaultZoomPreview.value = defaultZoomPercent;
+
   resetZoom({
     applyDefaultZoom: true,
-    defaultZoom: defaultZoomPercent,
+    defaultZoom: defaultZoomPreview.value,
+    centerX: defaultCenterPreview.value.x,
+    centerY: defaultCenterPreview.value.y,
+  });
+};
+
+const handleDefaultCenterPreview = (payload: {
+  x: number | null;
+  y: number | null;
+}) => {
+  defaultCenterPreview.value = payload;
+
+  resetZoom({
+    applyDefaultZoom: true,
+    defaultZoom: defaultZoomPreview.value,
+    centerX: defaultCenterPreview.value.x,
+    centerY: defaultCenterPreview.value.y,
   });
 };
 
@@ -463,6 +498,42 @@ const {
 
 const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
 
+const toFiniteNumberOrNull = (value: unknown): number | null => {
+  if (typeof value !== "number") return null;
+  return Number.isFinite(value) ? value : null;
+};
+
+const setGardenCenterPreview = (gardenData: GardenData) => {
+  defaultZoomPreview.value = toFiniteNumberOrNull(gardenData.default_zoom);
+  defaultCenterPreview.value = {
+    x: toFiniteNumberOrNull(gardenData.default_center_x),
+    y: toFiniteNumberOrNull(gardenData.default_center_y),
+  };
+};
+
+const resolveGardenAccess = async (gardenData: GardenData) => {
+  // Default role for public access is viewer, then override if team membership exists.
+  isTeamMember.value = false;
+  currentRole.value = gardenData.is_public ? "viewer" : null;
+
+  if (!user.value) {
+    return gardenData.is_public;
+  }
+
+  const teams = await fetchTeamsByGarden(gardenId);
+  for (const team of teams) {
+    const members = await fetchTeamMembers(team.id);
+    const me = members.find((member) => member.user_id === user.value?.id);
+    if (!me) continue;
+
+    isTeamMember.value = true;
+    currentRole.value = (me.role as typeof currentRole.value) || "viewer";
+    return true;
+  }
+
+  return gardenData.is_public;
+};
+
 const loadGarden = async () => {
   try {
     pending.value = true;
@@ -475,36 +546,14 @@ const loadGarden = async () => {
       return;
     }
 
-    // Check access: public, owner, or team member
-    let allowed = false;
-    if (gardenData.is_public) {
-      allowed = true;
-    }
-    if (user.value) {
-      // Check if user is a team member for this garden
-      const teams = await fetchTeamsByGarden(gardenId);
-      for (const team of teams) {
-        const members = await fetchTeamMembers(team.id);
-        if (user.value) {
-          const me = members.find((m) => m.user_id === user.value!.id);
-          if (me) {
-            allowed = true;
-            isTeamMember.value = true;
-            // Resolve role (fallback viewer if undefined)
-            currentRole.value =
-              (me.role as typeof currentRole.value) || "viewer";
-            break;
-          }
-        }
-      }
-    }
-
+    const allowed = await resolveGardenAccess(gardenData);
     if (!allowed) {
       error.value = "Access denied. This garden is private.";
       return;
     }
 
     garden.value = gardenData;
+    setGardenCenterPreview(gardenData);
     pixelsPerMetersPreview.value = null;
 
     if (gardenData.background_image_url) {

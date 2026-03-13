@@ -15,10 +15,10 @@ const open = ref(false);
 const toast = useToast();
 const { addGarden } = useGarden();
 
-const parseDefaultZoom = (value: unknown) => {
+const parseNullableNumber = (value: unknown) => {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
 };
 
 const schema = z.object({
@@ -33,12 +33,25 @@ const schema = z.object({
     .max(100, "Scale cannot exceed 100 Pixels per Meters"),
   defaultZoom: z
     .preprocess(
-      (value) => parseDefaultZoom(value),
+      (value) => parseNullableNumber(value),
       z
         .number()
+        .int("Default zoom must be an integer")
         .min(10, "Default zoom must be at least 10")
         .max(1000, "Default zoom cannot exceed 1000")
         .nullable(),
+    )
+    .optional(),
+  defaultCenterX: z
+    .preprocess(
+      (value) => parseNullableNumber(value),
+      z.number().int("Default center X must be an integer").nullable(),
+    )
+    .optional(),
+  defaultCenterY: z
+    .preprocess(
+      (value) => parseNullableNumber(value),
+      z.number().int("Default center Y must be an integer").nullable(),
     )
     .optional(),
   variety_filter_mode: z.enum(["garden", "public", "all"], {
@@ -101,6 +114,8 @@ const state = reactive<Partial<GardenSchema>>({
   isPublic: false,
   PixelsPerMeters: 20,
   defaultZoom: null,
+  defaultCenterX: null,
+  defaultCenterY: null,
   variety_filter_mode: "garden",
   backgroundImage: undefined,
   backgroundImageRotation: 0,
@@ -149,7 +164,9 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       backgroundImageOffsetX: validatedData.backgroundImageOffsetX,
       backgroundImageOffsetY: validatedData.backgroundImageOffsetY,
       PixelsPerMeters: validatedData.PixelsPerMeters,
-      defaultZoom: parseDefaultZoom(validatedData.defaultZoom),
+      defaultZoom: parseNullableNumber(validatedData.defaultZoom),
+      defaultCenterX: parseNullableNumber(validatedData.defaultCenterX),
+      defaultCenterY: parseNullableNumber(validatedData.defaultCenterY),
       variety_filter_mode: validatedData.variety_filter_mode,
       description: validatedData.description ?? null,
       zip_code: validatedData.zip_code ?? null,
@@ -166,6 +183,8 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
       isPublic: false,
       PixelsPerMeters: 20,
       defaultZoom: null,
+      defaultCenterX: null,
+      defaultCenterY: null,
       variety_filter_mode: "garden",
       backgroundImage: undefined,
       backgroundImageRotation: 0,
@@ -318,6 +337,14 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
                 state.defaultZoom !== null && state.defaultZoom !== undefined
                   ? `${state.defaultZoom}%`
                   : "auto-fit"
+              }}, Center:
+              {{
+                state.defaultCenterX !== null &&
+                state.defaultCenterX !== undefined &&
+                state.defaultCenterY !== null &&
+                state.defaultCenterY !== undefined
+                  ? `(${state.defaultCenterX}, ${state.defaultCenterY})`
+                  : "auto"
               }}
             </p>
           </div>
@@ -361,11 +388,15 @@ async function onSubmit(event: FormSubmitEvent<GardenSchema>) {
     v-model:open="transformModalOpen"
     :pixels-per-meters="state.PixelsPerMeters ?? 20"
     :default-zoom="state.defaultZoom ?? null"
+    :default-center-x="state.defaultCenterX ?? null"
+    :default-center-y="state.defaultCenterY ?? null"
     :rotation="state.backgroundImageRotation ?? 0"
     :offset-x="state.backgroundImageOffsetX ?? 0"
     :offset-y="state.backgroundImageOffsetY ?? 0"
     @update:pixels-per-meters="state.PixelsPerMeters = $event"
     @update:default-zoom="state.defaultZoom = $event"
+    @update:default-center-x="state.defaultCenterX = $event"
+    @update:default-center-y="state.defaultCenterY = $event"
     @update:rotation="state.backgroundImageRotation = $event"
     @update:offset-x="state.backgroundImageOffsetX = $event"
     @update:offset-y="state.backgroundImageOffsetY = $event"

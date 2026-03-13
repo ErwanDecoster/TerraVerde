@@ -3,6 +3,8 @@ interface Props {
   open: boolean;
   pixelsPerMeters: number;
   defaultZoom?: number | null;
+  defaultCenterX?: number | null;
+  defaultCenterY?: number | null;
   rotation: number;
   offsetX: number;
   offsetY: number;
@@ -11,7 +13,10 @@ interface Props {
 
 interface Emits {
   (e: "update:open", value: boolean): void;
-  (e: "update:defaultZoom", value: number | null): void;
+  (
+    e: "update:defaultZoom" | "update:defaultCenterX" | "update:defaultCenterY",
+    value: number | null,
+  ): void;
   (
     e:
       | "update:pixelsPerMeters"
@@ -21,6 +26,8 @@ interface Emits {
     value: number,
   ): void;
 }
+
+type NullableNumericInput = number | string | null | undefined;
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
@@ -37,14 +44,49 @@ const pixelsPerMetersModel = computed({
 
 const defaultZoomModel = computed({
   get: () => props.defaultZoom ?? null,
-  set: (value: number | string | null | undefined) => {
+  set: (value: NullableNumericInput) => {
     if (value === "" || value === null || value === undefined) {
       emit("update:defaultZoom", null);
       return;
     }
 
     const parsed = Number(value);
-    emit("update:defaultZoom", Number.isFinite(parsed) ? parsed : null);
+    emit(
+      "update:defaultZoom",
+      Number.isFinite(parsed) ? Math.trunc(parsed) : null,
+    );
+  },
+});
+
+const defaultCenterXModel = computed({
+  get: () => props.defaultCenterX ?? null,
+  set: (value: NullableNumericInput) => {
+    if (value === "" || value === null || value === undefined) {
+      emit("update:defaultCenterX", null);
+      return;
+    }
+
+    const parsed = Number(value);
+    emit(
+      "update:defaultCenterX",
+      Number.isFinite(parsed) ? Math.trunc(parsed) : null,
+    );
+  },
+});
+
+const defaultCenterYModel = computed({
+  get: () => props.defaultCenterY ?? null,
+  set: (value: NullableNumericInput) => {
+    if (value === "" || value === null || value === undefined) {
+      emit("update:defaultCenterY", null);
+      return;
+    }
+
+    const parsed = Number(value);
+    emit(
+      "update:defaultCenterY",
+      Number.isFinite(parsed) ? Math.trunc(parsed) : null,
+    );
   },
 });
 
@@ -183,8 +225,36 @@ onBeforeUnmount(() => {
               type="number"
               min="10"
               max="1000"
-              step="0.1"
+              step="1"
               placeholder="Auto fit (empty)"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Default Center X Offset"
+            description="0 keeps horizontal center; positive moves right"
+            class="col-span-1"
+          >
+            <UInput
+              v-model="defaultCenterXModel"
+              type="number"
+              step="1"
+              placeholder="0"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Default Center Y Offset"
+            description="0 keeps vertical center; positive moves down"
+            class="col-span-1"
+          >
+            <UInput
+              v-model="defaultCenterYModel"
+              type="number"
+              step="1"
+              placeholder="0"
               class="w-full"
             />
           </UFormField>
