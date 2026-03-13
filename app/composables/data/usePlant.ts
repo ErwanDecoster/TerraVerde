@@ -1,11 +1,18 @@
+import { useStorageBucket } from "~/composables/data/useStorageBucket";
 import type {
   PlantData,
+  PlantEventData,
+  PlantEventFormData,
+  PlantPhotoEventFormData,
   PlantFormData,
   PlantUpdateFormData,
 } from "~/types/plant";
 
 export const usePlant = () => {
   const { $supabase } = useNuxtApp();
+  const { user } = useAuth();
+  const { uploadFile, removeFile, getPublicUrl } = useStorageBucket();
+  const PLANT_PICTURE_BUCKET = "plant-picture";
 
   /**
    * Create a new plant in the database
@@ -199,6 +206,165 @@ export const usePlant = () => {
     return data || [];
   };
 
+  const getPlantPicturePublicUrl = (imagePath: string) => {
+    return getPublicUrl(PLANT_PICTURE_BUCKET, imagePath);
+  };
+
+  const fetchPlantEvents = async (
+    plantId: string,
+  ): Promise<PlantEventData[]> => {
+    const { data, error } = await $supabase
+      .from("plant_events")
+      .select(
+        `
+        *,
+        plant_event_photos(*)
+      `,
+      )
+      .eq("plant_id", plantId)
+      .order("event_date", { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch plant events: ${error.message}`);
+    }
+
+    return (data || []).map((event) => ({
+      ...event,
+      plant_event_photos: (event.plant_event_photos || []).map(
+        (photo: { image_path: string }) => ({
+          ...photo,
+          image_url: getPlantPicturePublicUrl(photo.image_path),
+        }),
+      ),
+    }));
+  };
+
+  const addPlantEvent = async (
+    formData: PlantEventFormData,
+  ): Promise<PlantEventData> => {
+    if (!user.value) {
+      throw new Error("User not authenticated");
+    }
+
+    const { data, error } = await $supabase
+      .from("plant_events")
+      .insert({
+        plant_id: formData.plant_id,
+        garden_id: formData.garden_id,
+        event_type: formData.event_type,
+        title: formData.title || null,
+        notes: formData.notes || null,
+        event_date: formData.event_date,
+        created_by: user.value.id,
+      })
+      .select(
+        `
+        *,
+        plant_event_photos(*)
+      `,
+      )
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to add plant event: ${error.message}`);
+    }
+
+    return {
+      ...data,
+      plant_event_photos: (data.plant_event_photos || []).map(
+        (photo: { image_path: string }) => ({
+          ...photo,
+          image_url: getPlantPicturePublicUrl(photo.image_path),
+        }),
+      ),
+    };
+  };
+
+  const uploadPlantEventPhoto = async (file: File, path: string) => {
+    return uploadFile(PLANT_PICTURE_BUCKET, path, file);
+  };
+
+  const addPlantPhotoEvent = async (
+    formData: PlantPhotoEventFormData,
+  ): Promise<PlantEventData> => {
+    if (!user.value) {
+      throw new Error("User not authenticated");
+    }
+
+    const fileExtension = formData.file.name.split(".").pop() || "jpg";
+    const filePath = `${formData.garden_id}/${formData.plant_id}/${crypto.randomUUID()}.${fileExtension}`;
+
+    let uploadedImagePath: string | null = null;
+
+    try {
+      const uploadResult = await uploadPlantEventPhoto(formData.file, filePath);
+      uploadedImagePath = uploadResult.path;
+
+      const { data: eventData, error: eventError } = await $supabase
+        .from("plant_events")
+        .insert({
+          plant_id: formData.plant_id,
+          garden_id: formData.garden_id,
+          event_type: "photo",
+          title: "Photo added",
+          notes: formData.notes || null,
+          event_date: formData.event_date,
+          created_by: user.value.id,
+        })
+        .select()
+        .single();
+
+      if (eventError) {
+        throw new Error(`Failed to add photo event: ${eventError.message}`);
+      }
+
+      const { error: photoError } = await $supabase
+        .from("plant_event_photos")
+        .insert({
+          plant_event_id: eventData.id,
+          plant_id: formData.plant_id,
+          image_path: uploadResult.path,
+          caption: formData.caption || null,
+        });
+
+      if (photoError) {
+        throw new Error(`Failed to link photo to event: ${photoError.message}`);
+      }
+
+      const { data, error } = await $supabase
+        .from("plant_events")
+        .select(
+          `
+          *,
+          plant_event_photos(*)
+        `,
+        )
+        .eq("id", eventData.id)
+        .single();
+
+      if (error) {
+        throw new Error(
+          `Failed to fetch created photo event: ${error.message}`,
+        );
+      }
+
+      return {
+        ...data,
+        plant_event_photos: (data.plant_event_photos || []).map(
+          (photo: { image_path: string }) => ({
+            ...photo,
+            image_url: getPlantPicturePublicUrl(photo.image_path),
+          }),
+        ),
+      };
+    } catch (error) {
+      if (uploadedImagePath) {
+        await removeFile(PLANT_PICTURE_BUCKET, uploadedImagePath);
+      }
+      throw error;
+    }
+  };
+
   return {
     addPlant,
     addMultiplePlants,
@@ -206,5 +372,10 @@ export const usePlant = () => {
     fetchPlants,
     fetchPlantById,
     deletePlant,
+    fetchPlantEvents,
+    addPlantEvent,
+    addPlantPhotoEvent,
+    uploadPlantEventPhoto,
+    getPlantPicturePublicUrl,
   };
 };

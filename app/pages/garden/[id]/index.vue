@@ -84,6 +84,7 @@
       v-model:open="showPlantInfoModal"
       :plant="selectedPlant"
       :can-edit="permissions.editPlants"
+      :can-manage-history="canManagePlantHistory"
       @edit-requested="onEditRequested"
     />
 
@@ -173,6 +174,9 @@ const permissions = computed(() =>
 const isEditingEnabled = ref(false);
 const canEdit = computed(
   () => Boolean(isEditingEnabled.value) && permissions.value.editPlants,
+);
+const canManagePlantHistory = computed(
+  () => currentRole.value === "owner" || currentRole.value === "admin",
 );
 
 const visibleCategories = ref<string[]>([

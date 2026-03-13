@@ -1,40 +1,29 @@
+import { useStorageBucket } from "~/composables/data/useStorageBucket";
 import type { ProfileData, ProfileUpdateFormData } from "~/types/profile";
 
 export const useProfile = () => {
   const { $supabase } = useNuxtApp();
-  const config = useRuntimeConfig();
+  const { uploadFile, removeFile, getPublicUrl } = useStorageBucket();
 
   /**
    * Upload an avatar image to Supabase storage
    */
   const uploadAvatarImage = async (file: File, fileName: string) => {
-    const { data, error } = await $supabase.storage
-      .from("avatars")
-      .upload(fileName, file);
-    if (error) {
-      throw new Error(`Failed to upload avatar: ${error.message}`);
-    }
-    return data;
+    return uploadFile("avatars", fileName, file);
   };
 
   /**
    * Remove an avatar image from Supabase storage
    */
   const removeAvatarImage = async (path: string) => {
-    const { error } = await $supabase.storage.from("avatars").remove([path]);
-
-    if (error) {
-      console.warn("Failed to remove avatar:", error);
-    }
+    return removeFile("avatars", path);
   };
 
   /**
    * Get the public URL for an avatar image
    */
   const getAvatarPublicUrl = (imagePath: string) => {
-    const projectId = config.public.supabaseProjectId;
-    const bucket = "avatars";
-    return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${imagePath}`;
+    return getPublicUrl("avatars", imagePath);
   };
 
   /**

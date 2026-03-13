@@ -1,3 +1,4 @@
+import { useStorageBucket } from "~/composables/data/useStorageBucket";
 import { useTeam } from "~/composables/data/useTeam";
 import type {
   GardenData,
@@ -7,39 +8,27 @@ import type {
 
 export const useGarden = () => {
   const { $supabase } = useNuxtApp();
-  const config = useRuntimeConfig();
+  const { uploadFile, removeFile, getPublicUrl } = useStorageBucket();
 
   /**
    * Upload an image to Supabase storage
    */
   const uploadGardenImage = async (file: File, fileName: string) => {
-    const { data, error } = await $supabase.storage
-      .from("maps")
-      .upload(fileName, file);
-    if (error) {
-      throw new Error(`Failed to upload image: ${error.message}`);
-    }
-    return data;
+    return uploadFile("maps", fileName, file);
   };
 
   /**
    * Remove an image from Supabase storage
    */
   const removeGardenImage = async (path: string) => {
-    const { error } = await $supabase.storage.from("maps").remove([path]);
-
-    if (error) {
-      console.warn("Failed to remove image:", error);
-    }
+    return removeFile("maps", path);
   };
 
   /**
    * Get the public URL for an image
    */
   const getImagePublicUrl = (imagePath: string) => {
-    const projectId = config.public.supabaseProjectId;
-    const bucket = "maps";
-    return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${imagePath}`;
+    return getPublicUrl("maps", imagePath);
   };
 
   /**

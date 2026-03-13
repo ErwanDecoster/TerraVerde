@@ -4,12 +4,6 @@
     title="Plant Information"
     :description="`Details for ${plant.name}`"
   >
-    <UButton
-      label="View Plant"
-      variant="subtle"
-      icon="i-heroicons-eye-20-solid"
-    />
-
     <template #body>
       <div class="space-y-4">
         <div>
@@ -98,6 +92,103 @@
             <span class="text-muted ml-2">{{ plant.width }}m</span>
           </div>
         </div>
+
+        <div class="bg-elevated rounded-lg p-4">
+          <div class="mb-3 flex items-center justify-between">
+            <h5 class="font-medium">History</h5>
+            <div v-if="canManageHistory" class="flex items-center gap-2">
+              <UButton
+                size="xs"
+                variant="outline"
+                icon="i-heroicons-plus-20-solid"
+                @click="showAddEventModal = true"
+              >
+                Add Event
+              </UButton>
+              <UButton
+                size="xs"
+                color="primary"
+                variant="outline"
+                icon="i-heroicons-photo-20-solid"
+                @click="showAddPhotoModal = true"
+              >
+                Add Photo
+              </UButton>
+            </div>
+          </div>
+
+          <div v-if="eventsLoading" class="flex items-center gap-2 text-sm">
+            <UIcon
+              name="i-heroicons-arrow-path-20-solid"
+              class="animate-spin"
+            />
+            <span>Loading history...</span>
+          </div>
+
+          <UAlert
+            v-else-if="eventsError"
+            color="error"
+            variant="subtle"
+            icon="i-heroicons-exclamation-triangle-20-solid"
+            title="Unable to load history"
+            :description="eventsError"
+          />
+
+          <div v-else-if="plantEvents.length === 0" class="text-muted text-sm">
+            No history yet
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
+              v-for="event in plantEvents"
+              :key="event.id"
+              class="bg-default rounded-md border p-3"
+            >
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    :name="getEventIcon(event.event_type)"
+                    class="text-primary"
+                  />
+                  <span class="font-medium">
+                    {{ getEventLabel(event.event_type) }}
+                  </span>
+                </div>
+                <span class="text-muted text-xs">
+                  {{ formatDateTime(event.event_date) }}
+                </span>
+              </div>
+
+              <p v-if="event.title" class="text-sm font-medium">
+                {{ event.title }}
+              </p>
+              <p v-if="event.notes" class="text-muted text-sm">
+                {{ event.notes }}
+              </p>
+
+              <div
+                v-if="
+                  event.plant_event_photos && event.plant_event_photos.length
+                "
+                class="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3"
+              >
+                <a
+                  v-for="photo in event.plant_event_photos"
+                  :key="photo.id"
+                  :href="photo.image_url"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    :src="photo.image_url"
+                    alt=""
+                    class="h-24 w-full rounded border object-cover"
+                  />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -115,17 +206,35 @@
       </div>
     </template>
   </UModal>
+
+  <AddPlantEventModal
+    :open="showAddEventModal"
+    :plant="plant"
+    @update:open="showAddEventModal = $event"
+    @event-added="onEventAdded"
+  />
+
+  <AddPlantPhotoEventModal
+    :open="showAddPhotoModal"
+    :plant="plant"
+    @update:open="showAddPhotoModal = $event"
+    @event-added="onEventAdded"
+  />
 </template>
 
 <script lang="ts" setup>
-import type { PlantData } from "~/types/plant";
-import { PLANT_STATUSES } from "~/types/plant";
+import AddPlantEventModal from "~/components/plant/AddPlantEventModal.vue";
+import AddPlantPhotoEventModal from "~/components/plant/AddPlantPhotoEventModal.vue";
+import { usePlant } from "~/composables/data/usePlant";
+import type { PlantData, PlantEventData, PlantEventType } from "~/types/plant";
+import { PLANT_EVENT_TYPES, PLANT_STATUSES } from "~/types/plant";
 import { getCategoryLabel } from "~/utils/plantCategories";
 
 interface Props {
   plant: PlantData;
   open: boolean;
   canEdit?: boolean;
+  canManageHistory?: boolean;
 }
 
 interface Emits {
@@ -135,11 +244,47 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+const { fetchPlantEvents } = usePlant();
+
+const plantEvents = ref<PlantEventData[]>([]);
+const eventsLoading = ref(false);
+const eventsError = ref<string | null>(null);
+const showAddEventModal = ref(false);
+const showAddPhotoModal = ref(false);
 
 const isOpen = computed({
   get: () => props.open,
   set: (value) => emit("update:open", value),
 });
+
+const loadEvents = async () => {
+  if (!props.plant?.id) return;
+
+  eventsLoading.value = true;
+  eventsError.value = null;
+
+  try {
+    plantEvents.value = await fetchPlantEvents(props.plant.id);
+  } catch (error) {
+    console.error("Error loading plant events:", error);
+    eventsError.value = "Failed to load plant history";
+  } finally {
+    eventsLoading.value = false;
+  }
+};
+
+watch(
+  () => ({
+    open: isOpen.value,
+    plantId: props.plant.id,
+  }),
+  ({ open }) => {
+    if (open) {
+      loadEvents();
+    }
+  },
+  { immediate: true },
+);
 
 const getStatusLabel = (status: string) => {
   const statusInfo = PLANT_STATUSES.find((s) => s.value === status);
@@ -173,6 +318,34 @@ const formatDate = (dateString: string) => {
     month: "long",
     day: "numeric",
   });
+};
+
+const formatDateTime = (dateString: string) => {
+  return new Date(dateString).toLocaleString("fr-FR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getEventLabel = (eventType: PlantEventType) => {
+  return (
+    PLANT_EVENT_TYPES.find((event) => event.value === eventType)?.label ||
+    eventType
+  );
+};
+
+const getEventIcon = (eventType: PlantEventType) => {
+  return (
+    PLANT_EVENT_TYPES.find((event) => event.value === eventType)?.icon ||
+    "i-heroicons-clock-20-solid"
+  );
+};
+
+const onEventAdded = (event: PlantEventData) => {
+  plantEvents.value = [event, ...plantEvents.value];
 };
 
 const openEditModal = () => {
