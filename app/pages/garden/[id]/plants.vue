@@ -219,7 +219,9 @@ import AddPlantModal from "~/components/plant/AddPlantModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
 import { useGarden } from "~/composables/data/useGarden";
 import { usePlant } from "~/composables/data/usePlant";
+import { useTeam } from "~/composables/data/useTeam";
 import { useVarietySync } from "~/composables/data/useVarietySync";
+import { useAuth } from "~/composables/useAuth";
 import { useIsOwner } from "~/composables/useIsOwner";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
@@ -231,7 +233,9 @@ const gardenId = route.params.id as string;
 
 const { fetchGardenById } = useGarden();
 const { fetchPlants } = usePlant();
+const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
 const { syncVarietyInPlants } = useVarietySync();
+const { user, getUser } = useAuth();
 const { isOwner } = useIsOwner(gardenId);
 
 const garden = ref<GardenData | null>(null);
@@ -341,6 +345,26 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
   syncVarietyInPlants(plants, updatedVariety);
 };
 
+const resolveGardenAccess = async (gardenData: GardenData) => {
+  if (gardenData.is_public) return true;
+
+  if (!user.value) {
+    await getUser();
+  }
+
+  if (!user.value) return false;
+
+  const teams = await fetchTeamsByGarden(gardenId);
+  for (const team of teams) {
+    const members = await fetchTeamMembers(team.id);
+    if (members.some((member) => member.user_id === user.value?.id)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const loadData = async () => {
   try {
     pending.value = true;
@@ -352,11 +376,7 @@ const loadData = async () => {
       return;
     }
 
-    // Check access: public, owner, or team member
-    let allowed = false;
-    if (gardenData.is_public) {
-      allowed = true;
-    }
+    const allowed = await resolveGardenAccess(gardenData);
     if (!allowed) {
       error.value = "Access denied. This garden is private.";
       return;
