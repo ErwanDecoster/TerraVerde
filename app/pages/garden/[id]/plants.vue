@@ -141,19 +141,27 @@
           class="w-full"
         >
           <template #name-cell="{ row }">
-            <div class="flex items-center gap-2">
+            <div
+              class="flex cursor-pointer items-center gap-2"
+              @click="openPlantInfoModal(row.original)"
+            >
               <div
                 class="h-4 w-4 rounded-full border"
                 :style="{
                   backgroundColor: row.original.variety.main_color || '#CCCCCC',
                 }"
               />
-              <span class="font-medium">{{ row.original.name }}</span>
+              <span class="font-medium underline-offset-2 hover:underline">
+                {{ row.original.name }}
+              </span>
             </div>
           </template>
 
           <template #variety-cell="{ row }">
-            <div>
+            <div
+              class="cursor-pointer"
+              @click="openPlantInfoModal(row.original)"
+            >
               <p class="font-medium">
                 {{ row.original.variety.name }}
               </p>
@@ -168,23 +176,38 @@
 
           <template #status-cell="{ row }">
             <UBadge
+              class="cursor-pointer"
               :color="getStatusColor(row.original.status)"
               variant="subtle"
+              @click="openPlantInfoModal(row.original)"
             >
               {{ getStatusLabel(row.original.status) }}
             </UBadge>
           </template>
 
           <template #planted_date-cell="{ row }">
-            {{ formatDate(row.original.planted_date) }}
+            <span
+              class="cursor-pointer"
+              @click="openPlantInfoModal(row.original)"
+            >
+              {{ formatDate(row.original.planted_date) }}
+            </span>
           </template>
 
           <template #dimensions-cell="{ row }">
-            {{ row.original.height }}m × {{ row.original.width }}m
+            <span
+              class="cursor-pointer"
+              @click="openPlantInfoModal(row.original)"
+            >
+              {{ row.original.height }}m × {{ row.original.width }}m
+            </span>
           </template>
 
           <template #position-cell="{ row }">
-            <span class="text-sm text-gray-500">
+            <span
+              class="cursor-pointer text-sm text-gray-500"
+              @click="openPlantInfoModal(row.original)"
+            >
               ({{ row.original.x_position?.toFixed(1) || 0 }},
               {{ row.original.y_position?.toFixed(1) || 0 }})
             </span>
@@ -204,12 +227,20 @@
                   icon="i-heroicons-pencil-square-20-solid"
                   size="sm"
                   variant="ghost"
+                  @click.stop
                 />
               </EditPlantModal>
             </div>
           </template>
         </UTable>
       </UCard>
+
+      <PlantInfoModal
+        v-if="selectedPlant && showPlantInfoModal"
+        v-model:open="showPlantInfoModal"
+        :plant="selectedPlant"
+        :can-manage-history="isOwner"
+      />
     </div>
   </div>
 </template>
@@ -217,6 +248,7 @@
 <script setup lang="ts">
 import AddPlantModal from "~/components/plant/AddPlantModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
+import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
 import { useGarden } from "~/composables/data/useGarden";
 import { usePlant } from "~/composables/data/usePlant";
 import { useTeam } from "~/composables/data/useTeam";
@@ -243,6 +275,8 @@ const plants = ref<PlantData[]>([]);
 const pending = ref(true);
 const error = ref<string | null>(null);
 const searchQuery = ref("");
+const selectedPlant = ref<PlantData | null>(null);
+const showPlantInfoModal = ref(false);
 
 const columns = computed(() => {
   const baseColumns = [
@@ -343,6 +377,11 @@ const onPlantDeleted = (plantId: string) => {
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   syncVarietyInPlants(plants, updatedVariety);
+};
+
+const openPlantInfoModal = (plant: PlantData) => {
+  selectedPlant.value = plant;
+  showPlantInfoModal.value = true;
 };
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
