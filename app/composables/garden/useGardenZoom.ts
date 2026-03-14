@@ -84,7 +84,38 @@ export const useGardenZoom = (
     draggable: true,
     scaleX: 1,
     scaleY: 1,
+    fitScale: 1,
+    zoomPercent: 100,
   });
+
+  const getFitScaleForStage = (stage: KonvaStage) => {
+    const bgConfig = backgroundConfig?.value;
+    if (!bgConfig) return null;
+
+    const bounds = getBackgroundBounds(bgConfig);
+    if (!bounds?.width || !bounds?.height) return null;
+
+    const stageWidth = stage.width() || stageConfig.width;
+    const stageHeight = stage.height() || stageConfig.height;
+
+    const scaleToFitWidth = stageWidth / bounds.width;
+    const scaleToFitHeight = stageHeight / bounds.height;
+
+    return Math.min(scaleToFitWidth, scaleToFitHeight);
+  };
+
+  const updateZoomState = (scale: number, fitScale: number | null) => {
+    stageConfig.scaleX = scale;
+    stageConfig.scaleY = scale;
+
+    if (fitScale && fitScale > 0) {
+      stageConfig.fitScale = fitScale;
+      stageConfig.zoomPercent = (scale / fitScale) * 100;
+      return;
+    }
+
+    stageConfig.zoomPercent = scale * 100;
+  };
 
   const handleWheel = (e: {
     evt: WheelEvent;
@@ -117,8 +148,7 @@ export const useGardenZoom = (
 
     stage.position(newPos);
 
-    stageConfig.scaleX = newScale;
-    stageConfig.scaleY = newScale;
+    updateZoomState(newScale, getFitScaleForStage(stage));
 
     stage.batchDraw();
   };
@@ -145,8 +175,7 @@ export const useGardenZoom = (
 
     stage.scale({ x: newScale, y: newScale });
     stage.position(newPos);
-    stageConfig.scaleX = newScale;
-    stageConfig.scaleY = newScale;
+    updateZoomState(newScale, getFitScaleForStage(stage));
     stage.batchDraw();
   };
 
@@ -182,7 +211,7 @@ export const useGardenZoom = (
     const scaleToFitWidth = stageWidth / bounds.width;
     const scaleToFitHeight = stageHeight / bounds.height;
 
-    const fitScale = Math.min(scaleToFitWidth, scaleToFitHeight, 1);
+    const fitScale = Math.min(scaleToFitWidth, scaleToFitHeight);
     const requestedDefaultZoom = options?.defaultZoom;
     const shouldApplyDefaultZoom = Boolean(options?.applyDefaultZoom);
     const clampedDefaultZoomPercent =
@@ -192,7 +221,7 @@ export const useGardenZoom = (
     const defaultZoomScale =
       clampedDefaultZoomPercent === null
         ? null
-        : clampedDefaultZoomPercent / 100;
+        : fitScale * (clampedDefaultZoomPercent / 100);
     const scale =
       shouldApplyDefaultZoom && defaultZoomScale !== null
         ? defaultZoomScale
@@ -220,8 +249,7 @@ export const useGardenZoom = (
     stage.scale({ x: scale, y: scale });
     stage.position({ x, y });
 
-    stageConfig.scaleX = scale;
-    stageConfig.scaleY = scale;
+    updateZoomState(scale, fitScale);
 
     stage.batchDraw();
   };

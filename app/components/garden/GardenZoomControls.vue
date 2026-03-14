@@ -9,7 +9,7 @@
       @click="zoomOut"
     />
     <span class="min-w-12 text-center text-sm">
-      {{ Math.round(stageConfig.scaleX * 100) }}%
+      {{ Math.round(stageConfig.zoomPercent ?? stageConfig.scaleX * 100) }}%
     </span>
     <UButton
       icon="i-heroicons-plus-20-solid"
@@ -32,6 +32,7 @@ interface Props {
   stageConfig: {
     scaleX: number;
     scaleY: number;
+    zoomPercent?: number;
     width: number;
     height: number;
     draggable: boolean;

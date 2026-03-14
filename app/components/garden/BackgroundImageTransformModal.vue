@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 
           <UFormField
             label="Default Center Zoom (%)"
-            description="Optional. Used by the center/reset button"
+            description="Used by center/reset. 100% fills available screen"
             class="col-span-2"
           >
             <UInput
