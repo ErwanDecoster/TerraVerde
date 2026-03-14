@@ -27,7 +27,7 @@
     />
   </div>
 
-  <div v-else class="h-screen overflow-hidden">
+  <div v-else class="overflow-hidden">
     <div class="relative flex-1 overflow-hidden">
       <GardenHeader
         :garden="garden"
