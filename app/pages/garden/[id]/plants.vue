@@ -260,6 +260,7 @@ import { PLANT_STATUSES } from "~/types/plant";
 import type { VarietyData } from "~/types/variety";
 
 const route = useRoute();
+const router = useRouter();
 const gardenId = route.params.id as string;
 
 const gardenStore = useGardenStore();
@@ -277,6 +278,14 @@ const showPlantInfoModal = ref(false);
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
+const searchFromQuery = computed(() => {
+  const value = route.query.search;
+  return typeof value === "string" ? value : "";
+});
+const varietyIdFilterFromQuery = computed(() => {
+  const value = route.query.varietyId;
+  return typeof value === "string" && value.length ? value : null;
+});
 
 const columns = computed(() => {
   const baseColumns = [
@@ -317,10 +326,17 @@ const columns = computed(() => {
 });
 
 const filteredPlants = computed(() => {
-  if (!searchQuery.value) return plantsForGarden.value;
+  const plantsMatchingVariety = varietyIdFilterFromQuery.value
+    ? plantsForGarden.value.filter(
+        (plant) =>
+          plant.variety.id.toString() === varietyIdFilterFromQuery.value,
+      )
+    : plantsForGarden.value;
+
+  if (!searchQuery.value) return plantsMatchingVariety;
 
   const query = searchQuery.value.toLowerCase();
-  return plantsForGarden.value.filter(
+  return plantsMatchingVariety.filter(
     (plant) =>
       plant.name.toLowerCase().includes(query) ||
       plant.variety.name.toLowerCase().includes(query) ||
@@ -393,6 +409,34 @@ const onLocateRequested = async (plant: PlantData) => {
     },
   });
 };
+
+watch(
+  searchFromQuery,
+  (value) => {
+    if (value !== searchQuery.value) {
+      searchQuery.value = value;
+    }
+  },
+  { immediate: true },
+);
+
+watch(searchQuery, async (value) => {
+  const normalized = value.trim();
+  const nextSearch = normalized.length ? normalized : undefined;
+  const currentSearch =
+    typeof route.query.search === "string" ? route.query.search : undefined;
+
+  if (currentSearch === nextSearch) {
+    return;
+  }
+
+  await router.replace({
+    query: {
+      ...route.query,
+      search: nextSearch,
+    },
+  });
+});
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
   const access = await teamsStore.resolveGardenAccess(gardenId, gardenData);

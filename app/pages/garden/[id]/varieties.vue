@@ -163,7 +163,10 @@
           class="-m-4 sm:-m-6"
         >
           <template #name-cell="{ row }">
-            <div class="flex items-center gap-2">
+            <div
+              class="flex cursor-pointer items-center gap-2"
+              @click="openVarietyInfoModal(row.original)"
+            >
               <div
                 v-if="row.original.main_color"
                 class="h-4 w-4 rounded-full border"
@@ -185,22 +188,37 @@
 
           <template #category-cell="{ row }">
             <UBadge
+              class="cursor-pointer"
               :color="getCategoryColor(row.original.category) as any"
               variant="subtle"
+              @click="openVarietyInfoModal(row.original)"
             >
               {{ getCategoryLabel(row.original.category) }}
             </UBadge>
           </template>
 
           <template #harvest_period-cell="{ row }">
-            <span v-if="row.original.harvest_period" class="text-sm">
+            <span
+              v-if="row.original.harvest_period"
+              class="cursor-pointer text-sm"
+              @click="openVarietyInfoModal(row.original)"
+            >
               {{ row.original.harvest_period }}
             </span>
-            <span v-else class="text-sm text-gray-400"> Not specified </span>
+            <span
+              v-else
+              class="cursor-pointer text-sm text-gray-400"
+              @click="openVarietyInfoModal(row.original)"
+            >
+              Not specified
+            </span>
           </template>
 
           <template #plant_count-cell="{ row }">
-            <div class="flex items-center gap-1">
+            <div
+              class="flex cursor-pointer items-center gap-1"
+              @click="openVarietyInfoModal(row.original)"
+            >
               <UIcon
                 name="i-heroicons-sparkles-20-solid"
                 class="h-4 w-4 text-green-500"
@@ -240,6 +258,14 @@
           </template>
         </UTable>
       </UCard>
+
+      <VarietyInfoModal
+        v-if="selectedVariety && showVarietyInfoModal"
+        v-model:open="showVarietyInfoModal"
+        :variety="selectedVariety"
+        :can-search-plants="true"
+        @search-plants-requested="onSearchPlantsRequested"
+      />
     </div>
   </div>
 </template>
@@ -248,12 +274,14 @@
 import { storeToRefs } from "pinia";
 import AddVarietyModal from "~/components/variety/AddVarietyModal.vue";
 import EditVarietyModal from "~/components/variety/EditVarietyModal.vue";
+import VarietyInfoModal from "~/components/variety/VarietyInfoModal.vue";
 import { useIsOwner } from "~/composables/useIsOwner";
 import type { GardenData } from "~/types/garden";
 import type { VarietyData } from "~/types/variety";
 import { getCategoryColor, getCategoryLabel } from "~/utils/plantCategories";
 
 const route = useRoute();
+const router = useRouter();
 const gardenId = route.params.id as string;
 
 const gardenStore = useGardenStore();
@@ -269,12 +297,18 @@ const { isOwner } = useIsOwner(gardenId);
 const pending = ref(true);
 const error = ref<string | null>(null);
 const searchQuery = ref("");
+const selectedVariety = ref<VarietyData | null>(null);
+const showVarietyInfoModal = ref(false);
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
 const varietiesForGarden = computed(() =>
   varietiesGardenId.value === gardenId ? varieties.value : [],
 );
+const searchFromQuery = computed(() => {
+  const value = route.query.search;
+  return typeof value === "string" ? value : "";
+});
 
 const columns = computed(() => {
   const baseColumns = [
@@ -365,6 +399,51 @@ const onVarietyDeleted = (varietyId: string) => {
   varietiesStore.removeVariety(varietyId);
   plantsStore.removePlantsByVariety(varietyId);
 };
+
+const openVarietyInfoModal = (variety: VarietyData) => {
+  selectedVariety.value = variety;
+  showVarietyInfoModal.value = true;
+};
+
+const onSearchPlantsRequested = async (variety: VarietyData) => {
+  showVarietyInfoModal.value = false;
+
+  await navigateTo({
+    path: `/garden/${gardenId}/plants`,
+    query: {
+      search: variety.name,
+      varietyId: variety.id,
+    },
+  });
+};
+
+watch(
+  searchFromQuery,
+  (value) => {
+    if (value !== searchQuery.value) {
+      searchQuery.value = value;
+    }
+  },
+  { immediate: true },
+);
+
+watch(searchQuery, async (value) => {
+  const normalized = value.trim();
+  const nextSearch = normalized.length ? normalized : undefined;
+  const currentSearch =
+    typeof route.query.search === "string" ? route.query.search : undefined;
+
+  if (currentSearch === nextSearch) {
+    return;
+  }
+
+  await router.replace({
+    query: {
+      ...route.query,
+      search: nextSearch,
+    },
+  });
+});
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
   const access = await teamsStore.resolveGardenAccess(gardenId, gardenData);
