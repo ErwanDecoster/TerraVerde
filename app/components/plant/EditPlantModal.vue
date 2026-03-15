@@ -17,7 +17,10 @@ interface Props {
 
 interface Emits {
   (e: "update:open" | "update:modelValue", value: boolean): void;
-  (e: "plantUpdated" | "plantCopied", data: PlantData): void;
+  (
+    e: "plantUpdated" | "plantCopied" | "locateRequested",
+    data: PlantData,
+  ): void;
   (e: "plantDeleted", plantId: string): void;
   (e: "varietyUpdated", data: VarietyData): void;
 }
@@ -302,6 +305,11 @@ async function copyPlant() {
       await plantsStore.createMultiplePlants(plantsToCreate);
 
     createdPlants.forEach((plant: PlantData) => emit("plantCopied", plant));
+
+    const latestCopiedPlant = createdPlants[createdPlants.length - 1];
+    if (latestCopiedPlant) {
+      emit("locateRequested", latestCopiedPlant);
+    }
 
     const plantCount = multipleCopyingCount.value;
     toast.add({

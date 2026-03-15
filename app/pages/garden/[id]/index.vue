@@ -114,6 +114,7 @@
       @plant-updated="onPlantUpdated"
       @plant-deleted="onPlantDeleted"
       @plant-copied="onPlantCopied"
+      @locate-requested="onLocateRequestedFromEditModal"
       @variety-updated="onVarietyUpdated"
     />
 
@@ -485,6 +486,16 @@ const onPlantDeleted = (plantId: string) => {
 
 const onPlantCopied = (copiedPlant: PlantData) => {
   plantsStore.appendPlant(copiedPlant);
+};
+
+const onLocateRequestedFromEditModal = async (plant: PlantData) => {
+  await router.replace({
+    query: {
+      ...route.query,
+      focusPlantId: plant.id,
+      focusMode: "quarter",
+    },
+  });
 };
 
 const onEditRequested = (plant: PlantData) => {

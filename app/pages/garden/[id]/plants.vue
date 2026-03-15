@@ -236,6 +236,7 @@
                 @plant-updated="onPlantUpdated"
                 @plant-deleted="onPlantDeleted"
                 @plant-copied="onPlantAdded"
+                @locate-requested="onLocateRequested"
                 @variety-updated="onVarietyUpdated"
               />
 
