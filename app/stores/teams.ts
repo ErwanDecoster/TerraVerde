@@ -136,6 +136,13 @@ export const useTeamsStore = defineStore("teams", () => {
     loadingByGarden.value = nextLoading;
   };
 
+  const reset = () => {
+    teamsByGarden.value = {};
+    accessByGarden.value = {};
+    loadingByGarden.value = {};
+    pendingFetches.clear();
+  };
+
   return {
     teamsByGarden,
     accessByGarden,
@@ -151,5 +158,6 @@ export const useTeamsStore = defineStore("teams", () => {
     getGardenAccess,
     isGardenOwner,
     resetGardenState,
+    reset,
   };
 });

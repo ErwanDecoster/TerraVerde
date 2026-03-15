@@ -54,6 +54,7 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       await $supabase.auth.signOut();
       user.value = null;
+      initialized.value = false;
       await navigateTo("/login");
     } catch (error) {
       console.error("Error signing out:", error);
