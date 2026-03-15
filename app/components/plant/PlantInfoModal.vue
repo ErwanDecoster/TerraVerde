@@ -203,6 +203,14 @@
 
     <template #footer="{ close }">
       <div class="flex w-full justify-end gap-0.5">
+        <UButton
+          v-if="canLocate"
+          variant="outline"
+          icon="i-heroicons-map-pin-20-solid"
+          @click="requestLocate"
+        >
+          Locate on Map
+        </UButton>
         <UButton variant="ghost" @click="close"> Close </UButton>
         <UButton
           v-if="canEdit"
@@ -245,11 +253,13 @@ interface Props {
   canEdit?: boolean;
   canManageHistory?: boolean;
   showBulkTip?: boolean;
+  canLocate?: boolean;
 }
 
 interface Emits {
   (e: "update:open", value: boolean): void;
   (e: "edit-requested", plant: PlantData): void;
+  (e: "locate-requested", plant: PlantData): void;
 }
 
 const props = defineProps<Props>();
@@ -361,5 +371,9 @@ const onEventAdded = (event: PlantEventData) => {
 const openEditModal = () => {
   emit("edit-requested", props.plant);
   isOpen.value = false;
+};
+
+const requestLocate = () => {
+  emit("locate-requested", props.plant);
 };
 </script>

@@ -182,6 +182,49 @@ export const useGardenZoom = (
   const zoomIn = () => zoomTo(1.2);
   const zoomOut = () => zoomTo(1 / 1.2);
 
+  const focusOnPoint = (options: {
+    x: number;
+    y: number;
+    objectDiameter?: number;
+    objectScreenRatio?: number;
+    scale?: number;
+  }) => {
+    if (!stageRef?.value) return false;
+
+    const stage = stageRef.value.getStage();
+    if (!stage) return false;
+
+    const stageWidth = stage.width() || stageConfig.width;
+    const stageHeight = stage.height() || stageConfig.height;
+    const minViewportDimension = Math.min(stageWidth, stageHeight);
+
+    let scale = options.scale ?? stage.scaleX();
+
+    if (
+      options.objectDiameter &&
+      options.objectDiameter > 0 &&
+      options.objectScreenRatio &&
+      options.objectScreenRatio > 0
+    ) {
+      const targetObjectScreenDiameter =
+        minViewportDimension * options.objectScreenRatio;
+      scale = targetObjectScreenDiameter / options.objectDiameter;
+    }
+
+    const clampedScale = Math.max(0.1, Math.min(scale, 10));
+
+    stage.scale({ x: clampedScale, y: clampedScale });
+    stage.position({
+      x: stageWidth / 2 - options.x * clampedScale,
+      y: stageHeight / 2 - options.y * clampedScale,
+    });
+
+    updateZoomState(clampedScale, getFitScaleForStage(stage));
+    stage.batchDraw();
+
+    return true;
+  };
+
   const resetZoom = (options?: {
     applyDefaultZoom?: boolean;
     defaultZoom?: number | null;
@@ -270,6 +313,7 @@ export const useGardenZoom = (
     handleWheel,
     zoomIn,
     zoomOut,
+    focusOnPoint,
     resetZoom,
     handleResize,
   };

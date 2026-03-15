@@ -155,6 +155,7 @@ import type { TeamRole } from "~/types/team";
 import type { VarietyData } from "~/types/variety";
 
 const route = useRoute();
+const router = useRouter();
 const gardenId = route.params.id as string;
 const toast = useToast();
 
@@ -253,11 +254,18 @@ interface KonvaStage {
 
 const canvas = ref<{ stage: { getStage: () => KonvaStage } } | null>(null);
 
-const { stageConfig, handleWheel, zoomIn, zoomOut, resetZoom, handleResize } =
-  useGardenZoom(
-    computed(() => canvas.value?.stage || null),
-    computed(() => backgroundConfig),
-  );
+const {
+  stageConfig,
+  handleWheel,
+  zoomIn,
+  zoomOut,
+  focusOnPoint,
+  resetZoom,
+  handleResize,
+} = useGardenZoom(
+  computed(() => canvas.value?.stage || null),
+  computed(() => backgroundConfig),
+);
 
 const defaultZoomPreview = ref<number | null>(null);
 const defaultCenterPreview = ref<{ x: number | null; y: number | null }>({
@@ -352,6 +360,10 @@ const clickCoordinates = ref<{ x: number; y: number } | null>(null);
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
+const focusedPlantIdFromQuery = computed(() => {
+  const queryPlantId = route.query.focusPlantId;
+  return typeof queryPlantId === "string" ? queryPlantId : null;
+});
 
 const onPlantClick = (plant: PlantData) => {
   if (isSelectionKeyPressed.value && canUseBulkInCurrentMode.value) {
@@ -486,6 +498,54 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
   varietiesStore.upsertVariety(updatedVariety);
 };
 
+const clearFocusPlantQuery = async () => {
+  if (!focusedPlantIdFromQuery.value) return;
+
+  const {
+    focusPlantId: _focusPlantId,
+    focusMode: _focusMode,
+    ...query
+  } = route.query;
+  await router.replace({ query });
+};
+
+const focusPlantOnMap = (plantId: string) => {
+  const marker = plantMarkers.value.find((item) => item.id === plantId);
+  if (!marker) return false;
+
+  const objectDiameter = Math.max(marker.config.radius * 2, 1);
+  return focusOnPoint({
+    x: marker.config.x,
+    y: marker.config.y,
+    objectDiameter,
+    objectScreenRatio: 0.2,
+  });
+};
+
+const applyFocusPlantFromQuery = async () => {
+  const focusedPlantId = focusedPlantIdFromQuery.value;
+  if (!focusedPlantId) return;
+
+  let focused = focusPlantOnMap(focusedPlantId);
+
+  if (!focused) {
+    for (let retries = 0; retries < 6 && !focused; retries += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      focused = focusPlantOnMap(focusedPlantId);
+    }
+  }
+
+  if (!focused) {
+    toast.add({
+      title: "Plant not found",
+      description: "Unable to locate this plant on the garden map.",
+      color: "warning",
+    });
+  }
+
+  await clearFocusPlantQuery();
+};
+
 const {
   hoveredPlant,
   handlePlantClick,
@@ -568,13 +628,24 @@ const loadPlants = async () => {
     varietiesStore.hydrateUsedVarieties(gardenId, loadedPlants);
 
     await nextTick();
-    setTimeout(() => {
+    setTimeout(async () => {
       applySavedCenterZoom();
+      await applyFocusPlantFromQuery();
     }, 200);
   } catch (err) {
     console.error("Error loading plants:", err);
   }
 };
+
+watch(
+  focusedPlantIdFromQuery,
+  async (plantId) => {
+    if (!plantId || pending.value) return;
+    await nextTick();
+    await applyFocusPlantFromQuery();
+  },
+  { immediate: false },
+);
 
 onMounted(() => {
   loadGarden();

@@ -241,6 +241,8 @@
         :plant="selectedPlant"
         :can-manage-history="isOwner"
         :show-bulk-tip="false"
+        :can-locate="true"
+        @locate-requested="onLocateRequested"
       />
     </div>
   </div>
@@ -378,6 +380,18 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
 const openPlantInfoModal = (plant: PlantData) => {
   selectedPlant.value = plant;
   showPlantInfoModal.value = true;
+};
+
+const onLocateRequested = async (plant: PlantData) => {
+  showPlantInfoModal.value = false;
+
+  await navigateTo({
+    path: `/garden/${gardenId}`,
+    query: {
+      focusPlantId: plant.id,
+      focusMode: "quarter",
+    },
+  });
 };
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
