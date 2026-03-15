@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { useGarden } from "~/composables/data/useGarden";
 import type {
   GardenData,

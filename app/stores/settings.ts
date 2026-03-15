@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import type { SettingsData, SettingsUpdateFormData } from "~/types/settings";
 
 export const useSettingsStore = defineStore("settings", () => {

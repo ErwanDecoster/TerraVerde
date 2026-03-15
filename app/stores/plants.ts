@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { usePlant } from "~/composables/data/usePlant";
 import type {
   PlantBulkHistoryFormData,

@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { useTeam } from "~/composables/data/useTeam";
 import type { GardenData } from "~/types/garden";
 import type { TeamData, TeamRole } from "~/types/team";
@@ -23,6 +24,7 @@ export const useTeamsStore = defineStore("teams", () => {
   const teamsByGarden = ref<Record<string, TeamData[]>>({});
   const accessByGarden = ref<Record<string, GardenAccessState>>({});
   const loadingByGarden = ref<Record<string, boolean>>({});
+  const pendingFetches = new Map<string, Promise<TeamData[]>>();
 
   const setGardenLoading = (gardenId: string, loading: boolean) => {
     loadingByGarden.value = {
@@ -39,18 +41,30 @@ export const useTeamsStore = defineStore("teams", () => {
       return teamsByGarden.value[gardenId];
     }
 
+    const pendingFetch = pendingFetches.get(gardenId);
+
+    if (pendingFetch !== undefined) {
+      return pendingFetch;
+    }
+
     setGardenLoading(gardenId, true);
 
-    try {
-      const teams = await fetchTeamsByGarden(gardenId);
-      teamsByGarden.value = {
-        ...teamsByGarden.value,
-        [gardenId]: teams,
-      };
-      return teams;
-    } finally {
-      setGardenLoading(gardenId, false);
-    }
+    const fetchPromise = fetchTeamsByGarden(gardenId)
+      .then((teams) => {
+        teamsByGarden.value = {
+          ...teamsByGarden.value,
+          [gardenId]: teams,
+        };
+        return teams;
+      })
+      .finally(() => {
+        pendingFetches.delete(gardenId);
+        setGardenLoading(gardenId, false);
+      });
+
+    pendingFetches.set(gardenId, fetchPromise);
+
+    return fetchPromise;
   };
 
   const resolveGardenAccess = async (

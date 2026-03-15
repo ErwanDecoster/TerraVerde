@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { useVariety } from "~/composables/data/useVariety";
 import type { VarietyFilterMode } from "~/types/garden";
 import type { PlantData } from "~/types/plant";

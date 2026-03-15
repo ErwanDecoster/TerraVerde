@@ -79,7 +79,7 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon name="lucide-trees" class="h-8 w-8 text-green-600" />
+            <UIcon name="i-lucide-tree-pine" class="h-8 w-8 text-green-600" />
             <div>
               <p class="text-sm text-gray-500 dark:text-gray-400">Trees</p>
               <p class="text-2xl font-semibold">
@@ -91,7 +91,10 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon name="lucide-shrub" class="h-8 w-8 text-green-600" />
+            <UIcon
+              name="i-lucide-tree-deciduous"
+              class="h-8 w-8 text-green-600"
+            />
             <div>
               <p class="text-sm text-gray-500 dark:text-gray-400">Shrubs</p>
               <p class="text-2xl font-semibold">
@@ -103,7 +106,7 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon name="lucide-leaf" class="h-8 w-8 text-yellow-600" />
+            <UIcon name="i-lucide-leaf" class="h-8 w-8 text-yellow-600" />
             <div>
               <p class="text-sm text-gray-500 dark:text-gray-400">Climbers</p>
               <p class="text-2xl font-semibold">
@@ -115,7 +118,7 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon name="lucide-flower-2" class="h-8 w-8 text-pink-500" />
+            <UIcon name="i-lucide-flower" class="h-8 w-8 text-pink-500" />
             <div>
               <p class="text-sm text-gray-500 dark:text-gray-400">Flowers</p>
               <p class="text-2xl font-semibold">
@@ -127,7 +130,7 @@
 
         <UCard>
           <div class="flex items-center gap-3">
-            <UIcon name="lucide-carrot" class="h-8 w-8 text-orange-500" />
+            <UIcon name="i-lucide-carrot" class="h-8 w-8 text-orange-500" />
             <div>
               <p class="text-sm text-gray-500 dark:text-gray-400">Vegetables</p>
               <p class="text-2xl font-semibold">

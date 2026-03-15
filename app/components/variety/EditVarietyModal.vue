@@ -41,9 +41,7 @@ async function computeCanEdit() {
   }
   permissionLoading.value = true;
   try {
-    const teams = await teamsStore.fetchGardenTeams(props.variety.garden_id, {
-      force: true,
-    });
+    const teams = await teamsStore.fetchGardenTeams(props.variety.garden_id);
     const canEdit = teams.some((team: TeamData) =>
       team.teams_members?.some(
         (member: TeamMemberData) =>
@@ -60,7 +58,13 @@ async function computeCanEdit() {
   }
 }
 
-onMounted(computeCanEdit);
+watch(open, (isOpen) => {
+  if (!isOpen) {
+    return;
+  }
+
+  void computeCanEdit();
+});
 
 const schema = z.object({
   name: z
@@ -125,6 +129,7 @@ const form = ref();
 watch(
   () => props.variety,
   (newVariety) => {
+    isGardenEditorMember.value = false;
     Object.assign(state, {
       name: newVariety.name,
       scientific_name: newVariety.scientific_name || "",
@@ -219,22 +224,31 @@ function confirmDelete() {
   >
     <UTooltip
       :text="
-        !isGardenEditorMember
+        !permissionLoading && !isGardenEditorMember
           ? 'This variety is imported from another garden. You must be part of that garden’s team to edit it.'
           : ''
       "
-      :disabled="isGardenEditorMember"
+      :disabled="permissionLoading || isGardenEditorMember"
     >
       <UButton
         label="Edit Variety"
         variant="subtle"
         icon="i-heroicons-pencil-square-20-solid"
-        :disabled="!isGardenEditorMember || permissionLoading"
-        :loading="permissionLoading"
+        :loading="permissionLoading && open"
+        :disabled="false"
       />
     </UTooltip>
 
     <template #body>
+      <UAlert
+        v-if="!permissionLoading && !isGardenEditorMember"
+        color="warning"
+        variant="soft"
+        title="Editing unavailable"
+        description="This variety belongs to another garden. Only members with owner or editor access in that garden can modify it."
+        class="col-span-2 mb-4"
+      />
+
       <UForm
         ref="form"
         :schema="schema"
@@ -247,6 +261,7 @@ function confirmDelete() {
             v-model="state.name"
             class="w-full"
             placeholder="Enter variety name"
+            :disabled="permissionLoading || !isGardenEditorMember"
           />
         </UFormField>
         <UFormField label="Category" name="category" required>
@@ -255,6 +270,7 @@ function confirmDelete() {
             :items="VARIETY_CATEGORIES_FOR_SELECT.slice()"
             class="w-full"
             placeholder="Select category"
+            :disabled="permissionLoading || !isGardenEditorMember"
           />
         </UFormField>
 
@@ -263,6 +279,7 @@ function confirmDelete() {
             v-model="state.scientific_name"
             class="w-full"
             placeholder="e.g., Solanum lycopersicum"
+            :disabled="permissionLoading || !isGardenEditorMember"
           />
         </UFormField>
 
@@ -271,6 +288,7 @@ function confirmDelete() {
             v-model="state.harvest_period"
             class="w-full"
             placeholder="e.g., July - October"
+            :disabled="permissionLoading || !isGardenEditorMember"
           />
         </UFormField>
 
@@ -284,6 +302,7 @@ function confirmDelete() {
             class="w-full"
             placeholder="https://example.com/variety-info"
             type="url"
+            :disabled="permissionLoading || !isGardenEditorMember"
           />
         </UFormField>
 
@@ -294,17 +313,31 @@ function confirmDelete() {
           :ui="{ container: 'grid grid-cols-2 gap-4' }"
         >
           <UPopover>
-            <UButton label="Choose color" class="w-full" variant="outline">
+            <UButton
+              label="Choose color"
+              class="w-full"
+              variant="outline"
+              :disabled="permissionLoading || !isGardenEditorMember"
+            >
               <template #leading>
                 <span :style="chip" class="size-3 rounded-full" />
               </template>
             </UButton>
 
             <template #content>
-              <UColorPicker v-model="state.main_color" class="p-2" />
+              <UColorPicker
+                v-model="state.main_color"
+                class="p-2"
+                :disabled="permissionLoading || !isGardenEditorMember"
+              />
             </template>
           </UPopover>
-          <UInput v-model="state.main_color" type="string" class="w-full" />
+          <UInput
+            v-model="state.main_color"
+            type="string"
+            class="w-full"
+            :disabled="permissionLoading || !isGardenEditorMember"
+          />
         </UFormField>
 
         <UFormField
@@ -312,7 +345,10 @@ function confirmDelete() {
           name="is_public"
           class="col-span-2"
         >
-          <USwitch v-model="state.is_public" />
+          <USwitch
+            v-model="state.is_public"
+            :disabled="permissionLoading || !isGardenEditorMember"
+          />
         </UFormField>
       </UForm>
     </template>
@@ -324,7 +360,9 @@ function confirmDelete() {
             color="error"
             variant="outline"
             icon="i-heroicons-trash-20-solid"
-            :disabled="loading || deleting"
+            :disabled="
+              loading || deleting || permissionLoading || !isGardenEditorMember
+            "
             @click="confirmDelete"
           >
             Delete
@@ -363,7 +401,13 @@ function confirmDelete() {
             type="submit"
             form="edit-variety-form"
             :loading="loading"
-            :disabled="loading || deleting || showDeleteConfirmation"
+            :disabled="
+              loading ||
+              deleting ||
+              showDeleteConfirmation ||
+              permissionLoading ||
+              !isGardenEditorMember
+            "
             icon="i-heroicons-check-20-solid"
             @click="form.submit()"
           >

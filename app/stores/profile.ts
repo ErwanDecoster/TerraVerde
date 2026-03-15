@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { useProfile } from "~/composables/data/useProfile";
 import type { ProfileData, ProfileUpdateFormData } from "~/types/profile";
 

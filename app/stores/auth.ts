@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { defineStore } from "pinia";
 
 export const useAuthStore = defineStore("auth", () => {
   const { $supabase } = useNuxtApp();
