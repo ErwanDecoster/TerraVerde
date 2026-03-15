@@ -161,6 +161,10 @@ const route = useRoute();
 const router = useRouter();
 const gardenId = route.params.id as string;
 const toast = useToast();
+const focusedPlantIdFromQuery = computed(() => {
+  const queryPlantId = route.query.focusPlantId;
+  return typeof queryPlantId === "string" ? queryPlantId : null;
+});
 
 const gardenStore = useGardenStore();
 const teamsStore = useTeamsStore();
@@ -234,6 +238,7 @@ const visibleCategories = ref<string[]>([
 
 const pending = ref(true);
 const error = ref<string | null>(null);
+const hasAppliedFocusFromQuery = ref(false);
 
 const showAddPlantModal = ref(false);
 const showEditPlantModal = ref(false);
@@ -300,6 +305,11 @@ const applySavedCenterZoom = () => {
   resetZoom(getSavedCenterZoomOptions());
 };
 
+const handleBackgroundImageReady = () => {
+  if (focusedPlantIdFromQuery.value || hasAppliedFocusFromQuery.value) return;
+  applySavedCenterZoom();
+};
+
 const onCenterZoom = () => {
   applySavedCenterZoom();
 };
@@ -335,7 +345,7 @@ const {
   loadBackgroundImage,
   setBackgroundRotation,
   setBackgroundOffset,
-} = useGardenCanvas(applySavedCenterZoom);
+} = useGardenCanvas(handleBackgroundImageReady);
 
 const pixelsPerMetersPreview = ref<number | null>(null);
 const gardenState = computed(() => garden.value || ({} as GardenData));
@@ -363,10 +373,6 @@ const clickCoordinates = ref<{ x: number; y: number } | null>(null);
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
-const focusedPlantIdFromQuery = computed(() => {
-  const queryPlantId = route.query.focusPlantId;
-  return typeof queryPlantId === "string" ? queryPlantId : null;
-});
 
 const onPlantClick = (plant: PlantData) => {
   if (isSelectionKeyPressed.value && canUseBulkInCurrentMode.value) {
@@ -568,6 +574,10 @@ const applyFocusPlantFromQuery = async () => {
     });
   }
 
+  if (focused) {
+    hasAppliedFocusFromQuery.value = true;
+  }
+
   await clearFocusPlantQuery();
 };
 
@@ -609,6 +619,7 @@ const loadGarden = async () => {
   try {
     pending.value = true;
     error.value = null;
+    hasAppliedFocusFromQuery.value = false;
 
     const gardenData = await gardenStore.loadCurrentGarden(gardenId, {
       force: true,
@@ -654,8 +665,12 @@ const loadPlants = async () => {
 
     await nextTick();
     setTimeout(async () => {
+      if (focusedPlantIdFromQuery.value) {
+        await applyFocusPlantFromQuery();
+        return;
+      }
+
       applySavedCenterZoom();
-      await applyFocusPlantFromQuery();
     }, 200);
   } catch (err) {
     console.error("Error loading plants:", err);
