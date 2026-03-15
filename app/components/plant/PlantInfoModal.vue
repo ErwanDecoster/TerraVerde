@@ -151,7 +151,7 @@
             <div
               v-for="event in plantEvents"
               :key="event.id"
-              class="bg-default rounded-md border p-3"
+              class="bg-default rounded-md p-3"
             >
               <div class="mb-2 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">

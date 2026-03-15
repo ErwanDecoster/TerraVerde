@@ -37,9 +37,7 @@ onMounted(async () => {
   <div class="container mx-auto p-6">
     <div class="mb-8">
       <h1 class="mb-2 text-4xl font-bold">Public Gardens</h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Discover gardens shared by the community
-      </p>
+      <p class="text-muted">Discover gardens shared by the community</p>
     </div>
 
     <!-- Loading state -->
@@ -66,12 +64,12 @@ onMounted(async () => {
     <div v-else-if="gardens.length === 0" class="py-12 text-center">
       <UIcon
         name="i-heroicons-globe-alt-20-solid"
-        class="mx-auto h-12 w-12 text-gray-400"
+        class="text-dimmed mx-auto h-12 w-12"
       />
-      <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+      <h3 class="text-highlighted mt-2 text-sm font-semibold">
         No public gardens yet
       </h3>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <p class="text-muted mt-1 text-sm">
         Be the first to share your garden with the community!
       </p>
       <div class="mt-6">
@@ -106,18 +104,16 @@ onMounted(async () => {
 
         <div class="space-y-3">
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 class="text-highlighted text-lg font-semibold">
               {{ garden.name }}
             </h3>
             <p
               v-if="gardenPrimaryMemberName(garden)"
-              class="text-sm text-gray-500 dark:text-gray-400"
+              class="text-muted text-sm"
             >
               {{ gardenPrimaryMemberName(garden) }} Garden
             </p>
-            <p v-else class="text-sm text-gray-500 dark:text-gray-400">
-              Community Garden
-            </p>
+            <p v-else class="text-muted text-sm">Community Garden</p>
           </div>
 
           <div class="pt-2">

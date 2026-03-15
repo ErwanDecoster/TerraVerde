@@ -133,10 +133,10 @@ async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
     <h1 class="mb-6 text-2xl font-semibold">My Profile</h1>
     <div v-if="loadingProfile" class="flex justify-center py-12">
       <div
-        class="border-primary-600 h-10 w-10 animate-spin rounded-full border-b-2"
+        class="border-primary h-10 w-10 animate-spin rounded-full border-b-2"
       />
     </div>
-    <div v-else-if="!profile" class="text-gray-600 dark:text-gray-300">
+    <div v-else-if="!profile" class="text-toned">
       <p>
         No profile exists yet. It will be created automatically at registration.
       </p>
@@ -155,7 +155,7 @@ async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
         </div>
         <div
           v-else
-          class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 text-xl font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+          class="bg-elevated text-toned flex h-20 w-20 items-center justify-center rounded-full text-xl font-medium"
         >
           {{ initials }}
         </div>
@@ -163,10 +163,7 @@ async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
           <h2 class="text-lg font-medium">
             {{ profile.first_name }} {{ profile.last_name }}
           </h2>
-          <p
-            v-if="profile.website"
-            class="text-sm text-blue-600 dark:text-blue-400"
-          >
+          <p v-if="profile.website" class="text-primary text-sm">
             <a
               :href="profile.website"
               target="_blank"

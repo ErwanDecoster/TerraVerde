@@ -103,7 +103,7 @@ const unitsOptions = [
     <h1 class="mb-6 text-2xl font-semibold">Settings</h1>
     <div v-if="loading" class="flex justify-center py-12">
       <div
-        class="border-primary-600 h-10 w-10 animate-spin rounded-full border-b-2"
+        class="border-primary h-10 w-10 animate-spin rounded-full border-b-2"
       />
     </div>
     <div v-else class="space-y-6">

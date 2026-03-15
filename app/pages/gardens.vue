@@ -61,7 +61,7 @@ onMounted(async () => {
         </template>
 
         <div class="space-y-3">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-highlighted text-lg font-semibold">
             {{ garden.name }}
           </h3>
 

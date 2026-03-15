@@ -160,7 +160,7 @@
           :data="filteredVarieties"
           :columns="columns"
           :loading="pending"
-          class="w-full"
+          class="-m-4 sm:-m-6"
         >
           <template #name-cell="{ row }">
             <div class="flex items-center gap-2">
