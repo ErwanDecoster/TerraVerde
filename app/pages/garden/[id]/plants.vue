@@ -215,25 +215,77 @@
 
           <template #actions-cell="{ row }">
             <div class="flex items-center gap-1">
+              <EditVarietyModal
+                :variety="row.original.variety"
+                :open="activeVarietyEditorPlantId === row.original.id"
+                :hide-trigger="true"
+                @update:open="
+                  onVarietyEditorOpenChange(row.original.id, $event)
+                "
+                @variety-updated="onVarietyUpdated"
+                @variety-deleted="onVarietyDeleted"
+              />
+
               <EditPlantModal
+                v-if="isOwner"
                 :plant="row.original"
+                :open="activePlantEditorId === row.original.id"
+                :hide-trigger="true"
                 :variety-filter-mode="garden?.variety_filter_mode"
+                @update:open="onPlantEditorOpenChange(row.original.id, $event)"
                 @plant-updated="onPlantUpdated"
                 @plant-deleted="onPlantDeleted"
                 @plant-copied="onPlantAdded"
                 @variety-updated="onVarietyUpdated"
-              >
+              />
+
+              <UDropdownMenu :items="getPlantActionItems(row.original)">
                 <UButton
-                  icon="i-heroicons-pencil-square-20-solid"
+                  label="Actions"
+                  icon="i-heroicons-ellipsis-horizontal-20-solid"
                   size="sm"
                   variant="ghost"
-                  @click.stop
                 />
-              </EditPlantModal>
+              </UDropdownMenu>
             </div>
           </template>
         </UTable>
       </UCard>
+
+      <UModal
+        v-model:open="showDeletePlantConfirmModal"
+        title="Delete Plant"
+        description="This action cannot be undone."
+      >
+        <template #body>
+          <p class="text-sm">
+            Are you sure you want to delete
+            <span class="font-semibold">{{ plantToDelete?.name }}</span
+            >?
+          </p>
+        </template>
+
+        <template #footer>
+          <div class="flex w-full justify-end gap-2">
+            <UButton
+              variant="ghost"
+              :disabled="deletingPlant"
+              @click="showDeletePlantConfirmModal = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="error"
+              icon="i-heroicons-trash-20-solid"
+              :loading="deletingPlant"
+              :disabled="deletingPlant"
+              @click="confirmDeletePlant"
+            >
+              Delete
+            </UButton>
+          </div>
+        </template>
+      </UModal>
 
       <PlantInfoModal
         v-if="selectedPlant && showPlantInfoModal"
@@ -253,6 +305,7 @@ import { storeToRefs } from "pinia";
 import AddPlantModal from "~/components/plant/AddPlantModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
 import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
+import EditVarietyModal from "~/components/variety/EditVarietyModal.vue";
 import { useIsOwner } from "~/composables/useIsOwner";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
@@ -262,6 +315,7 @@ import type { VarietyData } from "~/types/variety";
 const route = useRoute();
 const router = useRouter();
 const gardenId = route.params.id as string;
+const toast = useToast();
 
 const gardenStore = useGardenStore();
 const teamsStore = useTeamsStore();
@@ -275,6 +329,11 @@ const error = ref<string | null>(null);
 const searchQuery = ref("");
 const selectedPlant = ref<PlantData | null>(null);
 const showPlantInfoModal = ref(false);
+const showDeletePlantConfirmModal = ref(false);
+const plantToDelete = ref<PlantData | null>(null);
+const deletingPlant = ref(false);
+const activePlantEditorId = ref<string | null>(null);
+const activeVarietyEditorPlantId = ref<string | null>(null);
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
@@ -313,14 +372,11 @@ const columns = computed(() => {
       id: "position",
       header: "Position",
     },
-  ];
-
-  if (isOwner.value) {
-    baseColumns.push({
+    {
       id: "actions",
       header: "Actions",
-    });
-  }
+    },
+  ];
 
   return baseColumns;
 });
@@ -393,6 +449,10 @@ const onVarietyUpdated = (updatedVariety: VarietyData) => {
   plantsStore.syncVarietyInPlants(updatedVariety);
 };
 
+const onVarietyDeleted = (varietyId: string) => {
+  plantsStore.removePlantsByVariety(varietyId);
+};
+
 const openPlantInfoModal = (plant: PlantData) => {
   selectedPlant.value = plant;
   showPlantInfoModal.value = true;
@@ -408,6 +468,110 @@ const onLocateRequested = async (plant: PlantData) => {
       focusMode: "quarter",
     },
   });
+};
+
+const onSearchSameVariety = async (plant: PlantData) => {
+  await router.replace({
+    query: {
+      ...route.query,
+      search: plant.variety.name,
+      varietyId: plant.variety.id,
+    },
+  });
+};
+
+const requestDeletePlant = (plant: PlantData) => {
+  plantToDelete.value = plant;
+  showDeletePlantConfirmModal.value = true;
+};
+
+const openPlantEditor = (plant: PlantData) => {
+  activePlantEditorId.value = plant.id;
+};
+
+const onPlantEditorOpenChange = (plantId: string, isOpen: boolean) => {
+  if (!isOpen && activePlantEditorId.value === plantId) {
+    activePlantEditorId.value = null;
+  }
+};
+
+const openVarietyEditorFromPlant = (plant: PlantData) => {
+  activeVarietyEditorPlantId.value = plant.id;
+};
+
+const onVarietyEditorOpenChange = (plantId: string, isOpen: boolean) => {
+  if (!isOpen && activeVarietyEditorPlantId.value === plantId) {
+    activeVarietyEditorPlantId.value = null;
+  }
+};
+
+const confirmDeletePlant = async () => {
+  if (!plantToDelete.value) return;
+
+  deletingPlant.value = true;
+  try {
+    await plantsStore.deleteExistingPlant(plantToDelete.value.id);
+    toast.add({
+      title: "Plant Deleted",
+      description: "The plant has been successfully deleted",
+      color: "success",
+    });
+    showDeletePlantConfirmModal.value = false;
+    plantToDelete.value = null;
+  } catch (err) {
+    console.error("Error deleting plant:", err);
+    toast.add({
+      title: "Error",
+      description: "An error occurred while deleting the plant",
+      color: "error",
+    });
+  } finally {
+    deletingPlant.value = false;
+  }
+};
+
+const getPlantActionItems = (plant: PlantData) => {
+  const items: Array<Array<Record<string, unknown>>> = [
+    [
+      {
+        label: "View details",
+        icon: "i-heroicons-information-circle-20-solid",
+        onSelect: () => openPlantInfoModal(plant),
+      },
+      {
+        label: "Locate on map",
+        icon: "i-heroicons-map-pin-20-solid",
+        onSelect: () => onLocateRequested(plant),
+      },
+      {
+        label: "Find same variety",
+        icon: "i-heroicons-funnel-20-solid",
+        onSelect: () => onSearchSameVariety(plant),
+      },
+      {
+        label: "Edit variety",
+        icon: "i-heroicons-tag-20-solid",
+        onSelect: () => openVarietyEditorFromPlant(plant),
+      },
+    ],
+  ];
+
+  if (isOwner.value) {
+    items.push([
+      {
+        label: "Edit plant",
+        icon: "i-heroicons-pencil-square-20-solid",
+        onSelect: () => openPlantEditor(plant),
+      },
+      {
+        label: "Delete plant",
+        icon: "i-heroicons-trash-20-solid",
+        onSelect: () => requestDeletePlant(plant),
+      },
+    ]);
+  }
+
+  return items;
 };
 
 watch(

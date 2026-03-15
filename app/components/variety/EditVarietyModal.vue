@@ -7,17 +7,19 @@ import { VARIETY_CATEGORIES_FOR_SELECT } from "~/utils/plantCategories";
 
 interface Props {
   variety: VarietyData;
+  open?: boolean;
+  hideTrigger?: boolean;
 }
 
 interface Emits {
-  (e: "update:modelValue", value: boolean): void;
+  (e: "update:open" | "update:modelValue", value: boolean): void;
   (e: "varietyUpdated", data: VarietyData): void;
   (e: "varietyDeleted", varietyId: string): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-const open = ref(false);
+const internalOpen = ref(false);
 const toast = useToast();
 const authStore = useAuthStore();
 const teamsStore = useTeamsStore();
@@ -25,12 +27,19 @@ const varietiesStore = useVarietiesStore();
 
 const showDeleteConfirmation = ref(false);
 
-// Determine if current user can edit this variety: must be member (role owner or editor) of the garden owning the variety
 const isGardenEditorMember = ref(false);
 const permissionLoading = ref(false);
 
+const modalOpen = computed({
+  get: () => (props.open === undefined ? internalOpen.value : props.open),
+  set: (value: boolean) => {
+    internalOpen.value = value;
+    emit("update:open", value);
+    emit("update:modelValue", value);
+  },
+});
+
 async function computeCanEdit() {
-  // Need garden id and authenticated user
   if (!authStore.user) {
     await authStore.initialize();
   }
@@ -39,6 +48,7 @@ async function computeCanEdit() {
     isGardenEditorMember.value = false;
     return;
   }
+
   permissionLoading.value = true;
   try {
     const teams = await teamsStore.fetchGardenTeams(props.variety.garden_id);
@@ -58,11 +68,8 @@ async function computeCanEdit() {
   }
 }
 
-watch(open, (isOpen) => {
-  if (!isOpen) {
-    return;
-  }
-
+watch(modalOpen, (isOpen) => {
+  if (!isOpen) return;
   void computeCanEdit();
 });
 
@@ -120,10 +127,8 @@ const state = reactive<Partial<EditVarietySchema>>({
 });
 
 const chip = computed(() => ({ backgroundColor: state.main_color }));
-
 const loading = ref(false);
 const deleting = ref(false);
-
 const form = ref();
 
 watch(
@@ -163,7 +168,7 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
     );
 
     emit("varietyUpdated", varietyData);
-    open.value = false;
+    modalOpen.value = false;
 
     toast.add({
       title: "Variety Updated",
@@ -190,7 +195,7 @@ async function onDelete() {
     await varietiesStore.deleteExistingVariety(props.variety.id);
 
     emit("varietyDeleted", props.variety.id);
-    open.value = false;
+    modalOpen.value = false;
     showDeleteConfirmation.value = false;
 
     toast.add({
@@ -218,26 +223,30 @@ function confirmDelete() {
 
 <template>
   <UModal
-    v-model:open="open"
+    v-model:open="modalOpen"
     title="Edit Variety"
     description="Update the variety details below."
   >
-    <UTooltip
-      :text="
-        !permissionLoading && !isGardenEditorMember
-          ? 'This variety is imported from another garden. You must be part of that garden’s team to edit it.'
-          : ''
-      "
-      :disabled="permissionLoading || isGardenEditorMember"
-    >
-      <UButton
-        label="Edit Variety"
-        variant="subtle"
-        icon="i-heroicons-pencil-square-20-solid"
-        :loading="permissionLoading && open"
-        :disabled="false"
-      />
-    </UTooltip>
+    <template v-if="!hideTrigger">
+      <slot>
+        <UTooltip
+          :text="
+            !permissionLoading && !isGardenEditorMember
+              ? 'This variety is imported from another garden. You must be part of that garden’s team to edit it.'
+              : ''
+          "
+          :disabled="permissionLoading || isGardenEditorMember"
+        >
+          <UButton
+            label="Edit Variety"
+            variant="subtle"
+            icon="i-heroicons-pencil-square-20-solid"
+            :loading="permissionLoading && modalOpen"
+            :disabled="false"
+          />
+        </UTooltip>
+      </slot>
+    </template>
 
     <template #body>
       <UAlert

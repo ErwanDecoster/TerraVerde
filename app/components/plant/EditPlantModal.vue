@@ -11,10 +11,12 @@ import type { VarietyData } from "~/types/variety";
 interface Props {
   plant: PlantData;
   varietyFilterMode?: VarietyFilterMode;
+  open?: boolean;
+  hideTrigger?: boolean;
 }
 
 interface Emits {
-  (e: "update:modelValue", value: boolean): void;
+  (e: "update:open" | "update:modelValue", value: boolean): void;
   (e: "plantUpdated" | "plantCopied", data: PlantData): void;
   (e: "plantDeleted", plantId: string): void;
   (e: "varietyUpdated", data: VarietyData): void;
@@ -22,7 +24,7 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-const open = ref(false);
+const internalOpen = ref(false);
 const toast = useToast();
 const plantsStore = usePlantsStore();
 const varietiesStore = useVarietiesStore();
@@ -79,8 +81,22 @@ const resetPosition = ref(false);
 
 const multipleCopyingCount = ref(1);
 const copying = ref(false);
+const showEditVarietyModal = ref(false);
 
 const form = ref();
+
+const submitEditPlant = () => {
+  form.value?.submit?.();
+};
+
+const modalOpen = computed({
+  get: () => (props.open === undefined ? internalOpen.value : props.open),
+  set: (value: boolean) => {
+    internalOpen.value = value;
+    emit("update:open", value);
+    emit("update:modelValue", value);
+  },
+});
 
 const varietyOptions = computed(() => {
   return availableVarieties.value.map((variety) => ({
@@ -121,6 +137,11 @@ const onVarietyAdded = (newVariety: VarietyData) => {
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
   emit("varietyUpdated", updatedVariety);
+};
+
+const openEditVarietyModal = () => {
+  if (!selectedVariety.value) return;
+  showEditVarietyModal.value = true;
 };
 
 const selectedVariety = computed(() => {
@@ -186,7 +207,7 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
     });
 
     emit("plantUpdated", plantData);
-    open.value = false;
+    modalOpen.value = false;
 
     toast.add({
       title: "Plant Updated",
@@ -213,7 +234,7 @@ async function onDelete() {
     await plantsStore.deleteExistingPlant(props.plant.id);
 
     emit("plantDeleted", props.plant.id);
-    open.value = false;
+    modalOpen.value = false;
     showDeleteConfirmation.value = false;
 
     toast.add({
@@ -309,11 +330,12 @@ async function copyPlant() {
 
 <template>
   <UModal
-    v-model:open="open"
+    v-model:open="modalOpen"
     title="Edit Plant"
     description="Update the plant details below."
   >
     <UButton
+      v-if="!hideTrigger"
       label="Edit Plant"
       variant="subtle"
       icon="i-heroicons-pencil-square-20-solid"
@@ -321,6 +343,7 @@ async function copyPlant() {
 
     <template #body>
       <UForm
+        id="edit-plant-form"
         ref="form"
         :schema="schema"
         :state="state"
@@ -355,6 +378,7 @@ async function copyPlant() {
                 @variety-added="onVarietyAdded"
               >
                 <UButton
+                  label="Add Variety"
                   icon="i-heroicons-plus-20-solid"
                   size="sm"
                   variant="outline"
@@ -364,15 +388,19 @@ async function copyPlant() {
               <EditVarietyModal
                 v-if="selectedVariety"
                 :variety="selectedVariety"
+                :open="showEditVarietyModal"
+                :hide-trigger="true"
+                @update:open="showEditVarietyModal = $event"
                 @variety-updated="onVarietyUpdated"
-              >
-                <UButton
-                  icon="i-heroicons-pencil-square-20-solid"
-                  size="sm"
-                  variant="outline"
-                  :disabled="loading"
-                />
-              </EditVarietyModal>
+              />
+              <UButton
+                label="Edit Variety"
+                icon="i-heroicons-pencil-square-20-solid"
+                size="sm"
+                variant="outline"
+                :disabled="loading || !selectedVariety"
+                @click="openEditVarietyModal"
+              />
             </div>
           </div>
         </UFormField>
@@ -486,18 +514,18 @@ async function copyPlant() {
             Cancel
           </UButton>
           <UButton
-            type="submit"
-            form="edit-plant-form"
+            type="button"
             :loading="loading"
             :disabled="loading || deleting || showDeleteConfirmation || copying"
             icon="i-heroicons-check-20-solid"
-            @click="form.submit()"
+            @click="submitEditPlant"
           >
             Update Plant
           </UButton>
           <UPopover>
             <UButton
               aria-label="Copy Options"
+              label="Copy"
               icon="i-lucide-chevron-down"
               :disabled="
                 loading || deleting || showDeleteConfirmation || copying

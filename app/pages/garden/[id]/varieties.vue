@@ -244,20 +244,64 @@
           <template #actions-cell="{ row }">
             <div class="flex items-center gap-1">
               <EditVarietyModal
+                v-if="isOwner"
                 :variety="row.original"
+                :open="activeVarietyEditorId === row.original.id"
+                :hide-trigger="true"
+                @update:open="
+                  onVarietyEditorOpenChange(row.original.id, $event)
+                "
                 @variety-updated="onVarietyUpdated"
                 @variety-deleted="onVarietyDeleted"
-              >
+              />
+
+              <UDropdownMenu :items="getVarietyActionItems(row.original)">
                 <UButton
-                  icon="i-heroicons-pencil-square-20-solid"
+                  label="Actions"
+                  icon="i-heroicons-ellipsis-horizontal-20-solid"
                   size="sm"
                   variant="ghost"
                 />
-              </EditVarietyModal>
+              </UDropdownMenu>
             </div>
           </template>
         </UTable>
       </UCard>
+
+      <UModal
+        v-model:open="showDeleteVarietyConfirmModal"
+        title="Delete Variety"
+        description="This action cannot be undone."
+      >
+        <template #body>
+          <p class="text-sm">
+            Are you sure you want to delete
+            <span class="font-semibold">{{ varietyToDelete?.name }}</span
+            >?
+          </p>
+        </template>
+
+        <template #footer>
+          <div class="flex w-full justify-end gap-2">
+            <UButton
+              variant="ghost"
+              :disabled="deletingVariety"
+              @click="showDeleteVarietyConfirmModal = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              color="error"
+              icon="i-heroicons-trash-20-solid"
+              :loading="deletingVariety"
+              :disabled="deletingVariety"
+              @click="confirmDeleteVariety"
+            >
+              Delete
+            </UButton>
+          </div>
+        </template>
+      </UModal>
 
       <VarietyInfoModal
         v-if="selectedVariety && showVarietyInfoModal"
@@ -283,6 +327,7 @@ import { getCategoryColor, getCategoryLabel } from "~/utils/plantCategories";
 const route = useRoute();
 const router = useRouter();
 const gardenId = route.params.id as string;
+const toast = useToast();
 
 const gardenStore = useGardenStore();
 const teamsStore = useTeamsStore();
@@ -299,6 +344,10 @@ const error = ref<string | null>(null);
 const searchQuery = ref("");
 const selectedVariety = ref<VarietyData | null>(null);
 const showVarietyInfoModal = ref(false);
+const showDeleteVarietyConfirmModal = ref(false);
+const varietyToDelete = ref<VarietyData | null>(null);
+const deletingVariety = ref(false);
+const activeVarietyEditorId = ref<string | null>(null);
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
@@ -332,14 +381,11 @@ const columns = computed(() => {
       accessorKey: "reference_url",
       header: "Reference",
     },
-  ];
-
-  if (isOwner.value) {
-    baseColumns.push({
+    {
       id: "actions",
       header: "Actions",
-    });
-  }
+    },
+  ];
 
   return baseColumns;
 });
@@ -415,6 +461,95 @@ const onSearchPlantsRequested = async (variety: VarietyData) => {
       varietyId: variety.id,
     },
   });
+};
+
+const requestDeleteVariety = (variety: VarietyData) => {
+  varietyToDelete.value = variety;
+  showDeleteVarietyConfirmModal.value = true;
+};
+
+const openVarietyEditor = (variety: VarietyData) => {
+  activeVarietyEditorId.value = variety.id;
+};
+
+const onVarietyEditorOpenChange = (varietyId: string, isOpen: boolean) => {
+  if (!isOpen && activeVarietyEditorId.value === varietyId) {
+    activeVarietyEditorId.value = null;
+  }
+};
+
+const confirmDeleteVariety = async () => {
+  if (!varietyToDelete.value) return;
+
+  deletingVariety.value = true;
+  try {
+    await varietiesStore.deleteExistingVariety(varietyToDelete.value.id);
+    plantsStore.removePlantsByVariety(varietyToDelete.value.id);
+    toast.add({
+      title: "Variety Deleted",
+      description: "The variety has been successfully deleted",
+      color: "success",
+    });
+    showDeleteVarietyConfirmModal.value = false;
+    varietyToDelete.value = null;
+  } catch (err) {
+    console.error("Error deleting variety:", err);
+    toast.add({
+      title: "Error",
+      description: "An error occurred while deleting the variety",
+      color: "error",
+    });
+  } finally {
+    deletingVariety.value = false;
+  }
+};
+
+const getVarietyActionItems = (variety: VarietyData) => {
+  const items: Array<Array<Record<string, unknown>>> = [
+    [
+      {
+        label: "View details",
+        icon: "i-heroicons-information-circle-20-solid",
+        onSelect: () => openVarietyInfoModal(variety),
+      },
+      {
+        label: "Find plants",
+        icon: "i-heroicons-funnel-20-solid",
+        onSelect: () => onSearchPlantsRequested(variety),
+      },
+      ...(variety.reference_url
+        ? [
+            {
+              label: "Open reference",
+              icon: "i-heroicons-link-20-solid",
+              onSelect: () =>
+                globalThis.window?.open(
+                  variety.reference_url as string,
+                  "_blank",
+                  "noopener,noreferrer",
+                ),
+            },
+          ]
+        : []),
+    ],
+  ];
+
+  if (isOwner.value) {
+    items.push([
+      {
+        label: "Edit variety",
+        icon: "i-heroicons-pencil-square-20-solid",
+        onSelect: () => openVarietyEditor(variety),
+      },
+      {
+        label: "Delete variety",
+        icon: "i-heroicons-trash-20-solid",
+        onSelect: () => requestDeleteVariety(variety),
+      },
+    ]);
+  }
+
+  return items;
 };
 
 watch(

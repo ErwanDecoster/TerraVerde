@@ -204,6 +204,15 @@
     <template #footer="{ close }">
       <div class="flex w-full justify-end gap-0.5">
         <UButton
+          v-if="canSearchSameVariety"
+          color="primary"
+          variant="outline"
+          icon="i-heroicons-funnel-20-solid"
+          @click="requestSearchSameVariety"
+        >
+          Find Same Variety
+        </UButton>
+        <UButton
           v-if="canLocate"
           variant="outline"
           icon="i-heroicons-map-pin-20-solid"
@@ -254,12 +263,15 @@ interface Props {
   canManageHistory?: boolean;
   showBulkTip?: boolean;
   canLocate?: boolean;
+  canSearchSameVariety?: boolean;
 }
 
 interface Emits {
   (e: "update:open", value: boolean): void;
-  (e: "edit-requested", plant: PlantData): void;
-  (e: "locate-requested", plant: PlantData): void;
+  (
+    e: "edit-requested" | "locate-requested" | "search-same-variety-requested",
+    plant: PlantData,
+  ): void;
 }
 
 const props = defineProps<Props>();
@@ -375,5 +387,9 @@ const openEditModal = () => {
 
 const requestLocate = () => {
   emit("locate-requested", props.plant);
+};
+
+const requestSearchSameVariety = () => {
+  emit("search-same-variety-requested", props.plant);
 };
 </script>

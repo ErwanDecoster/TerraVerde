@@ -101,7 +101,9 @@
       :plant="selectedPlant"
       :can-edit="permissions.editPlants"
       :can-manage-history="canManagePlantHistory"
+      :can-search-same-variety="true"
       @edit-requested="onEditRequested"
+      @search-same-variety-requested="onSearchSameVarietyRequested"
     />
 
     <EditPlantModal
@@ -491,6 +493,18 @@ const onEditRequested = (plant: PlantData) => {
   selectedPlant.value = plant;
   showPlantInfoModal.value = false;
   showEditPlantModal.value = true;
+};
+
+const onSearchSameVarietyRequested = async (plant: PlantData) => {
+  showPlantInfoModal.value = false;
+
+  await navigateTo({
+    path: `/garden/${gardenId}/plants`,
+    query: {
+      search: plant.variety.name,
+      varietyId: plant.variety.id,
+    },
+  });
 };
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
