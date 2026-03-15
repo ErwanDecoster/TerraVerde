@@ -72,6 +72,7 @@ const state = reactive<Partial<EditPlantSchema>>({
 
 const loading = ref(false);
 const deleting = ref(false);
+const resetPosition = ref(false);
 
 const multipleCopyingCount = ref(1);
 const copying = ref(false);
@@ -144,9 +145,28 @@ watch(
       height: newPlant.height,
       width: newPlant.width,
     });
+    resetPosition.value = false;
   },
   { deep: true },
 );
+
+const hasPosition = computed(
+  () =>
+    typeof props.plant.x_position === "number" &&
+    typeof props.plant.y_position === "number",
+);
+
+const currentPositionLabel = computed(() => {
+  if (resetPosition.value)
+    return "Position will be reset to (0.0, 0.0) on save";
+  if (!hasPosition.value) return "Current position: (0.0, 0.0)";
+
+  return `(${props.plant.x_position?.toFixed(1)}, ${props.plant.y_position?.toFixed(1)})`;
+});
+
+const resetPlantPosition = () => {
+  resetPosition.value = true;
+};
 
 async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
   loading.value = true;
@@ -157,11 +177,13 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
     const plantData = await updatePlant(props.plant.id, {
       name: validatedData.name,
       description: validatedData.description || "",
-      variety_id: parseInt(validatedData.variety_id),
+      variety_id: Number.parseInt(validatedData.variety_id),
       status: validatedData.status,
       planted_date: validatedData.planted_date,
       height: validatedData.height,
       width: validatedData.width,
+      x_position: resetPosition.value ? 0 : (props.plant.x_position ?? 0),
+      y_position: resetPosition.value ? 0 : (props.plant.y_position ?? 0),
     });
 
     emit("plantUpdated", plantData);
@@ -224,7 +246,7 @@ async function copyPlant() {
     const validatedData = {
       name: state.name || props.plant.name,
       description: state.description || props.plant.description || "",
-      variety_id: parseInt(
+      variety_id: Number.parseInt(
         state.variety_id || props.plant.variety_id?.toString() || "0",
       ),
       status: state.status || props.plant.status,
@@ -397,6 +419,26 @@ async function copyPlant() {
             max="1000"
             step="1"
           />
+        </UFormField>
+
+        <UFormField label="Map Position" class="col-span-2">
+          <div
+            class="flex items-center justify-between gap-3 rounded-lg border p-3"
+          >
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              {{ currentPositionLabel }}
+            </span>
+            <UButton
+              type="button"
+              variant="outline"
+              color="warning"
+              icon="i-heroicons-arrow-path-20-solid"
+              :disabled="loading || deleting || resetPosition"
+              @click="resetPlantPosition"
+            >
+              Reset Position
+            </UButton>
+          </div>
         </UFormField>
       </UForm>
     </template>

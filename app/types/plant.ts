@@ -74,8 +74,8 @@ export interface PlantData {
   main_color: string;
   height: number;
   width: number;
-  x_position?: number;
-  y_position?: number;
+  x_position?: number | null;
+  y_position?: number | null;
   garden_id?: string;
   created_at: string;
   updated_at: string;
@@ -91,8 +91,8 @@ export interface PlantFormData {
   planted_date: string;
   height: number;
   width: number;
-  x_position?: number;
-  y_position?: number;
+  x_position?: number | null;
+  y_position?: number | null;
   garden_id?: string;
 }
 
@@ -104,8 +104,8 @@ export interface PlantUpdateFormData {
   planted_date: string;
   height: number;
   width: number;
-  x_position?: number;
-  y_position?: number;
+  x_position?: number | null;
+  y_position?: number | null;
   garden_id?: string;
 }
 

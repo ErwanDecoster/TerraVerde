@@ -240,6 +240,7 @@
         v-model:open="showPlantInfoModal"
         :plant="selectedPlant"
         :can-manage-history="isOwner"
+        :show-bulk-tip="false"
       />
     </div>
   </div>

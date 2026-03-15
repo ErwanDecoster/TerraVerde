@@ -94,7 +94,7 @@
         </div>
 
         <UAlert
-          v-if="canManageHistory || canEdit"
+          v-if="showBulkTip && (canManageHistory || canEdit)"
           color="info"
           variant="subtle"
           icon="i-heroicons-light-bulb-20-solid"
@@ -244,6 +244,7 @@ interface Props {
   open: boolean;
   canEdit?: boolean;
   canManageHistory?: boolean;
+  showBulkTip?: boolean;
 }
 
 interface Emits {
