@@ -1,11 +1,10 @@
+import { storeToRefs } from "pinia";
 import { computed, type Ref } from "vue";
-import { useSettings } from "~/composables/data/useSettings";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
 import {
   DEFAULT_SHOW_REAL_PLANT_SIZE,
   DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
-  type SettingsData,
 } from "~/types/settings";
 import { metersToPixels } from "~/utils/coordinates";
 import { getCategoryKey } from "~/utils/plantCategories";
@@ -16,15 +15,9 @@ export const usePlantMarkers = (
   garden: Ref<GardenData>,
   pixelsPerMetersPreview?: Ref<number | null>,
 ) => {
-  const { fetchMySettings } = useSettings();
-  const userSettings = ref<SettingsData | null>(null);
-  fetchMySettings()
-    .then((s) => {
-      userSettings.value = s;
-    })
-    .catch(() => {
-      userSettings.value = null;
-    });
+  const settingsStore = useSettingsStore();
+  const { settings: userSettings } = storeToRefs(settingsStore);
+
   const getPlantStatusStroke = (status: string) => {
     switch (status) {
       case "healthy":

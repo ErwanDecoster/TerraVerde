@@ -247,14 +247,10 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import AddPlantModal from "~/components/plant/AddPlantModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
 import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
-import { useGarden } from "~/composables/data/useGarden";
-import { usePlant } from "~/composables/data/usePlant";
-import { useTeam } from "~/composables/data/useTeam";
-import { useVarietySync } from "~/composables/data/useVarietySync";
-import { useAuth } from "~/composables/useAuth";
 import { useIsOwner } from "~/composables/useIsOwner";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
@@ -264,20 +260,21 @@ import type { VarietyData } from "~/types/variety";
 const route = useRoute();
 const gardenId = route.params.id as string;
 
-const { fetchGardenById } = useGarden();
-const { fetchPlants } = usePlant();
-const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
-const { syncVarietyInPlants } = useVarietySync();
-const { user, getUser } = useAuth();
+const gardenStore = useGardenStore();
+const teamsStore = useTeamsStore();
+const plantsStore = usePlantsStore();
+const { currentGarden: garden } = storeToRefs(gardenStore);
+const { plants, currentGardenId: plantsGardenId } = storeToRefs(plantsStore);
 const { isOwner } = useIsOwner(gardenId);
 
-const garden = ref<GardenData | null>(null);
-const plants = ref<PlantData[]>([]);
 const pending = ref(true);
 const error = ref<string | null>(null);
 const searchQuery = ref("");
 const selectedPlant = ref<PlantData | null>(null);
 const showPlantInfoModal = ref(false);
+const plantsForGarden = computed(() =>
+  plantsGardenId.value === gardenId ? plants.value : [],
+);
 
 const columns = computed(() => {
   const baseColumns = [
@@ -318,10 +315,10 @@ const columns = computed(() => {
 });
 
 const filteredPlants = computed(() => {
-  if (!searchQuery.value) return plants.value;
+  if (!searchQuery.value) return plantsForGarden.value;
 
   const query = searchQuery.value.toLowerCase();
-  return plants.value.filter(
+  return plantsForGarden.value.filter(
     (plant) =>
       plant.name.toLowerCase().includes(query) ||
       plant.variety.name.toLowerCase().includes(query) ||
@@ -331,16 +328,17 @@ const filteredPlants = computed(() => {
 });
 
 const healthyCount = computed(
-  () => plants.value.filter((plant) => plant.status === "healthy").length,
+  () =>
+    plantsForGarden.value.filter((plant) => plant.status === "healthy").length,
 );
 
 const sickCount = computed(
-  () => plants.value.filter((plant) => plant.status === "sick").length,
+  () => plantsForGarden.value.filter((plant) => plant.status === "sick").length,
 );
 
 const varietiesCount = computed(() => {
   const uniqueVarietyIds = new Set(
-    plants.value
+    plantsForGarden.value
       .filter((plant) => plant.variety_id)
       .map((plant) => plant.variety_id),
   );
@@ -362,22 +360,19 @@ const formatDate = (dateString: string) => {
 };
 
 const onPlantAdded = (plant: PlantData) => {
-  plants.value.unshift(plant);
+  plantsStore.prependPlant(plant);
 };
 
 const onPlantUpdated = (updatedPlant: PlantData) => {
-  const index = plants.value.findIndex((p) => p.id === updatedPlant.id);
-  if (index !== -1) {
-    plants.value[index] = updatedPlant;
-  }
+  plantsStore.upsertPlant(updatedPlant);
 };
 
 const onPlantDeleted = (plantId: string) => {
-  plants.value = plants.value.filter((p) => p.id !== plantId);
+  plantsStore.removePlant(plantId);
 };
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  syncVarietyInPlants(plants, updatedVariety);
+  plantsStore.syncVarietyInPlants(updatedVariety);
 };
 
 const openPlantInfoModal = (plant: PlantData) => {
@@ -386,23 +381,8 @@ const openPlantInfoModal = (plant: PlantData) => {
 };
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
-  if (gardenData.is_public) return true;
-
-  if (!user.value) {
-    await getUser();
-  }
-
-  if (!user.value) return false;
-
-  const teams = await fetchTeamsByGarden(gardenId);
-  for (const team of teams) {
-    const members = await fetchTeamMembers(team.id);
-    if (members.some((member) => member.user_id === user.value?.id)) {
-      return true;
-    }
-  }
-
-  return false;
+  const access = await teamsStore.resolveGardenAccess(gardenId, gardenData);
+  return access.allowed;
 };
 
 const loadData = async () => {
@@ -410,7 +390,9 @@ const loadData = async () => {
     pending.value = true;
     error.value = null;
 
-    const gardenData = await fetchGardenById(gardenId);
+    const gardenData = await gardenStore.loadCurrentGarden(gardenId, {
+      force: true,
+    });
     if (!gardenData) {
       error.value = "Garden not found";
       return;
@@ -422,9 +404,8 @@ const loadData = async () => {
       return;
     }
 
-    garden.value = gardenData;
     // Ownership check auto-runs via watchEffect in useIsOwner
-    plants.value = await fetchPlants(gardenId);
+    await plantsStore.loadGardenPlants(gardenId, { force: true });
   } catch (err) {
     console.error("Error loading data:", err);
     error.value = "Error loading data";

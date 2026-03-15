@@ -1,15 +1,12 @@
 <script lang="ts" setup>
 import { useColorMode } from "#imports";
-import { useProfile } from "~/composables/data/useProfile";
-import { useSettings } from "~/composables/data/useSettings";
-import type { ProfileData } from "~/types/profile";
-import type { SettingsData } from "~/types/settings";
+import { storeToRefs } from "pinia";
 
 const { user, logout, loading } = useAuth();
-const { fetchMyProfile } = useProfile();
-const { fetchMySettings, updateSettings } = useSettings();
-const currentProfile = ref<ProfileData | null>(null);
-const currentSettings = ref<SettingsData | null>(null);
+const profileStore = useProfileStore();
+const settingsStore = useSettingsStore();
+const { currentProfile } = storeToRefs(profileStore);
+const { settings: currentSettings } = storeToRefs(settingsStore);
 const colorMode = useColorMode();
 let lastSavedTheme: string | null = null;
 
@@ -31,31 +28,28 @@ watch(
   user,
   async (newUser) => {
     if (!newUser) {
-      currentProfile.value = null;
-      currentSettings.value = null;
+      profileStore.resetCurrentProfile();
       lastSavedTheme = null;
       return;
     }
+
     try {
-      currentProfile.value = await fetchMyProfile();
+      await profileStore.fetchCurrentProfile();
     } catch (err) {
       console.log("No profile found for user", err);
-      currentProfile.value = null;
     }
-    try {
-      const s = await fetchMySettings();
-      currentSettings.value = s;
-      if (
-        s?.default_color_theme &&
-        ["system", "light", "dark"].includes(s.default_color_theme)
-      ) {
-        colorMode.preference =
-          s.default_color_theme as typeof colorMode.preference;
-        lastSavedTheme = s.default_color_theme;
-      }
-    } catch (e) {
-      console.warn("Failed to load settings", e);
+  },
+  { immediate: true },
+);
+
+watch(
+  currentSettings,
+  (value) => {
+    if (!value?.default_color_theme) {
+      return;
     }
+
+    lastSavedTheme = value.default_color_theme;
   },
   { immediate: true },
 );
@@ -67,7 +61,7 @@ watch(
     if (pref === lastSavedTheme) return;
     lastSavedTheme = pref;
     try {
-      currentSettings.value = await updateSettings({
+      await settingsStore.updateSettings({
         default_color_theme: pref,
       });
     } catch (e) {

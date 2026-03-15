@@ -3,8 +3,6 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
 import AddVarietyModal from "~/components/variety/AddVarietyModal.vue";
 import EditVarietyModal from "~/components/variety/EditVarietyModal.vue";
-import { usePlant } from "~/composables/data/usePlant";
-import { useVariety } from "~/composables/data/useVariety";
 import type { VarietyFilterMode } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
 import { PLANT_STATUSES } from "~/types/plant";
@@ -26,11 +24,16 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const open = ref(false);
 const toast = useToast();
-const { updatePlant, deletePlant, addMultiplePlants } = usePlant();
-const { fetchVarieties } = useVariety();
+const plantsStore = usePlantsStore();
+const varietiesStore = useVarietiesStore();
 
-const varieties = ref<VarietyData[]>([]);
 const varietiesLoading = ref(false);
+const availableVarieties = computed(() =>
+  varietiesStore.getAvailableVarieties(
+    props.plant.garden_id,
+    props.varietyFilterMode,
+  ),
+);
 
 const showDeleteConfirmation = ref(false);
 
@@ -80,7 +83,7 @@ const copying = ref(false);
 const form = ref();
 
 const varietyOptions = computed(() => {
-  return varieties.value.map((variety) => ({
+  return availableVarieties.value.map((variety) => ({
     label: `${variety.name} ${
       variety.scientific_name ? `(${variety.scientific_name})` : ""
     }`,
@@ -89,10 +92,10 @@ const varietyOptions = computed(() => {
 });
 
 const loadVarieties = async () => {
-  if (varieties.value.length > 0) return;
+  if (availableVarieties.value.length > 0) return;
   varietiesLoading.value = true;
   try {
-    varieties.value = await fetchVarieties(
+    await varietiesStore.loadAvailableVarieties(
       props.plant.garden_id,
       props.varietyFilterMode,
     );
@@ -113,23 +116,19 @@ onMounted(() => {
 });
 
 const onVarietyAdded = (newVariety: VarietyData) => {
-  varieties.value.unshift(newVariety);
-
   state.variety_id = newVariety.id.toString();
 };
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  const index = varieties.value.findIndex((v) => v.id === updatedVariety.id);
-  if (index !== -1) {
-    varieties.value[index] = updatedVariety;
-  }
   emit("varietyUpdated", updatedVariety);
 };
 
 const selectedVariety = computed(() => {
   if (!state.variety_id) return null;
   return (
-    varieties.value.find((v) => v.id.toString() === state.variety_id) || null
+    availableVarieties.value.find(
+      (v) => v.id.toString() === state.variety_id,
+    ) || null
   );
 });
 
@@ -174,7 +173,7 @@ async function onSubmit(event: FormSubmitEvent<EditPlantSchema>) {
   try {
     const validatedData = event.data;
 
-    const plantData = await updatePlant(props.plant.id, {
+    const plantData = await plantsStore.updateExistingPlant(props.plant.id, {
       name: validatedData.name,
       description: validatedData.description || "",
       variety_id: Number.parseInt(validatedData.variety_id),
@@ -211,7 +210,7 @@ async function onDelete() {
   deleting.value = true;
 
   try {
-    await deletePlant(props.plant.id);
+    await plantsStore.deleteExistingPlant(props.plant.id);
 
     emit("plantDeleted", props.plant.id);
     open.value = false;
@@ -278,7 +277,8 @@ async function copyPlant() {
       }),
     );
 
-    const createdPlants = await addMultiplePlants(plantsToCreate);
+    const createdPlants =
+      await plantsStore.createMultiplePlants(plantsToCreate);
 
     createdPlants.forEach((plant: PlantData) => emit("plantCopied", plant));
 

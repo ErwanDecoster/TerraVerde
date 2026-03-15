@@ -1,15 +1,16 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from "@nuxt/ui";
+import { storeToRefs } from "pinia";
 import { z } from "zod";
-import { useProfile } from "~/composables/data/useProfile";
-import type { ProfileData } from "~/types/profile";
 
-const { fetchMyProfile, updateProfile } = useProfile();
 const { user } = useAuth();
+const profileStore = useProfileStore();
+const {
+  currentProfile: profile,
+  loadingCurrent: loadingProfile,
+  savingCurrent: saving,
+} = storeToRefs(profileStore);
 const toast = useToast();
-
-const loadingProfile = ref(true);
-const profile = ref<ProfileData | null>(null);
 
 const initials = computed(() => {
   const fn = profile.value?.first_name?.charAt(0) || "";
@@ -20,18 +21,16 @@ const initials = computed(() => {
 onMounted(async () => {
   if (!user.value) return;
   try {
-    profile.value = await fetchMyProfile();
+    await profileStore.fetchCurrentProfile();
   } catch (err) {
     console.warn("No profile found for user", err);
-  } finally {
-    loadingProfile.value = false;
   }
 });
 
 const fileSchema =
-  typeof File !== "undefined"
-    ? z.instanceof(File, { message: "Avatar file must be an image" })
-    : z.any().optional();
+  typeof File === "undefined"
+    ? z.any().optional()
+    : z.instanceof(File, { message: "Avatar file must be an image" });
 
 const schema = z.object({
   first_name: z
@@ -100,14 +99,12 @@ watch(
 );
 
 const form = ref();
-const saving = ref(false);
 
 async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
   if (!profile.value) return;
-  saving.value = true;
   try {
     const d = event.data;
-    const updated = await updateProfile(
+    await profileStore.updateCurrentProfile(
       {
         first_name: d.first_name ?? null,
         last_name: d.last_name ?? null,
@@ -118,7 +115,6 @@ async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
       },
       profile.value.avatar_url?.split("/").pop() || undefined,
     );
-    profile.value = updated;
     state.avatar_file = undefined;
     toast.add({ title: "Profile Updated", color: "success" });
   } catch (e) {
@@ -128,8 +124,6 @@ async function onSubmit(event: FormSubmitEvent<ProfileEditSchema>) {
       description: "Failed to update profile",
       color: "error",
     });
-  } finally {
-    saving.value = false;
   }
 }
 </script>

@@ -1,41 +1,17 @@
 <script lang="ts" setup>
-import { useColorMode } from "#imports";
 import type { FormSubmitEvent } from "@nuxt/ui";
+import { storeToRefs } from "pinia";
 import { z } from "zod";
-import { useSettings } from "~/composables/data/useSettings";
 import {
   DEFAULT_SHOW_REAL_PLANT_SIZE,
   DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
-  type SettingsData,
 } from "~/types/settings";
 
-const colorMode = useColorMode();
-
-const { fetchMySettings, updateSettings } = useSettings();
-const loading = ref(true);
-const saving = ref(false);
-const settings = ref<SettingsData | null>(null);
+const settingsStore = useSettingsStore();
+const { settings, loading, saving } = storeToRefs(settingsStore);
 
 onMounted(async () => {
-  try {
-    settings.value = await fetchMySettings();
-    if (settings.value) {
-      Object.assign(state, {
-        show_markers_letters: settings.value.show_markers_letters ?? false,
-        show_real_plant_size:
-          settings.value.show_real_plant_size ?? DEFAULT_SHOW_REAL_PLANT_SIZE,
-        show_small_plants_on_top:
-          settings.value.show_small_plants_on_top ??
-          DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
-        default_color_theme: settings.value.default_color_theme ?? "",
-        language: settings.value.language ?? "",
-        preferred_units: settings.value.preferred_units ?? "",
-        timezone: settings.value.timezone ?? "",
-      });
-    }
-  } finally {
-    loading.value = false;
-  }
+  await settingsStore.fetchMySettings();
 });
 
 const schema = z.object({
@@ -59,14 +35,35 @@ const state = reactive<Partial<SettingsEditSchema>>({
   timezone: "",
 });
 
+watch(
+  settings,
+  (value) => {
+    if (!value) {
+      return;
+    }
+
+    Object.assign(state, {
+      show_markers_letters: value.show_markers_letters ?? false,
+      show_real_plant_size:
+        value.show_real_plant_size ?? DEFAULT_SHOW_REAL_PLANT_SIZE,
+      show_small_plants_on_top:
+        value.show_small_plants_on_top ?? DEFAULT_SHOW_SMALL_PLANTS_ON_TOP,
+      default_color_theme: value.default_color_theme ?? "",
+      language: value.language ?? "",
+      preferred_units: value.preferred_units ?? "",
+      timezone: value.timezone ?? "",
+    });
+  },
+  { immediate: true },
+);
+
 const form = ref();
 
 async function onSubmit(e: FormSubmitEvent<SettingsEditSchema>) {
   if (!settings.value) return;
-  saving.value = true;
   try {
     const d = e.data;
-    const updated = await updateSettings({
+    await settingsStore.updateSettings({
       show_markers_letters: d.show_markers_letters ?? null,
       show_real_plant_size: d.show_real_plant_size ?? null,
       show_small_plants_on_top: d.show_small_plants_on_top ?? null,
@@ -75,14 +72,6 @@ async function onSubmit(e: FormSubmitEvent<SettingsEditSchema>) {
       preferred_units: d.preferred_units ?? null,
       timezone: d.timezone ?? null,
     });
-    settings.value = updated;
-    if (
-      updated.default_color_theme &&
-      ["system", "light", "dark"].includes(updated.default_color_theme)
-    ) {
-      colorMode.preference =
-        updated.default_color_theme as typeof colorMode.preference;
-    }
     useToast().add({ title: "Settings Updated", color: "success" });
   } catch (err) {
     console.error(err);
@@ -91,8 +80,6 @@ async function onSubmit(e: FormSubmitEvent<SettingsEditSchema>) {
       description: "Failed to update settings",
       color: "error",
     });
-  } finally {
-    saving.value = false;
   }
 }
 

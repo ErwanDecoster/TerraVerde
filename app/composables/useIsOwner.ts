@@ -1,6 +1,4 @@
 import { ref, watchEffect, type Ref } from "vue";
-import { useTeam } from "~/composables/data/useTeam";
-import { useAuth } from "~/composables/useAuth";
 
 /**
  * Composable to check if the current user is owner of a garden (via team membership/role)
@@ -10,8 +8,8 @@ export function useIsOwner(gardenId: string | Ref<string>) {
   const isOwner = ref(false);
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const { user, getUser } = useAuth();
-  const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
+  const authStore = useAuthStore();
+  const teamsStore = useTeamsStore();
 
   const resolveGardenId = () =>
     typeof gardenId === "string" ? gardenId : gardenId.value;
@@ -21,25 +19,13 @@ export function useIsOwner(gardenId: string | Ref<string>) {
     isOwner.value = false;
     error.value = null;
     if (!id) return;
-    if (!user.value) {
-      await getUser();
-      if (!user.value) return;
+    if (!authStore.user) {
+      await authStore.initialize();
+      if (!authStore.user) return;
     }
     loading.value = true;
     try {
-      const teams = await fetchTeamsByGarden(id);
-      for (const team of teams) {
-        const members = await fetchTeamMembers(team.id);
-        if (
-          user.value &&
-          members.some(
-            (m) => m.user_id === user.value!.id && m.role === "owner",
-          )
-        ) {
-          isOwner.value = true;
-          break;
-        }
-      }
+      isOwner.value = await teamsStore.isGardenOwner(id);
     } catch (e) {
       console.error("Error getting user:", e);
       error.value = "Failed to determine ownership";
@@ -52,7 +38,7 @@ export function useIsOwner(gardenId: string | Ref<string>) {
   watchEffect(() => {
     if (
       (typeof gardenId === "string" ? gardenId : gardenId.value) &&
-      user.value !== undefined
+      authStore.user !== undefined
     ) {
       // Fire and forget; errors stored in error ref
       checkIsOwner();

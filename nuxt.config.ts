@@ -2,7 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ["@nuxt/eslint", "@nuxt/ui", "nuxt-tiptap-editor"],
+  modules: ["@nuxt/eslint", "@pinia/nuxt", "@nuxt/ui", "nuxt-tiptap-editor"],
   devtools: { enabled: true },
   app: {
     head: {

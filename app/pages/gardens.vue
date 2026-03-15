@@ -1,38 +1,33 @@
 <script lang="ts" setup>
+import { storeToRefs } from "pinia";
 import AddGardenModal from "~/components/garden/AddGardenModal.vue";
 import EditGardenModal from "~/components/garden/EditGardenModal.vue";
-import { useGarden } from "~/composables/data/useGarden";
 import type { GardenData } from "~/types/garden";
 
 definePageMeta({
   middleware: ["auth"],
 });
 
+const gardensStore = useGardensStore();
+const { myGardens: gardens } = storeToRefs(gardensStore);
+
 function handleGardenAdded(data: GardenData) {
-  gardens.value.unshift(data);
+  gardensStore.upsertMyGarden(data);
+  gardensStore.syncPublicGarden(data);
 }
 
 function handleGardenUpdated(updatedGarden: GardenData) {
-  const index = gardens.value.findIndex(
-    (garden) => garden.id === updatedGarden.id,
-  );
-  if (index !== -1) {
-    gardens.value[index] = updatedGarden;
-  }
+  gardensStore.upsertMyGarden(updatedGarden);
+  gardensStore.syncPublicGarden(updatedGarden);
 }
 
 function handleGardenDeleted(gardenId: string) {
-  const index = gardens.value.findIndex((garden) => garden.id === gardenId);
-  if (index !== -1) {
-    gardens.value.splice(index, 1);
-  }
+  gardensStore.removeMyGarden(gardenId);
+  gardensStore.removePublicGarden(gardenId);
 }
 
-const gardens = ref<GardenData[]>([]);
-const { fetchMyGardens } = useGarden();
-
 onMounted(async () => {
-  gardens.value = await fetchMyGardens();
+  await gardensStore.loadMyGardens();
 });
 </script>
 
@@ -53,7 +48,7 @@ onMounted(async () => {
           <div class="relative aspect-video overflow-hidden">
             <img
               :src="garden.background_image_url"
-              :alt="garden.name + ' background image'"
+              :alt="garden.name + ' background'"
               class="h-full w-full object-cover"
               loading="lazy"
             />

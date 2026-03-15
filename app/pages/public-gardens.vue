@@ -1,15 +1,17 @@
 <script lang="ts" setup>
-import { useGarden } from "~/composables/data/useGarden";
+import { storeToRefs } from "pinia";
 import type { GardenData } from "~/types/garden";
 
 definePageMeta({
   middleware: [],
 });
 
-const { fetchPublicGardens } = useGarden();
-const gardens = ref<GardenData[]>([]);
-const loading = ref(true);
-const error = ref<string | null>(null);
+const gardensStore = useGardensStore();
+const {
+  publicGardens: gardens,
+  loadingPublicGardens: loading,
+  publicGardensError: error,
+} = storeToRefs(gardensStore);
 
 // Helper to derive a display name for the first team's first member ("owner" concept)
 const gardenPrimaryMemberName = (garden: GardenData): string => {
@@ -24,13 +26,9 @@ const gardenPrimaryMemberName = (garden: GardenData): string => {
 
 onMounted(async () => {
   try {
-    loading.value = true;
-    gardens.value = await fetchPublicGardens();
+    await gardensStore.loadPublicGardens();
   } catch (err) {
     console.error("Error loading public gardens:", err);
-    error.value = "Failed to load public gardens";
-  } finally {
-    loading.value = false;
   }
 });
 </script>

@@ -2,8 +2,6 @@
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
 import AddVarietyModal from "~/components/variety/AddVarietyModal.vue";
-import { usePlant } from "~/composables/data/usePlant";
-import { useVariety } from "~/composables/data/useVariety";
 import type { VarietyFilterMode } from "~/types/garden";
 import type { PlantData, PlantStatus } from "~/types/plant";
 import { PLANT_STATUSES } from "~/types/plant";
@@ -27,11 +25,13 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const open = ref(false);
 const toast = useToast();
-const { addPlant, addMultiplePlants } = usePlant();
-const { fetchVarieties } = useVariety();
+const plantsStore = usePlantsStore();
+const varietiesStore = useVarietiesStore();
 
-const varieties = ref<VarietyData[]>([]);
 const varietiesLoading = ref(false);
+const availableVarieties = computed(() =>
+  varietiesStore.getAvailableVarieties(props.gardenId, props.varietyFilterMode),
+);
 
 const schema = z.object({
   name: z
@@ -76,7 +76,7 @@ const multipleAddingCount = ref(1);
 const form = ref();
 
 const varietyOptions = computed(() => {
-  return varieties.value.map((variety) => ({
+  return availableVarieties.value.map((variety) => ({
     label: `${variety.name} ${
       variety.scientific_name ? `(${variety.scientific_name})` : ""
     }`,
@@ -85,10 +85,10 @@ const varietyOptions = computed(() => {
 });
 
 const loadVarieties = async () => {
-  if (varieties.value.length > 0) return;
+  if (availableVarieties.value.length > 0) return;
   varietiesLoading.value = true;
   try {
-    varieties.value = await fetchVarieties(
+    await varietiesStore.loadAvailableVarieties(
       props.gardenId,
       props.varietyFilterMode,
     );
@@ -109,23 +109,19 @@ onMounted(() => {
 });
 
 const onVarietyAdded = (newVariety: VarietyData) => {
-  varieties.value.unshift(newVariety);
-
   state.variety_id = newVariety.id.toString();
 };
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  const index = varieties.value.findIndex((v) => v.id === updatedVariety.id);
-  if (index !== -1) {
-    varieties.value[index] = updatedVariety;
-  }
   emit("varietyUpdated", updatedVariety);
 };
 
 const selectedVariety = computed(() => {
   if (!state.variety_id) return null;
   return (
-    varieties.value.find((v) => v.id.toString() === state.variety_id) || null
+    availableVarieties.value.find(
+      (v) => v.id.toString() === state.variety_id,
+    ) || null
   );
 });
 
@@ -136,10 +132,10 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
     const validatedData = event.data;
 
     if (multipleAddingCount.value === 1) {
-      const plantData = await addPlant({
+      const plantData = await plantsStore.createPlant({
         name: validatedData.name,
         description: validatedData.description || "",
-        variety_id: parseInt(validatedData.variety_id),
+        variety_id: Number.parseInt(validatedData.variety_id),
         status: validatedData.status,
         planted_date: validatedData.planted_date,
         height: validatedData.height,
@@ -164,7 +160,7 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         (_, index) => ({
           name: `${validatedData.name}`,
           description: validatedData.description || "",
-          variety_id: parseInt(validatedData.variety_id),
+          variety_id: Number.parseInt(validatedData.variety_id),
           status: validatedData.status,
           planted_date: validatedData.planted_date,
           height: validatedData.height,
@@ -176,7 +172,8 @@ async function onSubmit(event: FormSubmitEvent<PlantSchema>) {
         }),
       );
 
-      const createdPlants = await addMultiplePlants(plantsToCreate);
+      const createdPlants =
+        await plantsStore.createMultiplePlants(plantsToCreate);
 
       createdPlants.forEach((plant: PlantData) => emit("plantAdded", plant));
     }

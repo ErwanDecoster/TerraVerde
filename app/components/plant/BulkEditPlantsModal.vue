@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
-import { usePlant } from "~/composables/data/usePlant";
-import { useVariety } from "~/composables/data/useVariety";
 import type { VarietyFilterMode } from "~/types/garden";
 import type {
   PlantBulkHistoryFormData,
@@ -11,7 +9,6 @@ import type {
   PlantEventType,
 } from "~/types/plant";
 import { PLANT_EVENT_TYPES } from "~/types/plant";
-import type { VarietyData } from "~/types/variety";
 
 interface Props {
   open: boolean;
@@ -32,8 +29,8 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const { updatePlantsBulk, addPlantEventsBulk } = usePlant();
-const { fetchVarieties } = useVariety();
+const plantsStore = usePlantsStore();
+const varietiesStore = useVarietiesStore();
 const toast = useToast();
 
 const isOpen = computed({
@@ -88,8 +85,10 @@ const state = reactive<Partial<BulkEditSchema>>({
 const form = ref();
 const loading = ref(false);
 
-const varieties = ref<VarietyData[]>([]);
 const varietiesLoading = ref(false);
+const availableVarieties = computed(() =>
+  varietiesStore.getAvailableVarieties(props.gardenId, props.varietyFilterMode),
+);
 
 const selectedIds = computed(() => props.plants.map((plant) => plant.id));
 const selectedNamesPreview = computed(() =>
@@ -163,7 +162,7 @@ const canSubmit = computed(() => {
 });
 
 const varietyOptions = computed(() => {
-  return varieties.value.map((variety) => ({
+  return availableVarieties.value.map((variety) => ({
     label: variety.scientific_name
       ? `${variety.name} (${variety.scientific_name})`
       : variety.name,
@@ -179,10 +178,10 @@ const eventTypeItems = computed(() => {
 
 const loadVarieties = async () => {
   if (!canApplyBulkEdit.value) return;
-  if (varieties.value.length > 0) return;
+  if (availableVarieties.value.length > 0) return;
   varietiesLoading.value = true;
   try {
-    varieties.value = await fetchVarieties(
+    await varietiesStore.loadAvailableVarieties(
       props.gardenId,
       props.varietyFilterMode,
     );
@@ -258,12 +257,15 @@ async function onSubmit(_event: FormSubmitEvent<BulkEditSchema>) {
     const historyPayload = createHistoryPayload();
 
     if (Object.keys(patch).length > 0 && canApplyBulkEdit.value) {
-      const updatedPlants = await updatePlantsBulk(selectedIds.value, patch);
+      const updatedPlants = await plantsStore.updatePlantsInBulk(
+        selectedIds.value,
+        patch,
+      );
       emit("bulk-updated", updatedPlants);
     }
 
     if (historyPayload && canApplyBulkHistory.value) {
-      const createdEvents = await addPlantEventsBulk(
+      const createdEvents = await plantsStore.addHistoryToPlantsInBulk(
         selectedIds.value,
         props.gardenId,
         historyPayload,

@@ -131,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import GardenCanvas, {
   type KonvaNodeEventLike,
@@ -143,10 +144,6 @@ import AddPlantModal from "~/components/plant/AddPlantModal.vue";
 import BulkEditPlantsModal from "~/components/plant/BulkEditPlantsModal.vue";
 import EditPlantModal from "~/components/plant/EditPlantModal.vue";
 import PlantInfoModal from "~/components/plant/PlantInfoModal.vue";
-import { useGarden } from "~/composables/data/useGarden";
-import { usePlant } from "~/composables/data/usePlant";
-import { useTeam } from "~/composables/data/useTeam";
-import { useVarietySync } from "~/composables/data/useVarietySync";
 import { useBulkPlantSelection } from "~/composables/garden/useBulkPlantSelection";
 import { useGardenCanvas } from "~/composables/garden/useGardenCanvas";
 import { useGardenZoom } from "~/composables/garden/useGardenZoom";
@@ -154,19 +151,25 @@ import { usePlantInteractions } from "~/composables/garden/usePlantInteractions"
 import { usePlantMarkers } from "~/composables/garden/usePlantMarkers";
 import type { GardenData } from "~/types/garden";
 import type { PlantData } from "~/types/plant";
+import type { TeamRole } from "~/types/team";
 import type { VarietyData } from "~/types/variety";
 
 const route = useRoute();
 const gardenId = route.params.id as string;
 const toast = useToast();
 
-const { user } = useAuth();
-const { fetchGardenById } = useGarden();
-const { fetchPlants, updatePlant } = usePlant();
-const { syncVarietyInPlants } = useVarietySync();
+const gardenStore = useGardenStore();
+const teamsStore = useTeamsStore();
+const plantsStore = usePlantsStore();
+const varietiesStore = useVarietiesStore();
+const { currentGarden: garden } = storeToRefs(gardenStore);
+const { plants, currentGardenId: plantsGardenId } = storeToRefs(plantsStore);
 
-const currentRole = ref<"owner" | "admin" | "editor" | "viewer" | null>(null);
-const isTeamMember = ref(false);
+const currentRole = computed<TeamRole | null>(
+  () =>
+    teamsStore.getGardenAccess(gardenId)?.role ??
+    (garden.value?.is_public ? "viewer" : null),
+);
 
 // Permission matrix
 const rolePermissions = {
@@ -225,8 +228,6 @@ const visibleCategories = ref<string[]>([
   "other",
 ]);
 
-const garden = ref<GardenData>({} as GardenData);
-const plants = ref<PlantData[]>([]);
 const pending = ref(true);
 const error = ref<string | null>(null);
 
@@ -326,6 +327,7 @@ const {
 } = useGardenCanvas(applySavedCenterZoom);
 
 const pixelsPerMetersPreview = ref<number | null>(null);
+const gardenState = computed(() => garden.value || ({} as GardenData));
 
 const handleBackgroundRotationPreview = (rotation: number) => {
   setBackgroundRotation(rotation);
@@ -342,11 +344,14 @@ const handlePixelsPerMetersPreview = (pixelsPerMeters: number) => {
 const { plantMarkers, getCategoryLetter } = usePlantMarkers(
   plants,
   visibleCategories,
-  garden,
+  gardenState,
   pixelsPerMetersPreview,
 );
 
 const clickCoordinates = ref<{ x: number; y: number } | null>(null);
+const plantsForGarden = computed(() =>
+  plantsGardenId.value === gardenId ? plants.value : [],
+);
 
 const onPlantClick = (plant: PlantData) => {
   if (isSelectionKeyPressed.value && canUseBulkInCurrentMode.value) {
@@ -367,7 +372,7 @@ const selectedPlantsForBulk = computed(() => {
   if (selectedPlantIds.value.length === 0) return [];
 
   const selectedSet = new Set(selectedPlantIds.value);
-  return plants.value.filter((plant) => selectedSet.has(plant.id));
+  return plantsForGarden.value.filter((plant) => selectedSet.has(plant.id));
 });
 
 const canUseBulkInCurrentMode = computed(() => {
@@ -395,9 +400,7 @@ const {
 
 const onBulkUpdated = (updatedPlants: PlantData[]) => {
   if (!updatedPlants.length) return;
-
-  const byId = new Map(updatedPlants.map((plant) => [plant.id, plant]));
-  plants.value = plants.value.map((plant) => byId.get(plant.id) || plant);
+  plantsStore.mergePlants(updatedPlants);
 };
 
 const onBulkHistoryAdded = (count: number) => {
@@ -445,35 +448,29 @@ const handleBackgroundClick = (event: KonvaNodeEventLike) => {
 };
 
 const onPlantAdded = (newPlant: PlantData) => {
-  plants.value.push(newPlant);
+  plantsStore.appendPlant(newPlant);
   showAddPlantModal.value = false;
   clickCoordinates.value = null;
 };
 
 const onPlantUpdated = (updatedPlant: PlantData) => {
-  const index = plants.value.findIndex((p) => p.id === updatedPlant.id);
-  if (index !== -1) {
-    plants.value[index] = updatedPlant;
-  }
+  plantsStore.upsertPlant(updatedPlant);
   showEditPlantModal.value = false;
   selectedPlant.value = null;
 };
 
 const onPlantPositionUpdated = (updatedPlant: PlantData) => {
-  const index = plants.value.findIndex((p) => p.id === updatedPlant.id);
-  if (index !== -1) {
-    plants.value[index] = updatedPlant;
-  }
+  plantsStore.upsertPlant(updatedPlant);
 };
 
 const onPlantDeleted = (plantId: string) => {
-  plants.value = plants.value.filter((p) => p.id !== plantId);
+  plantsStore.removePlant(plantId);
   showEditPlantModal.value = false;
   selectedPlant.value = null;
 };
 
 const onPlantCopied = (copiedPlant: PlantData) => {
-  plants.value.push(copiedPlant);
+  plantsStore.appendPlant(copiedPlant);
 };
 
 const onEditRequested = (plant: PlantData) => {
@@ -485,7 +482,8 @@ const onEditRequested = (plant: PlantData) => {
 };
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  syncVarietyInPlants(plants, updatedVariety);
+  plantsStore.syncVarietyInPlants(updatedVariety);
+  varietiesStore.upsertVariety(updatedVariety);
 };
 
 const {
@@ -496,15 +494,13 @@ const {
   handlePlantHoverEnter,
   handlePlantHoverLeave,
 } = usePlantInteractions(
-  garden,
+  gardenState,
   gardenId,
-  updatePlant,
+  plantsStore.updateExistingPlant,
   onPlantClick,
   canEdit,
   onPlantPositionUpdated,
 );
-
-const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
 
 const toFiniteNumberOrNull = (value: unknown): number | null => {
   if (typeof value !== "number") return null;
@@ -520,26 +516,8 @@ const setGardenCenterPreview = (gardenData: GardenData) => {
 };
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
-  // Default role for public access is viewer, then override if team membership exists.
-  isTeamMember.value = false;
-  currentRole.value = gardenData.is_public ? "viewer" : null;
-
-  if (!user.value) {
-    return gardenData.is_public;
-  }
-
-  const teams = await fetchTeamsByGarden(gardenId);
-  for (const team of teams) {
-    const members = await fetchTeamMembers(team.id);
-    const me = members.find((member) => member.user_id === user.value?.id);
-    if (!me) continue;
-
-    isTeamMember.value = true;
-    currentRole.value = (me.role as typeof currentRole.value) || "viewer";
-    return true;
-  }
-
-  return gardenData.is_public;
+  const access = await teamsStore.resolveGardenAccess(gardenId, gardenData);
+  return access.allowed;
 };
 
 const loadGarden = async () => {
@@ -547,7 +525,9 @@ const loadGarden = async () => {
     pending.value = true;
     error.value = null;
 
-    const gardenData = await fetchGardenById(gardenId);
+    const gardenData = await gardenStore.loadCurrentGarden(gardenId, {
+      force: true,
+    });
 
     if (!gardenData) {
       error.value = "Garden not found";
@@ -560,7 +540,6 @@ const loadGarden = async () => {
       return;
     }
 
-    garden.value = gardenData;
     setGardenCenterPreview(gardenData);
     pixelsPerMetersPreview.value = null;
 
@@ -583,7 +562,10 @@ const loadGarden = async () => {
 
 const loadPlants = async () => {
   try {
-    plants.value = await fetchPlants(gardenId);
+    const loadedPlants = await plantsStore.loadGardenPlants(gardenId, {
+      force: true,
+    });
+    varietiesStore.hydrateUsedVarieties(gardenId, loadedPlants);
 
     await nextTick();
     setTimeout(() => {

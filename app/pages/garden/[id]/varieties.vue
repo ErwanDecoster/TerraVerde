@@ -242,40 +242,36 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import AddVarietyModal from "~/components/variety/AddVarietyModal.vue";
 import EditVarietyModal from "~/components/variety/EditVarietyModal.vue";
-import { useGarden } from "~/composables/data/useGarden";
-import { usePlant } from "~/composables/data/usePlant";
-import { useTeam } from "~/composables/data/useTeam";
-import { useVarietySync } from "~/composables/data/useVarietySync";
-import { useAuth } from "~/composables/useAuth";
 import { useIsOwner } from "~/composables/useIsOwner";
 import type { GardenData } from "~/types/garden";
-import type { PlantData } from "~/types/plant";
 import type { VarietyData } from "~/types/variety";
 import { getCategoryColor, getCategoryLabel } from "~/utils/plantCategories";
 
 const route = useRoute();
 const gardenId = route.params.id as string;
 
-const { fetchGardenById } = useGarden();
-const { fetchPlants } = usePlant();
-const { fetchTeamsByGarden, fetchTeamMembers } = useTeam();
-const {
-  syncVarietyInList,
-  addVarietyToList,
-  removeVarietyFromList,
-  syncVarietyInPlants,
-} = useVarietySync();
-const { user, getUser } = useAuth();
+const gardenStore = useGardenStore();
+const teamsStore = useTeamsStore();
+const plantsStore = usePlantsStore();
+const varietiesStore = useVarietiesStore();
+const { currentGarden: garden } = storeToRefs(gardenStore);
+const { plants, currentGardenId: plantsGardenId } = storeToRefs(plantsStore);
+const { currentVarieties: varieties, currentGardenId: varietiesGardenId } =
+  storeToRefs(varietiesStore);
 const { isOwner } = useIsOwner(gardenId);
 
-const garden = ref<GardenData | null>(null);
-const varieties = ref<VarietyData[]>([]);
-const plants = ref<PlantData[]>([]);
 const pending = ref(true);
 const error = ref<string | null>(null);
 const searchQuery = ref("");
+const plantsForGarden = computed(() =>
+  plantsGardenId.value === gardenId ? plants.value : [],
+);
+const varietiesForGarden = computed(() =>
+  varietiesGardenId.value === gardenId ? varieties.value : [],
+);
 
 const columns = computed(() => {
   const baseColumns = [
@@ -312,10 +308,10 @@ const columns = computed(() => {
 });
 
 const filteredVarieties = computed(() => {
-  if (!searchQuery.value) return varieties.value;
+  if (!searchQuery.value) return varietiesForGarden.value;
 
   const query = searchQuery.value.toLowerCase();
-  return varieties.value.filter(
+  return varietiesForGarden.value.filter(
     (variety) =>
       variety.name.toLowerCase().includes(query) ||
       variety.scientific_name?.toLowerCase().includes(query) ||
@@ -326,76 +322,50 @@ const filteredVarieties = computed(() => {
 
 const treeCount = computed(
   () =>
-    varieties.value.filter(
+    varietiesForGarden.value.filter(
       (v) => v.category === "tree" || v.category === "fruit_tree",
     ).length,
 );
 
 const shrubCount = computed(
-  () => varieties.value.filter((v) => v.category === "shrub").length,
+  () => varietiesForGarden.value.filter((v) => v.category === "shrub").length,
 );
 
 const climberCount = computed(
-  () => varieties.value.filter((v) => v.category === "climber").length,
+  () => varietiesForGarden.value.filter((v) => v.category === "climber").length,
 );
 
 const flowerCount = computed(
-  () => varieties.value.filter((v) => v.category === "flower").length,
+  () => varietiesForGarden.value.filter((v) => v.category === "flower").length,
 );
 
 const vegetableCount = computed(
-  () => varieties.value.filter((v) => v.category === "vegetable").length,
+  () =>
+    varietiesForGarden.value.filter((v) => v.category === "vegetable").length,
 );
 
 const getPlantCountForVariety = (varietyId: number) => {
-  return plants.value.filter((plant) => plant.variety_id === varietyId).length;
+  return plantsForGarden.value.filter((plant) => plant.variety_id === varietyId)
+    .length;
 };
 
 const onVarietyAdded = (variety: VarietyData) => {
-  addVarietyToList(varieties, variety);
+  varietiesStore.prependVariety(variety);
 };
 
 const onVarietyUpdated = (updatedVariety: VarietyData) => {
-  syncVarietyInList(varieties, updatedVariety);
-  syncVarietyInPlants(plants, updatedVariety);
+  varietiesStore.upsertVariety(updatedVariety);
+  plantsStore.syncVarietyInPlants(updatedVariety);
 };
 
 const onVarietyDeleted = (varietyId: string) => {
-  removeVarietyFromList(varieties, varietyId);
-  plants.value = plants.value.filter(
-    (plant) => plant.variety_id.toString() !== varietyId,
-  );
-};
-
-const getUsedVarietiesFromPlants = (plantsData: PlantData[]): VarietyData[] => {
-  const byId = new Map<string, VarietyData>();
-
-  for (const plant of plantsData) {
-    if (!plant.variety) continue;
-    byId.set(String(plant.variety.id), plant.variety);
-  }
-
-  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  varietiesStore.removeVariety(varietyId);
+  plantsStore.removePlantsByVariety(varietyId);
 };
 
 const resolveGardenAccess = async (gardenData: GardenData) => {
-  if (gardenData.is_public) return true;
-
-  if (!user.value) {
-    await getUser();
-  }
-
-  if (!user.value) return false;
-
-  const teams = await fetchTeamsByGarden(gardenId);
-  for (const team of teams) {
-    const members = await fetchTeamMembers(team.id);
-    if (members.some((member) => member.user_id === user.value?.id)) {
-      return true;
-    }
-  }
-
-  return false;
+  const access = await teamsStore.resolveGardenAccess(gardenId, gardenData);
+  return access.allowed;
 };
 
 const loadData = async () => {
@@ -403,7 +373,9 @@ const loadData = async () => {
     pending.value = true;
     error.value = null;
 
-    const gardenData = await fetchGardenById(gardenId);
+    const gardenData = await gardenStore.loadCurrentGarden(gardenId, {
+      force: true,
+    });
     if (!gardenData) {
       error.value = "Garden not found";
       return;
@@ -415,14 +387,13 @@ const loadData = async () => {
       return;
     }
 
-    garden.value = gardenData;
-
     // Ownership check auto-runs via watchEffect in useIsOwner
 
-    const plantsData = await fetchPlants(gardenId);
+    const plantsData = await plantsStore.loadGardenPlants(gardenId, {
+      force: true,
+    });
 
-    plants.value = plantsData;
-    varieties.value = getUsedVarietiesFromPlants(plantsData);
+    varietiesStore.hydrateUsedVarieties(gardenId, plantsData);
   } catch (err) {
     console.error("Error loading data:", err);
     error.value = "Error loading data";

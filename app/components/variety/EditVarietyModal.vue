@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
-import { useTeam } from "~/composables/data/useTeam";
-import { useVariety } from "~/composables/data/useVariety";
 import type { TeamData, TeamMemberData } from "~/types/team";
 import type { VarietyData } from "~/types/variety";
 import { VARIETY_CATEGORIES_FOR_SELECT } from "~/utils/plantCategories";
@@ -21,32 +19,36 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const open = ref(false);
 const toast = useToast();
-const { updateVariety, deleteVariety } = useVariety();
+const authStore = useAuthStore();
+const teamsStore = useTeamsStore();
+const varietiesStore = useVarietiesStore();
 
 const showDeleteConfirmation = ref(false);
 
 // Determine if current user can edit this variety: must be member (role owner or editor) of the garden owning the variety
-const { user } = useAuth();
-const { fetchTeamsByGarden } = useTeam();
 const isGardenEditorMember = ref(false);
 const permissionLoading = ref(false);
 
 async function computeCanEdit() {
   // Need garden id and authenticated user
-  if (!props.variety.garden_id || !user.value) {
+  if (!authStore.user) {
+    await authStore.initialize();
+  }
+
+  if (!props.variety.garden_id || !authStore.user) {
     isGardenEditorMember.value = false;
     return;
   }
   permissionLoading.value = true;
   try {
-    const teams = (await fetchTeamsByGarden(
-      props.variety.garden_id,
-    )) as TeamData[];
+    const teams = await teamsStore.fetchGardenTeams(props.variety.garden_id, {
+      force: true,
+    });
     const canEdit = teams.some((team: TeamData) =>
       team.teams_members?.some(
         (member: TeamMemberData) =>
-          member.user_id === user.value!.id &&
-          ["owner", "editor"].includes((member.role || "") as string),
+          member.user_id === authStore.user!.id &&
+          ["owner", "editor"].includes(member.role || ""),
       ),
     );
     isGardenEditorMember.value = canEdit;
@@ -142,15 +144,18 @@ async function onSubmit(event: FormSubmitEvent<EditVarietySchema>) {
   try {
     const validatedData = event.data;
 
-    const varietyData = await updateVariety(props.variety.id, {
-      name: validatedData.name,
-      scientific_name: validatedData.scientific_name || undefined,
-      harvest_period: validatedData.harvest_period || undefined,
-      main_color: validatedData.main_color || undefined,
-      reference_url: validatedData.reference_url || undefined,
-      category: validatedData.category,
-      is_public: validatedData.is_public,
-    });
+    const varietyData = await varietiesStore.updateExistingVariety(
+      props.variety.id,
+      {
+        name: validatedData.name,
+        scientific_name: validatedData.scientific_name || undefined,
+        harvest_period: validatedData.harvest_period || undefined,
+        main_color: validatedData.main_color || undefined,
+        reference_url: validatedData.reference_url || undefined,
+        category: validatedData.category,
+        is_public: validatedData.is_public,
+      },
+    );
 
     emit("varietyUpdated", varietyData);
     open.value = false;
@@ -177,7 +182,7 @@ async function onDelete() {
   deleting.value = true;
 
   try {
-    await deleteVariety(props.variety.id);
+    await varietiesStore.deleteExistingVariety(props.variety.id);
 
     emit("varietyDeleted", props.variety.id);
     open.value = false;

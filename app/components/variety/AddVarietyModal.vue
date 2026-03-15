@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from "@nuxt/ui";
 import { z } from "zod";
-import { useVariety } from "~/composables/data/useVariety";
 import type { VarietyData } from "~/types/variety";
 import { VARIETY_CATEGORIES_FOR_SELECT } from "~/utils/plantCategories";
 
@@ -18,7 +17,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const open = ref(false);
 const toast = useToast();
-const { addVariety } = useVariety();
+const varietiesStore = useVarietiesStore();
 
 const schema = z.object({
   name: z
@@ -85,7 +84,7 @@ async function onSubmit(event: FormSubmitEvent<VarietySchema>) {
   try {
     const validatedData = event.data;
 
-    const varietyData = await addVariety({
+    const varietyData = await varietiesStore.createVariety({
       name: validatedData.name,
       scientific_name: validatedData.scientific_name || undefined,
       harvest_period: validatedData.harvest_period || undefined,
