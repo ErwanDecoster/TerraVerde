@@ -262,6 +262,21 @@
                   size="sm"
                   variant="ghost"
                 />
+                <template #item-label="{ item }">
+                  <UTooltip
+                    v-if="item.disabledReason"
+                    :content="{ side: 'top' }"
+                    :ui="{
+                      content: 'max-w-56 whitespace-normal text-sm leading-5',
+                    }"
+                    :text="String(item.disabledReason)"
+                  >
+                    <span class="text-muted cursor-not-allowed">
+                      {{ item.label }}
+                    </span>
+                  </UTooltip>
+                  <span v-else>{{ item.label }}</span>
+                </template>
               </UDropdownMenu>
             </div>
           </template>
@@ -321,6 +336,7 @@ import EditVarietyModal from "~/components/variety/EditVarietyModal.vue";
 import VarietyInfoModal from "~/components/variety/VarietyInfoModal.vue";
 import { useIsOwner } from "~/composables/useIsOwner";
 import type { GardenData } from "~/types/garden";
+import type { TeamData, TeamMemberData } from "~/types/team";
 import type { VarietyData } from "~/types/variety";
 import { getCategoryColor, getCategoryLabel } from "~/utils/plantCategories";
 
@@ -329,6 +345,7 @@ const router = useRouter();
 const gardenId = route.params.id as string;
 const toast = useToast();
 
+const authStore = useAuthStore();
 const gardenStore = useGardenStore();
 const teamsStore = useTeamsStore();
 const plantsStore = usePlantsStore();
@@ -348,6 +365,8 @@ const showDeleteVarietyConfirmModal = ref(false);
 const varietyToDelete = ref<VarietyData | null>(null);
 const deletingVariety = ref(false);
 const activeVarietyEditorId = ref<string | null>(null);
+const canEditVarietyById = ref<Record<string, boolean>>({});
+const permissionLoadingByVarietyId = ref<Record<string, boolean>>({});
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
@@ -472,6 +491,92 @@ const openVarietyEditor = (variety: VarietyData) => {
   activeVarietyEditorId.value = variety.id;
 };
 
+const canEditVarietyFromOriginalGarden = (variety: VarietyData) => {
+  return canEditVarietyById.value[variety.id] === true;
+};
+
+const isVarietyEditPermissionLoading = (variety: VarietyData) => {
+  return permissionLoadingByVarietyId.value[variety.id] === true;
+};
+
+const getEditVarietyDisabledReason = (variety: VarietyData) => {
+  if (isVarietyEditPermissionLoading(variety)) {
+    return "Checking permissions...";
+  }
+
+  if (canEditVarietyFromOriginalGarden(variety)) {
+    return undefined;
+  }
+
+  return "This variety belongs to another garden. Only members with owner or editor access in that garden can modify it.";
+};
+
+const syncVarietyEditPermissions = async (varietyRows: VarietyData[]) => {
+  if (!authStore.user) {
+    await authStore.initialize();
+  }
+
+  const userId = authStore.user?.id;
+  if (!userId) {
+    const denied: Record<string, boolean> = {};
+    varietyRows.forEach((variety) => {
+      denied[variety.id] = false;
+    });
+    canEditVarietyById.value = denied;
+    permissionLoadingByVarietyId.value = {};
+    return;
+  }
+
+  const gardenIds = [
+    ...new Set(
+      varietyRows
+        .map((variety) => variety.garden_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const loadingState: Record<string, boolean> = {};
+  varietyRows.forEach((variety) => {
+    loadingState[variety.id] = true;
+  });
+  permissionLoadingByVarietyId.value = loadingState;
+
+  const canEditByGardenId: Record<string, boolean> = {};
+
+  await Promise.all(
+    gardenIds.map(async (originalGardenId) => {
+      try {
+        const teams = await teamsStore.fetchGardenTeams(originalGardenId);
+        canEditByGardenId[originalGardenId] = teams.some((team: TeamData) =>
+          team.teams_members?.some(
+            (member: TeamMemberData) =>
+              member.user_id === userId &&
+              ["owner", "editor"].includes(member.role || ""),
+          ),
+        );
+      } catch (permissionError) {
+        console.error(
+          "Failed to compute variety edit permission",
+          permissionError,
+        );
+        canEditByGardenId[originalGardenId] = false;
+      }
+    }),
+  );
+
+  const nextPermissions: Record<string, boolean> = {};
+  varietyRows.forEach((variety) => {
+    const originalGardenId = variety.garden_id;
+    nextPermissions[variety.id] =
+      typeof originalGardenId === "string"
+        ? canEditByGardenId[originalGardenId] === true
+        : false;
+  });
+
+  canEditVarietyById.value = nextPermissions;
+  permissionLoadingByVarietyId.value = {};
+};
+
 const onVarietyEditorOpenChange = (varietyId: string, isOpen: boolean) => {
   if (!isOpen && activeVarietyEditorId.value === varietyId) {
     activeVarietyEditorId.value = null;
@@ -505,6 +610,9 @@ const confirmDeleteVariety = async () => {
 };
 
 const getVarietyActionItems = (variety: VarietyData) => {
+  const canEditVariety = canEditVarietyFromOriginalGarden(variety);
+  const editVarietyDisabledReason = getEditVarietyDisabledReason(variety);
+
   const items: Array<Array<Record<string, unknown>>> = [
     [
       {
@@ -531,16 +639,21 @@ const getVarietyActionItems = (variety: VarietyData) => {
             },
           ]
         : []),
+      {
+        label: "Edit variety",
+        icon: "i-heroicons-pencil-square-20-solid",
+        disabled: canEditVariety === false,
+        disabledReason: editVarietyDisabledReason,
+        onSelect: () => {
+          if (!canEditVariety) return;
+          openVarietyEditor(variety);
+        },
+      },
     ],
   ];
 
   if (isOwner.value) {
     items.push([
-      {
-        label: "Edit variety",
-        icon: "i-heroicons-pencil-square-20-solid",
-        onSelect: () => openVarietyEditor(variety),
-      },
       {
         label: "Delete variety",
         icon: "i-heroicons-trash-20-solid",
@@ -611,6 +724,7 @@ const loadData = async () => {
     });
 
     varietiesStore.hydrateUsedVarieties(gardenId, plantsData);
+    await syncVarietyEditPermissions(varietiesStore.currentVarieties);
   } catch (err) {
     console.error("Error loading data:", err);
     error.value = "Error loading data";
@@ -618,6 +732,15 @@ const loadData = async () => {
     pending.value = false;
   }
 };
+
+watch(
+  varietiesForGarden,
+  async (value) => {
+    if (pending.value) return;
+    await syncVarietyEditPermissions(value);
+  },
+  { deep: true },
+);
 
 onMounted(() => {
   loadData();
