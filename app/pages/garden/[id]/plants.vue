@@ -240,9 +240,25 @@
                 @variety-updated="onVarietyUpdated"
               />
 
+              <UTooltip v-if="isOwner" text="Edit plant">
+                <UButton
+                  icon="i-heroicons-pencil-square-20-solid"
+                  size="sm"
+                  variant="ghost"
+                  @click="openPlantEditor(row.original)"
+                />
+              </UTooltip>
+              <UTooltip v-else text="View details">
+                <UButton
+                  icon="i-heroicons-information-circle-20-solid"
+                  size="sm"
+                  variant="ghost"
+                  @click="openPlantInfoModal(row.original)"
+                />
+              </UTooltip>
+
               <UDropdownMenu :items="getPlantActionItems(row.original)">
                 <UButton
-                  label="Actions"
                   icon="i-heroicons-ellipsis-horizontal-20-solid"
                   size="sm"
                   variant="ghost"
@@ -534,11 +550,15 @@ const confirmDeletePlant = async () => {
 const getPlantActionItems = (plant: PlantData) => {
   const items: Array<Array<Record<string, unknown>>> = [
     [
-      {
-        label: "View details",
-        icon: "i-heroicons-information-circle-20-solid",
-        onSelect: () => openPlantInfoModal(plant),
-      },
+      ...(isOwner.value
+        ? [
+            {
+              label: "View details",
+              icon: "i-heroicons-information-circle-20-solid",
+              onSelect: () => openPlantInfoModal(plant),
+            },
+          ]
+        : []),
       {
         label: "Locate on map",
         icon: "i-heroicons-map-pin-20-solid",
@@ -559,11 +579,6 @@ const getPlantActionItems = (plant: PlantData) => {
 
   if (isOwner.value) {
     items.push([
-      {
-        label: "Edit plant",
-        icon: "i-heroicons-pencil-square-20-solid",
-        onSelect: () => openPlantEditor(plant),
-      },
       {
         label: "Delete plant",
         icon: "i-heroicons-trash-20-solid",

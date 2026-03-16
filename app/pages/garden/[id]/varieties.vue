@@ -244,7 +244,7 @@
           <template #actions-cell="{ row }">
             <div class="flex items-center gap-1">
               <EditVarietyModal
-                v-if="isOwner"
+                v-if="canEditVarietyFromOriginalGarden(row.original)"
                 :variety="row.original"
                 :open="activeVarietyEditorId === row.original.id"
                 :hide-trigger="true"
@@ -255,28 +255,32 @@
                 @variety-deleted="onVarietyDeleted"
               />
 
+              <UTooltip
+                v-if="canEditVarietyFromOriginalGarden(row.original)"
+                text="Edit variety"
+              >
+                <UButton
+                  icon="i-heroicons-pencil-square-20-solid"
+                  size="sm"
+                  variant="ghost"
+                  @click="openVarietyEditor(row.original)"
+                />
+              </UTooltip>
+              <UTooltip v-else text="View details">
+                <UButton
+                  icon="i-heroicons-information-circle-20-solid"
+                  size="sm"
+                  variant="ghost"
+                  @click="openVarietyInfoModal(row.original)"
+                />
+              </UTooltip>
+
               <UDropdownMenu :items="getVarietyActionItems(row.original)">
                 <UButton
-                  label="Actions"
                   icon="i-heroicons-ellipsis-horizontal-20-solid"
                   size="sm"
                   variant="ghost"
                 />
-                <template #item-label="{ item }">
-                  <UTooltip
-                    v-if="item.disabledReason"
-                    :content="{ side: 'top' }"
-                    :ui="{
-                      content: 'max-w-56 whitespace-normal text-sm leading-5',
-                    }"
-                    :text="String(item.disabledReason)"
-                  >
-                    <span class="text-muted cursor-not-allowed">
-                      {{ item.label }}
-                    </span>
-                  </UTooltip>
-                  <span v-else>{{ item.label }}</span>
-                </template>
               </UDropdownMenu>
             </div>
           </template>
@@ -366,7 +370,6 @@ const varietyToDelete = ref<VarietyData | null>(null);
 const deletingVariety = ref(false);
 const activeVarietyEditorId = ref<string | null>(null);
 const canEditVarietyById = ref<Record<string, boolean>>({});
-const permissionLoadingByVarietyId = ref<Record<string, boolean>>({});
 const plantsForGarden = computed(() =>
   plantsGardenId.value === gardenId ? plants.value : [],
 );
@@ -495,22 +498,6 @@ const canEditVarietyFromOriginalGarden = (variety: VarietyData) => {
   return canEditVarietyById.value[variety.id] === true;
 };
 
-const isVarietyEditPermissionLoading = (variety: VarietyData) => {
-  return permissionLoadingByVarietyId.value[variety.id] === true;
-};
-
-const getEditVarietyDisabledReason = (variety: VarietyData) => {
-  if (isVarietyEditPermissionLoading(variety)) {
-    return "Checking permissions...";
-  }
-
-  if (canEditVarietyFromOriginalGarden(variety)) {
-    return undefined;
-  }
-
-  return "This variety belongs to another garden. Only members with owner or editor access in that garden can modify it.";
-};
-
 const syncVarietyEditPermissions = async (varietyRows: VarietyData[]) => {
   if (!authStore.user) {
     await authStore.initialize();
@@ -523,7 +510,6 @@ const syncVarietyEditPermissions = async (varietyRows: VarietyData[]) => {
       denied[variety.id] = false;
     });
     canEditVarietyById.value = denied;
-    permissionLoadingByVarietyId.value = {};
     return;
   }
 
@@ -534,12 +520,6 @@ const syncVarietyEditPermissions = async (varietyRows: VarietyData[]) => {
         .filter((id): id is string => Boolean(id)),
     ),
   ];
-
-  const loadingState: Record<string, boolean> = {};
-  varietyRows.forEach((variety) => {
-    loadingState[variety.id] = true;
-  });
-  permissionLoadingByVarietyId.value = loadingState;
 
   const canEditByGardenId: Record<string, boolean> = {};
 
@@ -574,7 +554,6 @@ const syncVarietyEditPermissions = async (varietyRows: VarietyData[]) => {
   });
 
   canEditVarietyById.value = nextPermissions;
-  permissionLoadingByVarietyId.value = {};
 };
 
 const onVarietyEditorOpenChange = (varietyId: string, isOpen: boolean) => {
@@ -611,15 +590,18 @@ const confirmDeleteVariety = async () => {
 
 const getVarietyActionItems = (variety: VarietyData) => {
   const canEditVariety = canEditVarietyFromOriginalGarden(variety);
-  const editVarietyDisabledReason = getEditVarietyDisabledReason(variety);
 
   const items: Array<Array<Record<string, unknown>>> = [
     [
-      {
-        label: "View details",
-        icon: "i-heroicons-information-circle-20-solid",
-        onSelect: () => openVarietyInfoModal(variety),
-      },
+      ...(canEditVariety
+        ? [
+            {
+              label: "View details",
+              icon: "i-heroicons-information-circle-20-solid",
+              onSelect: () => openVarietyInfoModal(variety),
+            },
+          ]
+        : []),
       {
         label: "Find plants",
         icon: "i-heroicons-funnel-20-solid",
@@ -639,16 +621,6 @@ const getVarietyActionItems = (variety: VarietyData) => {
             },
           ]
         : []),
-      {
-        label: "Edit variety",
-        icon: "i-heroicons-pencil-square-20-solid",
-        disabled: canEditVariety === false,
-        disabledReason: editVarietyDisabledReason,
-        onSelect: () => {
-          if (!canEditVariety) return;
-          openVarietyEditor(variety);
-        },
-      },
     ],
   ];
 
