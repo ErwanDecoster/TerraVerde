@@ -66,7 +66,7 @@ const normalizeOffset = (offset: number) => {
 
 const normalizePixelsPerMeters = (value: number) => {
   if (!Number.isFinite(value)) return 20;
-  return Math.max(1, Math.min(100, value));
+  return Math.max(1, value);
 };
 
 const normalizeDefaultZoomPercent = (value: unknown): number | null => {
@@ -88,8 +88,7 @@ const schema = z.object({
   isPublic: z.boolean().optional(),
   PixelsPerMeters: z
     .number()
-    .min(1, "Scale must be at least 1 Pixels per Meters")
-    .max(100, "Scale cannot exceed 100 Pixels per Meters"),
+    .min(1, "Scale must be at least 1 Pixels per Meters"),
   defaultZoom: z
     .preprocess(
       (value) => parseNullableNumber(value),

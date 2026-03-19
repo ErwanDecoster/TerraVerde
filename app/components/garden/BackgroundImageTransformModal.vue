@@ -208,7 +208,6 @@ onBeforeUnmount(() => {
               v-model.number="pixelsPerMetersModel"
               type="number"
               min="1"
-              max="100"
               step="1"
               placeholder="20"
               class="w-full"
